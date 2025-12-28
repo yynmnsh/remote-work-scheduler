@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Work Scheduler - AI Trainer</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lucide-static/0.294.0/lucide.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .lucide { width: 1em; height: 1em; display: inline-block; vertical-align: middle; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // API Configuration
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyiTkrMw6GlZTHNHia7Vhe9JEAgPY69h3EO8Ae4-PBTVOadd8RY_YZ9-pGsU1Xg90kw/exec';
+
+        // Icon Components (Simplified)
+        const Icon = ({ name, className = "w-5 h-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {name === 'calendar' && <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>}
+                {name === 'clock' && <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>}
+                {name === 'dollar' && <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}
+                {name === 'users' && <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>}
+                {name === 'plus' && <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>}
+                {name === 'edit' && <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>}
+                {name === 'trash' && <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>}
+                {name === 'save' && <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>}
+                {name === 'x' && <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>}
+                {name === 'refresh' && <><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>}
+                {name === 'check' && <><polyline points="20 6 9 17 4 12"/></>}
+                {name === 'alert' && <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}
+                {name === 'lock' && <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}
+                {name === 'unlock' && <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>}
+                {name === 'loader' && <><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></>}
+            </svg>
+        );
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [adminPassword, setAdminPassword] = useState('');
+            const [showPasswordModal, setShowPasswordModal] = useState(false);
+            const [loading, setLoading] = useState(false);
+            const [syncing, setSyncing] = useState(false);
+            const [lastSync, setLastSync] = useState(new Date());
+            
+            const [users, setUsers] = useState([]);
+            const [schedules, setSchedules] = useState([]);
+            const [timesheets, setTimesheets] = useState([]);
+            const [settings, setSettings] = useState({
+                hourly_rate: 17,
+                exchange_rate: 16770,
+                max_hours_per_day: 8,
+                payment_day: 'Wednesday'
+            });
+
+            const [showScheduleModal, setShowScheduleModal] = useState(false);
+            const [showTimesheetModal, setShowTimesheetModal] = useState(false);
+            const [editingItem, setEditingItem] = useState(null);
+
+            const [scheduleForm, setScheduleForm] = useState({
+                date: '', userId: '', startTime: '', endTime: '', notes: ''
+            });
+            
+            const [timesheetForm, setTimesheetForm] = useState({
+                date: '', userId: '', startTime: '', duration: '', notes: ''
+            });
+
+            useEffect(() => {
+                loadAllData();
+            }, []);
+
+            const fetchData = async (sheet) => {
+                try {
+                    const response = await fetch(`${API_URL}?action=get&sheet=${sheet}`);
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Fetch Error:', error);
+                    return null;
+                }
+            };
+
+            const apiCall = async (action, data = {}) => {
+                try {
+                    const formData = new FormData();
+                    formData.append('data', JSON.stringify(data));
+                    
+                    const response = await fetch(`${API_URL}?action=${action}`, {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+                    
+                    return { success: true };
+                } catch (error) {
+                    console.error('API Error:', error);
+                    return { success: false, error: error.message };
+                }
+            };
+
+            const loadAllData = async () => {
+                setSyncing(true);
+                
+                const usersData = await fetchData('users');
+                const schedulesData = await fetchData('schedule');
+                const timesheetsData = await fetchData('timesheet');
+                const settingsData = await fetchData('settings');
+
+                if (usersData) {
+                    setUsers(usersData);
+                    setSchedules(schedulesData || []);
+                    setTimesheets(timesheetsData || []);
+                    if (settingsData && settingsData.length > 0) {
+                        const settingsObj = {};
+                        settingsData.forEach(s => {
+                            settingsObj[s.key] = s.value;
+                        });
+                        setSettings(prev => ({ ...prev, ...settingsObj }));
+                    }
+                }
+
+                setLastSync(new Date());
+                setSyncing(false);
+            };
+
+            const hashPassword = async (password) => {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password);
+                const hash = await crypto.subtle.digest('SHA-256', data);
+                return Array.from(new Uint8Array(hash))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            };
+
+            const handleAdminLogin = async () => {
+                if (adminPassword === 'admin123') {
+                    setIsAdmin(true);
+                    setShowPasswordModal(false);
+                    setAdminPassword('');
+                    alert('✅ Admin access granted!');
+                } else {
+                    alert('❌ Invalid password!');
+                }
+            };
+
+            const handleSaveSchedule = async () => {
+                const user = users.find(u => u.id === parseInt(scheduleForm.userId));
+                if (!user) {
+                    alert('Please select a user');
+                    return;
+                }
+
+                if (!scheduleForm.date || !scheduleForm.startTime || !scheduleForm.endTime) {
+                    alert('Please fill all required fields');
+                    return;
+                }
+
+                const conflicts = schedules.filter(s => 
+                    s.date === scheduleForm.date && 
+                    s.id !== editingItem?.id &&
+                    ((scheduleForm.startTime >= s.startTime && scheduleForm.startTime < s.endTime) ||
+                     (scheduleForm.endTime > s.startTime && scheduleForm.endTime <= s.endTime))
+                );
+
+                if (conflicts.length > 0) {
+                    alert(`⚠️ Conflict with ${conflicts[0].userName}'s shift (${conflicts[0].startTime}-${conflicts[0].endTime})!`);
+                    return;
+                }
+
+                const newSchedule = {
+                    id: editingItem?.id || Date.now(),
+                    date: scheduleForm.date,
+                    userId: parseInt(scheduleForm.userId),
+                    userName: user.name,
+                    startTime: scheduleForm.startTime,
+                    endTime: scheduleForm.endTime,
+                    notes: scheduleForm.notes,
+                    createdAt: new Date().toISOString()
+                };
+
+                setLoading(true);
+                await apiCall(editingItem ? 'updateSchedule' : 'addSchedule', newSchedule);
+                
+                if (editingItem) {
+                    setSchedules(schedules.map(s => s.id === editingItem.id ? newSchedule : s));
+                } else {
+                    setSchedules([...schedules, newSchedule]);
+                }
+                setShowScheduleModal(false);
+                setScheduleForm({ date: '', userId: '', startTime: '', endTime: '', notes: '' });
+                setLoading(false);
+                
+                // Reload data after 1 second
+                setTimeout(loadAllData, 1000);
+            };
+
+            const handleDeleteSchedule = async (id) => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                if (confirm('Delete this schedule?')) {
+                    setLoading(true);
+                    await apiCall('deleteSchedule', { id });
+                    setSchedules(schedules.filter(s => s.id !== id));
+                    setLoading(false);
+                    setTimeout(loadAllData, 1000);
+                }
+            };
+
+            const handleSaveTimesheet = async () => {
+                const user = users.find(u => u.id === parseInt(timesheetForm.userId));
+                if (!user) {
+                    alert('Please select a user');
+                    return;
+                }
+
+                if (!timesheetForm.date || !timesheetForm.duration) {
+                    alert('Please fill all required fields');
+                    return;
+                }
+
+                const duration = parseInt(timesheetForm.duration);
+                const payment = (duration / 60) * parseFloat(settings.hourly_rate);
+                const paymentIDR = Math.round(payment * parseFloat(settings.exchange_rate));
+
+                const newTimesheet = {
+                    id: editingItem?.id || Date.now(),
+                    date: timesheetForm.date,
+                    userId: parseInt(timesheetForm.userId),
+                    userName: user.name,
+                    startTime: timesheetForm.startTime,
+                    duration: duration,
+                    payment: parseFloat(payment.toFixed(2)),
+                    paymentIDR: paymentIDR,
+                    notes: timesheetForm.notes,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+
+                setLoading(true);
+                await apiCall(editingItem ? 'updateTimesheet' : 'addTimesheet', newTimesheet);
+                
+                if (editingItem) {
+                    setTimesheets(timesheets.map(t => t.id === editingItem.id ? newTimesheet : t));
+                } else {
+                    setTimesheets([...timesheets, newTimesheet]);
+                }
+                setShowTimesheetModal(false);
+                setTimesheetForm({ date: '', userId: '', startTime: '', duration: '', notes: '' });
+                setLoading(false);
+                setTimeout(loadAllData, 1000);
+            };
+
+            const handleDeleteTimesheet = async (id) => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                if (confirm('Delete this timesheet?')) {
+                    setLoading(true);
+                    await apiCall('deleteTimesheet', { id });
+                    setTimesheets(timesheets.filter(t => t.id !== id));
+                    setLoading(false);
+                    setTimeout(loadAllData, 1000);
+                }
+            };
+
+            const handleMarkAsPaid = async (userId) => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                if (confirm('Mark all pending payments as paid for this user?')) {
+                    setLoading(true);
+                    await apiCall('markAsPaid', { userId });
+                    setTimesheets(timesheets.map(t => 
+                        t.userId === userId && t.status === 'pending' 
+                            ? { ...t, status: 'paid' }
+                            : t
+                    ));
+                    setLoading(false);
+                    setTimeout(loadAllData, 1000);
+                }
+            };
+
+            const getWeeklyStats = () => {
+                const thisWeek = timesheets.filter(t => t.status === 'pending');
+                const byUser = {};
+                
+                thisWeek.forEach(t => {
+                    if (!byUser[t.userId]) {
+                        byUser[t.userId] = { name: t.userName, userId: t.userId, hours: 0, usd: 0, idr: 0 };
+                    }
+                    byUser[t.userId].hours += t.duration / 60;
+                    byUser[t.userId].usd += t.payment;
+                    byUser[t.userId].idr += t.paymentIDR;
+                });
+
+                return Object.values(byUser);
+            };
+
+            const getTodaySchedule = () => {
+                const today = new Date().toISOString().split('T')[0];
+                return schedules.filter(s => s.date === today).sort((a, b) => a.startTime.localeCompare(b.startTime));
+            };
+
+            const getCurrentShift = () => {
+                const now = new Date();
+                const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                const today = now.toISOString().split('T')[0];
+                
+                return schedules.find(s => 
+                    s.date === today && 
+                    currentTime >= s.startTime && 
+                    currentTime < s.endTime
+                );
+            };
+
+            const formatIDR = (amount) => {
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+            };
+
+            const getNextPaymentDate = () => {
+                const now = new Date();
+                const dayOfWeek = now.getDay();
+                const daysUntilWednesday = (3 - dayOfWeek + 7) % 7 || 7;
+                const nextWed = new Date(now);
+                nextWed.setDate(now.getDate() + daysUntilWednesday);
+                return nextWed;
+            };
+
+            const weeklyStats = getWeeklyStats();
+            const totalWeeklyUSD = weeklyStats.reduce((sum, u) => sum + u.usd, 0);
+            const totalWeeklyIDR = weeklyStats.reduce((sum, u) => sum + u.idr, 0);
+            const currentShift = getCurrentShift();
+            const todaySchedule = getTodaySchedule();
+            const nextPayment = getNextPaymentDate();
+            const daysUntilPayment = Math.ceil((nextPayment - new Date()) / (1000 * 60 * 60 * 24));
+
+            return (
+                <div className="min-h-screen bg-gray-100">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
+                        <div className="max-w-7xl mx-auto px-4 py-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-2xl font-bold">🚀 Remote Work Scheduler</h1>
+                                    <p className="text-blue-100 text-sm">AI Trainer - Outlier Platform</p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={loadAllData}
+                                        disabled={syncing}
+                                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
+                                    >
+                                        <Icon name="refresh" className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                                        <span className="text-sm">Sync</span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (isAdmin) {
+                                                setIsAdmin(false);
+                                                alert('👋 Logged out');
+                                            } else {
+                                                setShowPasswordModal(true);
+                                            }
+                                        }}
+                                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors"
+                                    >
+                                        <Icon name={isAdmin ? 'unlock' : 'lock'} className="w-4 h-4" />
+                                        <span className="text-sm">{isAdmin ? 'Admin' : 'Login'}</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="text-xs text-blue-100 mt-2">
+                                Last sync: {lastSync.toLocaleTimeString('id-ID')} | ✅ Connected
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="bg-white shadow">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="flex gap-1 overflow-x-auto">
+                                {[
+                                    { id: 'dashboard', label: 'Dashboard', icon: 'calendar' },
+                                    { id: 'schedule', label: 'Jadwal', icon: 'clock' },
+                                    { id: 'timesheet', label: 'Laporan', icon: 'check' },
+                                    { id: 'payment', label: 'Payment', icon: 'dollar' }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                                            activeTab === tab.id
+                                                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                                                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <Icon name={tab.icon} className="w-4 h-4" />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto px-4 py-6">
+                        {activeTab === 'dashboard' && (
+                            <div className="space-y-6">
+                                {/* Stats Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-blue-100 text-sm">Total Minggu Ini</p>
+                                                <p className="text-3xl font-bold mt-1">${totalWeeklyUSD.toFixed(2)}</p>
+                                                <p className="text-blue-100 text-xs mt-1">{formatIDR(totalWeeklyIDR)}</p>
+                                            </div>
+                                            <Icon name="dollar" className="w-12 h-12 text-blue-200" />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-green-100 text-sm">Payment Countdown</p>
+                                                <p className="text-3xl font-bold mt-1">{daysUntilPayment} Hari</p>
+                                                <p className="text-green-100 text-xs mt-1">
+                                                    Next: {nextPayment.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                </p>
+                                            </div>
+                                            <Icon name="clock" className="w-12 h-12 text-green-200" />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-purple-100 text-sm">Active Users</p>
+                                                <p className="text-3xl font-bold mt-1">{users.filter(u => u.status === 'active').length}</p>
+                                                <p className="text-purple-100 text-xs mt-1">Team Members</p>
+                                            </div>
+                                            <Icon name="users" className="w-12 h-12 text-purple-200" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Current Shift */}
+                                {currentShift && (
+                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                                        <div className="flex items-center">
+                                            <Icon name="alert" className="w-5 h-5 text-yellow-600 mr-2" />
+                                            <div>
+                                                <p className="font-semibold text-yellow-800">🔴 Sedang Kerja Sekarang:</p>
+                                                <p className="text-yellow-700">{currentShift.userName} ({currentShift.startTime} - {currentShift.endTime})</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Today's Schedule */}
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <h3 className="text-lg font-semibold mb-4">📅 Jadwal Hari Ini</h3>
+                                    {todaySchedule.length === 0 ? (
+                                        <p className="text-gray-500 text-center py-8">Belum ada jadwal untuk hari ini</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {todaySchedule.map(s => {
+                                                const user = users.find(u => u.id === s.userId);
+                                                return (
+                                                    <div key={s.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                        <div className="w-1 h-12 rounded mr-3" style={{ backgroundColor: user?.color }}></div>
+                                                        <div className="flex-1">
+                                                            <p className="font-semibold">{s.userName}</p>
+                                                            <p className="text-sm text-gray-600">⏰ {s.startTime} - {s.endTime}</p>
+                                                        </div>
+                                                        {s.notes && <p className="text-sm text-gray-500 italic">"{s.notes}"</p>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Weekly Payment Summary */}
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <h3 className="text-lg font-semibold mb-4">💰 Pending Payment</h3>
+                                    {weeklyStats.length === 0 ? (
+                                        <p className="text-gray-500 text-center py-8">Belum ada data kerja minggu ini</p>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left text-sm font-semibold">Name</th>
+                                                        <th className="px-4 py-2 text-right text-sm font-semibold">Hours</th>
+                                                        <th className="px-4 py-2 text-right text-sm font-semibold">USD</th>
+                                                        <th className="px-4 py-2 text-right text-sm font-semibold">IDR</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {weeklyStats.map((stat, idx) => (
+                                                        <tr key={idx} className="border-t">
+                                                            <td className="px-4 py-2">{stat.name}</td>
+                                                            <td className="px-4 py-2 text-right">{stat.hours.toFixed(2)}h</td>
+                                                            <td className="px-4 py-2 text-right">${stat.usd.toFixed(2)}</td>
+                                                            <td className="px-4 py-2 text-right">{formatIDR(stat.idr)}</td>
+                                                        </tr>
+                                                    ))}
+                                                    <tr className="border-t-2 border-gray-300 font-bold bg-gray-50">
+                                                        <td className="px-4 py-2">TOTAL</td>
+                                                        <td className="px-4 py-2 text-right">{weeklyStats.reduce((s, u) => s + u.hours, 0).toFixed(2)}h</td>
+                                                        <td className="px-4 py-2 text-right">${totalWeeklyUSD.toFixed(2)}</td>
+                                                        <td className="px-4 py-2 text-right">{formatIDR(totalWeeklyIDR)}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'schedule' && (
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-bold">📋 Jadwal Shift</h2>
+                                    <button
+                                        onClick={() => {
+                                            if (!isAdmin) {
+                                                setShowPasswordModal(true);
+                                                return;
+                                            }
+                                            setEditingItem(null);
+                                            setScheduleForm({ date: '', userId: '', startTime: '', endTime: '', notes: '' });
+                                            setShowScheduleModal(true);
+                                        }}
+                                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                    >
+                                        <Icon name="plus" className="w-4 h-4" />
+                                        Tambah Jadwal
+                                    </button>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow">
+                                    {schedules.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <Icon name="calendar" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                            <p className="text-gray-500">Belum ada jadwal</p>
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y">
+                                            {Object.entries(
+                                                schedules.reduce((acc, s) => {
+                                                    if (!acc[s.date]) acc[s.date] = [];
+                                                    acc[s.date].push(s);
+                                                    return acc;
+                                                }, {})
+                                            ).sort(([a], [b]) => b.localeCompare(a)).map(([date, dateSchedules]) => (
+                                                <div key={date}>
+                                                    <div className="bg-gray-50 px-6 py-3 font-semibold">
+                                                        {new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                    </div>
+                                                    <div className="p-6 space-y-3">
+                                                        {dateSchedules.sort((a, b) => a.startTime.localeCompare(b.startTime)).map(schedule => {
+                                                            const user = users.find(u => u.id === schedule.userId);
+                                                            return (
+                                                                <div key={schedule.id} className="flex items-center p-4 bg-gray-50 rounded-lg">
+                                                                    <div className="w-1 h-16 rounded mr-4" style={{ backgroundColor: user?.color }}></div>
+                                                                    <div className="flex-1">
+                                                                        <p className="font-semibold text-lg">{schedule.userName}</p>
+                                                                        <p className="text-gray-600">⏰ {schedule.startTime} - {schedule.endTime}</p>
+                                                                        {schedule.notes && <p className="text-sm text-gray-500 mt-1 italic">"{schedule.notes}"</p>}
+                                                                    </div>
+                                                                    {isAdmin && (
+                                                                        <div className="flex gap-2">
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setEditingItem(schedule);
+                                                                                    setScheduleForm({
+                                                                                        date: schedule.date,
+                                                                                        userId: schedule.userId.toString(),
+                                                                                        startTime: schedule.startTime,
+                                                                                        endTime: schedule.endTime,
+                                                                                        notes: schedule.notes
+                                                                                    });
+                                                                                    setShowScheduleModal(true);
+                                                                                }}
+                                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                                                                            >
+                                                                                <Icon name="edit" className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteSchedule(schedule.id)}
+                                                                                className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                                                            >
+                                                                                <Icon name="trash" className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'timesheet' && (
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-bold">📊 Laporan Kerja</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingItem(null);
+                                            setTimesheetForm({ date: '', userId: '', startTime: '', duration: '', notes: '' });
+                                            setShowTimesheetModal(true);
+                                        }}
+                                        className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                                    >
+                                        <Icon name="plus" className="w-4 h-4" />
+                                        Log Kerja
+                                    </button>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow overflow-hidden">
+                                    {timesheets.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <Icon name="check" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                            <p className="text-gray-500">Belum ada laporan kerja</p>
+                                        </div>
+                                    ) : (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-left text-sm font-semibold">Tanggal</th>
+                                                        <th className="px-4 py-3 text-left text-sm font-semibold">Nama</th>
+                                                        <th className="px-4 py-3 text-left text-sm font-semibold">Start</th>
+                                                        <th className="px-4 py-3 text-right text-sm font-semibold">Durasi</th>
+                                                        <th className="px-4 py-3 text-right text-sm font-semibold">USD</th>
+                                                        <th className="px-4 py-3 text-right text-sm font-semibold">IDR</th>
+                                                        <th className="px-4 py-3 text-center text-sm font-semibold">Status</th>
+                                                        {isAdmin && <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {Object.entries(
+                                                        timesheets.reduce((acc, t) => {
+                                                            if (!acc[t.date]) acc[t.date] = [];
+                                                            acc[t.date].push(t);
+                                                            return acc;
+                                                        }, {})
+                                                    ).sort(([a], [b]) => b.localeCompare(a)).map(([date, dateTimesheets]) => 
+                                                        dateTimesheets.map((t, idx) => (
+                                                            <tr key={t.id} className="border-t hover:bg-gray-50">
+                                                                {idx === 0 && (
+                                                                    <td rowSpan={dateTimesheets.length} className="px-4 py-3 font-semibold bg-gray-50">
+                                                                        {new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                                                                    </td>
+                                                                )}
+                                                                <td className="px-4 py-3">{t.userName}</td>
+                                                                <td className="px-4 py-3">{t.startTime}</td>
+                                                                <td className="px-4 py-3 text-right">{(t.duration / 60).toFixed(2)}h</td>
+                                                                <td className="px-4 py-3 text-right">${t.payment.toFixed(2)}</td>
+                                                                <td className="px-4 py-3 text-right">{formatIDR(t.paymentIDR)}</td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${t.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                                        {t.status === 'paid' ? '✅ Paid' : '⏳ Pending'}
+                                                                    </span>
+                                                                </td>
+                                                                {isAdmin && (
+                                                                    <td className="px-4 py-3 text-center">
+                                                                        <div className="flex justify-center gap-2">
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setEditingItem(t);
+                                                                                    setTimesheetForm({
+                                                                                        date: t.date,
+                                                                                        userId: t.userId.toString(),
+                                                                                        startTime: t.startTime,
+                                                                                        duration: t.duration.toString(),
+                                                                                        notes: t.notes
+                                                                                    });
+                                                                                    setShowTimesheetModal(true);
+                                                                                }}
+                                                                                className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                                                            >
+                                                                                <Icon name="edit" className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteTimesheet(t.id)}
+                                                                                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                                            >
+                                                                                <Icon name="trash" className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                )}
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'payment' && (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold">💳 Payment Tracker</h2>
+
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="mb-4">
+                                        <h3 className="text-lg font-semibold">Pending Payment</h3>
+                                        <p className="text-sm text-gray-600">
+                                            Week Ending: {nextPayment.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                        </p>
+                                    </div>
+
+                                    {weeklyStats.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <Icon name="dollar" className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                            <p className="text-gray-500">Belum ada data payment</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {weeklyStats.map((stat, idx) => {
+                                                const user = users.find(u => u.name === stat.name);
+                                                return (
+                                                    <div key={idx} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: user?.color }}></div>
+                                                                <span className="font-semibold text-lg">{stat.name}</span>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full font-semibold">
+                                                                    ⏳ Pending
+                                                                </span>
+                                                                {isAdmin && (
+                                                                    <button
+                                                                        onClick={() => handleMarkAsPaid(stat.userId)}
+                                                                        className="px-3 py-1 bg-green-600 text-white text-sm rounded-full hover:bg-green-700"
+                                                                    >
+                                                                        Mark Paid
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
+                                                            <div>
+                                                                <p className="text-gray-600">Total Hours</p>
+                                                                <p className="font-semibold text-lg">{stat.hours.toFixed(2)}h</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-gray-600">Payment USD</p>
+                                                                <p className="font-semibold text-lg">${stat.usd.toFixed(2)}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-gray-600">Payment IDR</p>
+                                                                <p className="font-semibold text-lg">{formatIDR(stat.idr)}</p>
+                                                            </div>
+                                                        </div>
+                                                        {user?.bankName && (
+                                                            <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-600">
+                                                                🏦 Bank: {user.bankName} - {user.accountNumber}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+
+                                            <div className="pt-4 border-t-2 border-gray-300 bg-blue-50 p-4 rounded-lg">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-lg">💰 TOTAL PAYMENT</span>
+                                                    <div className="text-right">
+                                                        <p className="font-bold text-2xl text-blue-600">${totalWeeklyUSD.toFixed(2)}</p>
+                                                        <p className="text-sm text-gray-600">{formatIDR(totalWeeklyIDR)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Loading Overlay */}
+                    {loading && (
+                        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+                            <div className="bg-white p-6 rounded-lg shadow-xl flex items-center gap-3">
+                                <Icon name="loader" className="w-6 h-6 animate-spin text-blue-600" />
+                                <span>Processing...</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Admin Password Modal */}
+                    {showPasswordModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                                <h3 className="text-lg font-semibold mb-4">🔐 Admin Login</h3>
+                                <input
+                                    type="password"
+                                    value={adminPassword}
+                                    onChange={(e) => setAdminPassword(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                                    placeholder="Enter admin password"
+                                    className="w-full px-4 py-2 border rounded-lg mb-4"
+                                    autoFocus
+                                />
+                                <div className="flex gap-2 justify-end">
+                                    <button
+                                        onClick={() => {
+                                            setShowPasswordModal(false);
+                                            setAdminPassword('');
+                                        }}
+                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleAdminLogin}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    >
+                                        Login
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-4">💡 Default password: admin123</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Schedule Modal */}
+                    {showScheduleModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 my-8">
+                                <h3 className="text-lg font-semibold mb-4">
+                                    {editingItem ? '✏️ Edit Jadwal' : '➕ Tambah Jadwal'}
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Tanggal *</label>
+                                        <input
+                                            type="date"
+                                            value={scheduleForm.date}
+                                            onChange={(e) => setScheduleForm({...scheduleForm, date: e.target.value})}
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">User *</label>
+                                        <select
+                                            value={scheduleForm.userId}
+                                            onChange={(e) => setScheduleForm({...scheduleForm, userId: e.target.value})}
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        >
+                                            <option value="">Pilih user...</option>
+                                            {users.filter(u => u.status === 'active').map(u => (
+                                                <option key={u.id} value={u.id}>{u.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Start Time *</label>
+                                            <input
+                                                type="time"
+                                                value={scheduleForm.startTime}
+                                                onChange={(e) => setScheduleForm({...scheduleForm, startTime: e.target.value})}
+                                                className="w-full px-4 py-2 border rounded-lg"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">End Time *</label>
+                                            <input
+                                                type="time"
+                                                value={scheduleForm.endTime}
+                                                onChange={(e) => setScheduleForm({...scheduleForm, endTime: e.target.value})}
+                                                className="w-full px-4 py-2 border rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Notes (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={scheduleForm.notes}
+                                            onChange={(e) => setScheduleForm({...scheduleForm, notes: e.target.value})}
+                                            placeholder="Catatan..."
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 justify-end mt-6">
+                                    <button
+                                        onClick={() => setShowScheduleModal(false)}
+                                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    >
+                                        <Icon name="x" className="w-4 h-4" />
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveSchedule}
+                                        disabled={loading}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                    >
+                                        <Icon name="save" className="w-4 h-4" />
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Timesheet Modal */}
+                    {showTimesheetModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 my-8">
+                                <h3 className="text-lg font-semibold mb-4">
+                                    {editingItem ? '✏️ Edit Laporan' : '➕ Log Kerja'}
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Tanggal *</label>
+                                        <input
+                                            type="date"
+                                            value={timesheetForm.date}
+                                            onChange={(e) => setTimesheetForm({...timesheetForm, date: e.target.value})}
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">User *</label>
+                                        <select
+                                            value={timesheetForm.userId}
+                                            onChange={(e) => setTimesheetForm({...timesheetForm, userId: e.target.value})}
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        >
+                                            <option value="">Pilih user...</option>
+                                            {users.filter(u => u.status === 'active').map(u => (
+                                                <option key={u.id} value={u.id}>{u.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Start Time</label>
+                                        <input
+                                            type="time"
+                                            value={timesheetForm.startTime}
+                                            onChange={(e) => setTimesheetForm({...timesheetForm, startTime: e.target.value})}
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Durasi (menit) *</label>
+                                        <input
+                                            type="number"
+                                            value={timesheetForm.duration}
+                                            onChange={(e) => setTimesheetForm({...timesheetForm, duration: e.target.value})}
+                                            placeholder="Contoh: 75"
+                                            min="1"
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        />
+                                        {timesheetForm.duration && (
+                                            <div className="mt-2 p-2 bg-green-50 rounded text-sm">
+                                                <p className="font-semibold text-green-800">Preview Payment:</p>
+                                                <p className="text-gray-700">
+                                                    ⏱️ {(parseInt(timesheetForm.duration) / 60).toFixed(2)} jam = 
+                                                    💵 ${((parseInt(timesheetForm.duration) / 60) * settings.hourly_rate).toFixed(2)} = 
+                                                    💰 {formatIDR(Math.round(((parseInt(timesheetForm.duration) / 60) * settings.hourly_rate) * settings.exchange_rate))}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Notes (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={timesheetForm.notes}
+                                            onChange={(e) => setTimesheetForm({...timesheetForm, notes: e.target.value})}
+                                            placeholder="Catatan..."
+                                            className="w-full px-4 py-2 border rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 justify-end mt-6">
+                                    <button
+                                        onClick={() => setShowTimesheetModal(false)}
+                                        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    >
+                                        <Icon name="x" className="w-4 h-4" />
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveTimesheet}
+                                        disabled={loading}
+                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                                    >
+                                        <Icon name="save" className="w-4 h-4" />
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
