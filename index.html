@@ -8,103 +8,80 @@
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-5NB0IjJff_-yXSBqSqZLJihx6kHvj2g",
+            authDomain: "remotework-db.firebaseapp.com",
+            projectId: "remotework-db",
+            storageBucket: "remotework-db.firebasestorage.app",
+            messagingSenderId: "890725023216",
+            appId: "1:890725023216:web:30b10e5e4180825eb47135",
+            measurementId: "G-QYCS4M4KJ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        window.db = db;
+        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc };
+    </script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#2563eb',
-                        secondary: '#475569',
-                        success: '#22c55e',
-                        danger: '#ef4444',
-                        warning: '#f59e0b'
-                    }
+                    colors: { primary: '#2563eb', secondary: '#475569', success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' },
                 }
             }
         }
     </script>
-    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid #3498db;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const API_URL = "https://script.google.com/macros/s/AKfycbyiTkrMw6GlZTHNHia7Vhe9JEAgPY69h3EO8Ae4-PBTVOadd8RY_YZ9-pGsU1Xg90kw/exec";
+        // --- CONSTANTS ---
+        const HOURLY_RATE_USD = 17;
+        const EXCHANGE_RATE = 16770;
         
+        const INITIAL_USERS = [
+            { id: '1', name: 'Habib', color: '#3b82f6' },
+            { id: '2', name: 'Yusuf', color: '#ef4444' },
+            { id: '3', name: 'Fathim', color: '#10b981' },
+            { id: '4', name: 'Azmi', color: '#8b5cf6' },
+            { id: '5', name: 'Nurul', color: '#f59e0b' },
+            { id: '6', name: 'Ika', color: '#ec4899' }
+        ];
+
         // --- UTILITIES ---
         const formatCurrency = (amount, currency = 'USD') => {
-            let num = parseFloat(amount);
-            if (isNaN(num)) num = 0;
-            if (currency === 'IDR') {
-                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-            }
+            const num = parseFloat(amount) || 0;
+            if (currency === 'IDR') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
             return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
         };
 
         const formatDate = (dateString) => {
             if (!dateString) return '';
-            if (String(dateString).includes('1899-')) return ''; 
-            try {
-                const d = new Date(dateString);
-                if (isNaN(d.getTime())) return dateString;
-                const options = { weekday: 'short', day: 'numeric', month: 'short' };
-                return d.toLocaleDateString('id-ID', options);
-            } catch (e) {
-                return dateString;
-            }
-        };
-
-        const formatTime = (val) => {
-            if (!val) return '';
-            const strVal = String(val);
-            if (strVal.includes('T')) {
-                try {
-                    const d = new Date(strVal);
-                    const hours = String(d.getHours()).padStart(2, '0');
-                    const minutes = String(d.getMinutes()).padStart(2, '0');
-                    return `${hours}:${minutes}`;
-                } catch (e) {
-                    return strVal;
-                }
-            }
-            return strVal;
-        };
-
-        const cleanNumber = (val) => {
-            if (!val) return 0;
-            if (String(val).includes('1899-')) return 0; 
-            const num = parseFloat(val);
-            return isNaN(num) ? 0 : num;
+            const options = { weekday: 'short', day: 'numeric', month: 'short' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
         };
 
         const getShiftMinutes = (timeStr) => {
@@ -115,646 +92,387 @@
             return minutes - 900; 
         };
 
-        // --- COMPONENTS ---
-        const Spinner = () => <div className="loader inline-block align-middle mr-2"></div>;
+        // --- UI COMPONENTS ---
+        const Spinner = () => <i className="fas fa-circle-notch fa-spin text-white"></i>;
 
-        const Alert = ({ type, message, onClose }) => (
-            <div className={`fixed top-4 right-4 z-50 p-4 rounded shadow-lg text-white fade-in ${type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-orange-500' : 'bg-red-500'}`}>
-                <div className="flex items-center">
-                    <span className="mr-2">{message}</span>
-                    <button onClick={onClose} className="ml-2 hover:text-gray-200"><i className="fas fa-times"></i></button>
-                </div>
+        const Notification = ({ msg, type, onClose }) => (
+            <div className={`fixed top-4 right-4 left-4 md:left-auto z-50 p-4 rounded-lg shadow-xl text-white flex justify-between items-center fade-in ${type === 'error' ? 'bg-red-500' : 'bg-green-600'}`}>
+                <span className="text-sm font-medium">{msg}</span>
+                <button onClick={onClose}><i className="fas fa-times opacity-70 hover:opacity-100"></i></button>
             </div>
         );
 
-        // --- SUB-COMPONENTS ---
-        const DashboardView = ({ users, currentUser, schedules, timesheets, setView, getUserName, isOwner }) => {
-            // Force re-render dengan useMemo untuk memastikan update langsung
-            const activeUserObj = React.useMemo(() => 
-                users.find(u => String(u.id) === String(currentUser)), 
-                [users, currentUser]
-            );
-            const activeUserName = activeUserObj ? activeUserObj.name : 'User';
+        // --- SUB-VIEWS (DEFINED OUTSIDE APP TO PREVENT RE-RENDER LAG) ---
 
-            const myPendingSheets = React.useMemo(() => 
-                timesheets.filter(t => isOwner(t.userId) && t.status === 'pending'),
-                [timesheets, currentUser]
-            );
-
-            const totalEarnedIDR = myPendingSheets.reduce((sum, item) => sum + cleanNumber(item.paymentIDR), 0);
-            const totalMinutes = myPendingSheets.reduce((sum, item) => sum + cleanNumber(item.duration), 0);
-            const upcomingSchedules = schedules.slice(0, 5);
+        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, getUserColor }) => {
+            const myPending = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
+            const estEarned = myPending.reduce((acc, curr) => acc + (curr.paymentIDR || 0), 0);
+            const totalMins = myPending.reduce((acc, curr) => acc + (curr.duration || 0), 0);
 
             return (
                 <div className="space-y-4 fade-in">
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                         <div className="relative z-10">
-                            <h2 className="text-xl font-bold mb-1">Halo, {activeUserName}! 👋</h2>
-                            <p className="text-blue-100 text-sm mb-4">Remote Work - AI Trainer</p>
-                            
-                            <div className="grid grid-cols-2 gap-4 mt-4">
-                                <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                                    <p className="text-xs text-blue-200">Estimasi Mingguan</p>
-                                    <p className="text-lg font-bold">{formatCurrency(totalEarnedIDR, 'IDR')}</p>
+                            <h2 className="text-2xl font-bold">Halo, {currentUser ? getUserName(currentUser) : 'Tim'}! 👋</h2>
+                            <p className="text-blue-200 text-sm">Remote Work Scheduler</p>
+                            <div className="grid grid-cols-2 gap-4 mt-6">
+                                <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                                    <p className="text-xs text-blue-200 uppercase tracking-wider">Estimasi Gaji</p>
+                                    <p className="text-lg font-bold mt-1">{formatCurrency(estEarned, 'IDR')}</p>
                                 </div>
-                                <div className="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                                    <p className="text-xs text-blue-200">Total Jam Kerja</p>
-                                    <p className="text-lg font-bold">{(totalMinutes/60).toFixed(2)} Jam</p>
+                                <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10">
+                                    <p className="text-xs text-blue-200 uppercase tracking-wider">Jam Kerja</p>
+                                    <p className="text-lg font-bold mt-1">{(totalMins/60).toFixed(1)} Jam</p>
                                 </div>
                             </div>
                         </div>
-                        <i className="fas fa-network-wired absolute -right-4 -bottom-4 text-8xl text-white/10"></i>
+                        <i className="fas fa-robot absolute -right-6 -bottom-6 text-9xl text-white opacity-5"></i>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => setView('schedule')} className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-blue-600">
-                            <i className="fas fa-calendar-alt text-2xl mb-2"></i>
-                            <span className="font-medium text-sm">Cek Jadwal</span>
-                        </button>
-                        <button onClick={() => setView('timesheet')} className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition flex flex-col items-center justify-center text-green-600">
-                            <i className="fas fa-clock text-2xl mb-2"></i>
-                            <span className="font-medium text-sm">Lapor Kerja</span>
-                        </button>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-sm p-4">
-                        <h3 className="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Jadwal Terkini</h3>
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 className="font-bold text-slate-700 mb-4 flex items-center">
+                            <i className="fas fa-calendar-day text-blue-500 mr-2"></i> Jadwal Terkini
+                        </h3>
                         <div className="space-y-3">
-                            {upcomingSchedules.map((sch, idx) => (
-                                <div key={idx} className="flex items-center p-2 border-b last:border-0 hover:bg-gray-50 transition rounded-lg">
-                                    <div className={`w-2 h-10 rounded-full mr-3`} style={{backgroundColor: users.find(u => String(u.id) === String(sch.userId))?.color || '#ccc'}}></div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <p className="font-bold text-gray-800 text-sm">{getUserName(sch.userId, sch.userName)}</p>
-                                            <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500">{formatDate(sch.date)}</span>
+                            {schedules.slice(0, 5).map(s => (
+                                <div key={s.id} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm" style={{backgroundColor: getUserColor(s.userId)}}>
+                                        {getUserName(s.userId).substring(0,2).toUpperCase()}
+                                    </div>
+                                    <div className="ml-3 flex-1">
+                                        <div className="flex justify-between">
+                                            <span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span>
+                                            <span className="text-[10px] bg-white border px-2 py-0.5 rounded-full text-slate-500">{formatDate(s.date)}</span>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-0.5">
-                                            <i className="far fa-clock mr-1"></i> {formatTime(sch.startTime)} - {formatTime(sch.endTime)}
-                                        </p>
+                                        <div className="text-xs text-slate-500 mt-1">
+                                            {s.startTime} - {s.endTime}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
-                            {schedules.length === 0 && <p className="text-center text-gray-400 text-sm py-4">Belum ada jadwal.</p>}
+                            {schedules.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Belum ada jadwal.</p>}
                         </div>
                     </div>
                 </div>
             );
         };
 
-        const ScheduleView = ({ 
-            schedules, users, currentUser, loading, 
-            handleAddSchedule, handleDeleteSchedule, handleEditSchedule, cancelEdit,
-            scheduleForm, setScheduleForm, editScheduleId, 
-            isOwner, getUserName 
-        }) => {
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                
-                // Validasi jam mulai dan selesai
-                if (!scheduleForm.startTime || !scheduleForm.endTime) {
-                    alert("Mohon isi jam mulai dan selesai!");
-                    return;
-                }
-                
-                const startMin = getShiftMinutes(scheduleForm.startTime);
-                const endMin = getShiftMinutes(scheduleForm.endTime);
-                const duration = endMin - startMin;
-                
-                if (duration <= 0) {
-                    alert("Jam selesai harus setelah jam mulai!");
-                    return;
-                }
-                
-                if (duration > 480) {
-                    alert("Maksimal durasi shift adalah 8 jam (480 menit)!");
-                    return;
-                }
-                
-                handleAddSchedule(scheduleForm);
-            };
-
+        const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule }) => {
             return (
                 <div className="space-y-4 fade-in">
-                    <div className={`bg-white p-4 rounded-xl shadow-sm border-l-4 ${editScheduleId ? 'border-orange-500' : 'border-blue-500'}`}>
-                        <h3 className="font-bold text-gray-800 mb-4 flex items-center justify-between">
-                            <span>
-                                <i className={`fas ${editScheduleId ? 'fa-edit text-orange-500' : 'fa-plus-circle text-blue-500'} mr-2`}></i> 
+                    <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editScheduleId ? 'border-orange-500' : 'border-blue-500'}`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-700">
                                 {editScheduleId ? 'Edit Jadwal' : 'Booking Jadwal'}
-                            </span>
-                            {editScheduleId && (
-                                <button onClick={cancelEdit} className="text-xs text-red-500 hover:underline flex items-center gap-1">
-                                    <i className="fas fa-times"></i> Batal
-                                </button>
-                            )}
-                        </h3>
-                        <form onSubmit={handleSubmit} className="space-y-3">
+                            </h3>
+                            {editScheduleId && <button onClick={() => {setEditScheduleId(null); setScheduleForm({date:'', startTime:'15:00', endTime:'16:00'})}} className="text-xs text-red-500">Batal</button>}
+                        </div>
+                        <form onSubmit={saveSchedule} className="space-y-3">
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Tanggal Shift (Mulai 15:00 WIB)</label>
-                                <input type="date" className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" 
-                                    value={scheduleForm.date} onChange={e => setScheduleForm({...scheduleForm, date: e.target.value})} required />
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Tanggal</label>
+                                <input type="date" required className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={scheduleForm.date} onChange={e => setScheduleForm({...scheduleForm, date: e.target.value})} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Jam Mulai</label>
-                                    <input type="time" className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" 
-                                        value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} required />
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Mulai</label>
+                                    <input type="time" required className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                        value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Jam Selesai (Max 8 Jam)</label>
-                                    <input type="time" className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" 
-                                        value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} required />
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Selesai</label>
+                                    <input type="time" required className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                        value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} />
                                 </div>
                             </div>
-                            <div className="bg-blue-50 p-2 rounded text-xs">
-                                <p className="text-blue-700">
-                                    <i className="fas fa-info-circle mr-1"></i>
-                                    Pastikan tidak bentrok dengan jadwal lain di tanggal yang sama
-                                </p>
-                            </div>
-                            <button type="submit" disabled={loading} className={`w-full text-white py-2 rounded-lg font-medium transition ${editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'} disabled:opacity-50`}>
-                                {loading ? <Spinner/> : (editScheduleId ? 'Update Jadwal' : 'Simpan Jadwal')}
+                            <button disabled={loading} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 ${editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                {loading ? <Spinner/> : (editScheduleId ? 'Update Perubahan' : 'Booking Slot')}
                             </button>
                         </form>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm">
-                        <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between">
-                            <span>Semua Jadwal</span>
-                            <span className="text-xs text-gray-500 font-normal">{schedules.length} jadwal</span>
-                        </h3>
-                        <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                            {schedules.map((item, idx) => (
-                                <div key={idx} className={`p-3 rounded-lg border-2 ${isOwner(item.userId) ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200'}`}>
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className={`w-3 h-3 rounded-full`} style={{backgroundColor: users.find(u => String(u.id) === String(item.userId))?.color || 'gray'}}></span>
-                                                <span className="font-bold text-gray-800 text-sm">{getUserName(item.userId, item.userName)}</span>
-                                                {isOwner(item.userId) && (
-                                                    <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full">ANDA</span>
-                                                )}
+                    <div className="space-y-3 pb-20">
+                        {schedules.map(s => {
+                            const isMine = String(s.userId) === String(currentUser);
+                            return (
+                                <div key={s.id} className={`p-4 rounded-xl border flex justify-between items-center ${isMine ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-2 h-10 rounded-full" style={{backgroundColor: getUserColor(s.userId)}}></div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span>
+                                                {isMine && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 rounded font-bold">YOU</span>}
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs text-gray-600 ml-5">
-                                                <span className="bg-white border px-2 py-0.5 rounded">
-                                                    <i className="far fa-calendar mr-1"></i>{formatDate(item.date)}
-                                                </span>
-                                                <span className="bg-white border px-2 py-0.5 rounded">
-                                                    <i className="far fa-clock mr-1"></i>{formatTime(item.startTime)} - {formatTime(item.endTime)}
-                                                </span>
+                                            <div className="text-xs text-slate-500 mt-1">
+                                                {formatDate(s.date)} • {s.startTime} - {s.endTime}
                                             </div>
                                         </div>
-                                        {isOwner(item.userId) && (
-                                            <div className="flex gap-1 ml-2">
-                                                <button 
-                                                    onClick={() => handleEditSchedule(item)} 
-                                                    className="text-white bg-blue-500 hover:bg-blue-600 p-2 rounded-lg transition text-xs"
-                                                    title="Edit Jadwal"
-                                                >
-                                                    <i className="fas fa-pencil-alt"></i>
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDeleteSchedule(item.id)} 
-                                                    className="text-white bg-red-500 hover:bg-red-600 p-2 rounded-lg transition text-xs"
-                                                    title="Hapus Jadwal"
-                                                >
-                                                    <i className="fas fa-trash-alt"></i>
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
+                                    {isMine && (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => editSchedule(s)} className="w-8 h-8 rounded-full bg-white border border-blue-100 text-blue-500 hover:bg-blue-50 flex items-center justify-center transition"><i className="fas fa-pen text-xs"></i></button>
+                                            <button onClick={() => deleteSchedule(s.id)} className="w-8 h-8 rounded-full bg-white border border-red-100 text-red-500 hover:bg-red-50 flex items-center justify-center transition"><i className="fas fa-trash text-xs"></i></button>
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                            {schedules.length === 0 && (
-                                <div className="text-center py-8 text-gray-400">
-                                    <i className="fas fa-calendar-times text-4xl mb-2"></i>
-                                    <p className="text-sm">Belum ada jadwal</p>
-                                </div>
-                            )}
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
         };
 
-        const TimesheetView = ({ 
-            timesheets, users, currentUser, loading, settings,
-            handleAddTimesheet, handleDeleteTimesheet, handleEditTimesheet,
-            isOwner, getUserName, formatCurrency 
-        }) => {
-            const [form, setForm] = React.useState({ date: '', startTime: '', duration: '' });
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if(!form.date || !form.duration || !form.startTime) {
-                    alert("Mohon lengkapi semua data!");
-                    return;
-                }
-                if(parseFloat(form.duration) <= 0) {
-                    alert("Durasi harus lebih dari 0 menit!");
-                    return;
-                }
-                handleAddTimesheet(form);
-                setForm({ date: '', startTime: '', duration: '' });
-            };
-
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet }) => {
             return (
                 <div className="space-y-4 fade-in">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
-                        <h3 className="font-bold text-gray-800 mb-4 flex items-center">
-                            <i className="fas fa-file-invoice-dollar text-green-500 mr-2"></i> Input Laporan
-                        </h3>
-                        <form onSubmit={handleSubmit} className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Tanggal Kerja</label>
-                                <input type="date" className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" 
-                                    value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
-                            </div>
+                    <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-green-500">
+                        <h3 className="font-bold text-slate-700 mb-4">Input Laporan Kerja</h3>
+                        <form onSubmit={saveTimesheet} className="space-y-3">
+                            <input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} />
                             <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Jam Mulai</label>
-                                    <input type="time" className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" 
-                                        value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})} required />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Durasi (Menit)</label>
-                                    <input type="number" placeholder="Contoh: 42" min="1" className="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" 
-                                        value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} required />
-                                </div>
+                                <input type="time" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                    value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} />
+                                <input type="number" placeholder="Durasi (Menit)" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                    value={timesheetForm.duration} onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} />
                             </div>
-                            <div className="bg-green-50 p-2 rounded text-xs text-green-700 flex justify-between items-center">
-                                <span className="font-medium">Estimasi Gaji:</span>
-                                <span className="font-bold text-base">{form.duration ? formatCurrency((form.duration/60)*17 * (settings.exchange_rate || 16770), 'IDR') : 'Rp 0'}</span>
+                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg">
+                                <span>Estimasi:</span>
+                                <span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*HOURLY_RATE_USD*EXCHANGE_RATE, 'IDR') : 'Rp 0'}</span>
                             </div>
-                            <button type="submit" disabled={loading} className="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50">
-                                {loading ? <Spinner/> : 'Submit Laporan'}
+                            <button disabled={loading} className="w-full py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm shadow-md transition-all active:scale-95">
+                                {loading ? <Spinner/> : 'Kirim Laporan'}
                             </button>
                         </form>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm">
-                        <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between">
-                            <span>Riwayat Tim</span>
-                            <span className="text-xs text-gray-500 font-normal">{timesheets.length} laporan</span>
-                        </h3>
-                        <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                            {timesheets.map((item, idx) => (
-                                <div key={idx} className={`border-2 rounded-lg p-3 ${isOwner(item.userId) ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200'}`}>
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <p className="font-bold text-gray-800 text-sm">{getUserName(item.userId, item.userName)}</p>
-                                                {isOwner(item.userId) && (
-                                                    <span className="text-[9px] bg-green-600 text-white px-1.5 py-0.5 rounded-full">ANDA</span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-gray-500">
-                                                <i className="far fa-calendar mr-1"></i>{formatDate(item.date)} • 
-                                                <i className="far fa-clock ml-2 mr-1"></i>{formatTime(item.startTime)}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-green-700 text-sm">{formatCurrency(item.paymentIDR, 'IDR')}</p>
-                                            <p className="text-xs text-gray-500">{item.duration} menit</p>
-                                        </div>
+                    <div className="pb-20">
+                        {timesheets.map(t => (
+                            <div key={t.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold text-slate-700 text-sm">{getUserName(t.userId)}</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">{formatDate(t.date)} • {t.startTime}</p>
                                     </div>
-                                    <div className="mt-2 flex justify-between items-center border-t pt-2">
-                                        <span className={`text-[10px] px-2 py-1 rounded-full uppercase font-bold ${item.status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
-                                            {item.status === 'pending' ? '⏳ Belum Dibayar' : '✅ Lunas'}
-                                        </span>
-                                        {isOwner(item.userId) && item.status === 'pending' && (
-                                            <button 
-                                                onClick={() => handleDeleteTimesheet(item.id)} 
-                                                className="text-xs text-white bg-red-500 hover:bg-red-600 flex items-center gap-1 px-3 py-1 rounded-lg transition"
-                                            >
-                                                <i className="fas fa-trash"></i> Hapus
-                                            </button>
-                                        )}
+                                    <div className="text-right">
+                                        <p className="font-bold text-green-600 text-sm">{formatCurrency(t.paymentIDR, 'IDR')}</p>
+                                        <p className="text-xs text-slate-400">{t.duration} Menit</p>
                                     </div>
                                 </div>
-                            ))}
-                            {timesheets.length === 0 && (
-                                <div className="text-center py-8 text-gray-400">
-                                    <i className="fas fa-file-alt text-4xl mb-2"></i>
-                                    <p className="text-sm">Belum ada laporan</p>
+                                <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${t.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                                        {t.status === 'paid' ? 'LUNAS' : 'PENDING'}
+                                    </span>
+                                    {String(t.userId) === String(currentUser) && t.status !== 'paid' && (
+                                        <button onClick={() => deleteTimesheet(t.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                                            <i className="fas fa-trash"></i> Hapus
+                                        </button>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
         };
 
-        // --- MAIN APP COMPONENT ---
+        // --- MAIN APP ---
         function App() {
-            const [view, setView] = React.useState('dashboard'); 
+            // STATES
+            const [view, setView] = React.useState('dashboard');
+            const [currentUser, setCurrentUser] = React.useState(null);
             const [users, setUsers] = React.useState([]);
             const [schedules, setSchedules] = React.useState([]);
             const [timesheets, setTimesheets] = React.useState([]);
-            const [settings, setSettings] = React.useState({});
             const [loading, setLoading] = React.useState(false);
-            const [notification, setNotification] = React.useState(null);
-            const [currentUser, setCurrentUser] = React.useState(null); 
+            const [notify, setNotify] = React.useState(null);
+
+            // FORM STATES
             const [scheduleForm, setScheduleForm] = React.useState({ date: '', startTime: '15:00', endTime: '16:00' });
-            const [editScheduleId, setEditScheduleId] = React.useState(null); 
-            
+            const [editScheduleId, setEditScheduleId] = React.useState(null);
+            const [timesheetForm, setTimesheetForm] = React.useState({ date: '', startTime: '', duration: '' });
+
+            // FIREBASE INIT
             React.useEffect(() => {
-                fetchAllData();
+                const initData = async () => {
+                    if (!window.db) return;
+                    
+                    // Users Sync
+                    const userCol = window.fs.collection(window.db, 'users');
+                    const userSnap = await window.fs.getDocs(userCol);
+                    if (userSnap.empty) {
+                        INITIAL_USERS.forEach(async (u) => await window.fs.setDoc(window.fs.doc(window.db, 'users', u.id), u));
+                        setUsers(INITIAL_USERS);
+                    } else {
+                         window.fs.onSnapshot(userCol, (snapshot) => {
+                            setUsers(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})));
+                        });
+                    }
+
+                    // Schedules Sync
+                    window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'schedules')), (snapshot) => {
+                        setSchedules(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => new Date(b.date) - new Date(a.date)));
+                    });
+
+                    // Timesheets Sync
+                    window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'timesheets')), (snapshot) => {
+                        setTimesheets(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => new Date(b.date) - new Date(a.date)));
+                    });
+
+                    // Load User
+                    const savedId = localStorage.getItem('remote_user_id');
+                    if (savedId) setCurrentUser(savedId);
+                };
+                setTimeout(initData, 500);
             }, []);
 
+            // COMMON HANDLERS
             const showNotify = (msg, type = 'success') => {
-                setNotification({ message: msg, type });
-                setTimeout(() => setNotification(null), 4000);
+                setNotify({ msg, type });
+                setTimeout(() => setNotify(null), 3000);
             };
 
-            const fetchAllData = async () => {
+            const getUserName = (uid) => users.find(u => String(u.id) === String(uid))?.name || 'Unknown';
+            const getUserColor = (uid) => users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1';
+
+            // SCHEDULE HANDLERS
+            const saveSchedule = async (e) => {
+                e.preventDefault();
+                if (!currentUser) return showNotify("Pilih akun Anda!", "error");
                 setLoading(true);
                 try {
-                    const usersRes = await fetch(`${API_URL}?action=get&sheet=users`);
-                    const usersData = await usersRes.json();
-                    setUsers(usersData);
+                    const startMin = getShiftMinutes(scheduleForm.startTime);
+                    const endMin = getShiftMinutes(scheduleForm.endTime);
+                    const duration = endMin - startMin;
 
-                    const savedUser = localStorage.getItem('remote_user_id');
-                    if (savedUser && usersData.find(u => String(u.id) === String(savedUser))) {
-                         setCurrentUser(savedUser);
-                    } else if (!currentUser && usersData.length > 0) {
-                        setCurrentUser(String(usersData[0].id));
+                    if (duration <= 0) throw new Error("Jam selesai harus setelah mulai!");
+                    if (duration > 480) throw new Error("Maksimal 8 jam!");
+
+                    const hasConflict = schedules.find(s => {
+                        if (editScheduleId && s.id === editScheduleId) return false;
+                        if (s.date !== scheduleForm.date) return false;
+                        const sStart = getShiftMinutes(s.startTime);
+                        const sEnd = getShiftMinutes(s.endTime);
+                        return (startMin < sEnd && endMin > sStart);
+                    });
+
+                    if (hasConflict) throw new Error(`Bentrok dengan ${getUserName(hasConflict.userId)}!`);
+
+                    const payload = {
+                        userId: currentUser,
+                        date: scheduleForm.date,
+                        startTime: scheduleForm.startTime,
+                        endTime: scheduleForm.endTime,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    if (editScheduleId) {
+                        await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload);
+                        showNotify("Update berhasil!");
+                    } else {
+                        await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload);
+                        showNotify("Jadwal dibuat!");
                     }
-
-                    const schedRes = await fetch(`${API_URL}?action=get&sheet=schedule`);
-                    const schedData = await schedRes.json();
-                    const cleanSched = schedData.map(s => ({
-                        ...s,
-                        sortDate: String(s.date).includes('1899') ? new Date().toISOString() : s.date 
-                    })).sort((a, b) => new Date(b.sortDate) - new Date(a.sortDate));
-                    setSchedules(cleanSched);
-
-                    const timeRes = await fetch(`${API_URL}?action=get&sheet=timesheet`);
-                    const timeData = await timeRes.json();
-                    const cleanTimesheets = timeData.map(t => ({
-                        ...t,
-                        paymentIDR: cleanNumber(t.paymentIDR),
-                        duration: cleanNumber(t.duration)
-                    })).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    setTimesheets(cleanTimesheets);
-
-                    const setRes = await fetch(`${API_URL}?action=get&sheet=settings`);
-                    const setData = await setRes.json();
-                    const config = {};
-                    setData.forEach(item => config[item.key] = item.value);
-                    setSettings(config);
-
-                } catch (error) {
-                    showNotify("Gagal mengambil data dari server.", "error");
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleUserChange = (e) => {
-                const newVal = e.target.value;
-                setCurrentUser(newVal);
-                localStorage.setItem('remote_user_id', newVal);
-                showNotify(`Akun diubah ke ${getUserName(newVal)}`, 'success');
-            };
-
-            const getUserName = (userId, originalName) => {
-                const foundUser = users.find(u => String(u.id) === String(userId));
-                if (foundUser) return foundUser.name;
-                return originalName || 'Unknown User';
-            };
-
-            const isOwner = (dataUserId) => {
-                return String(dataUserId) === String(currentUser);
-            };
-
-            const sendData = async (payload) => {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                });
-                return await response.json();
-            };
-
-            const handleAddSchedule = async (formData) => {
-                if(!currentUser) { 
-                    return showNotify("Pilih akun Anda terlebih dahulu!", "error"); 
-                }
-
-                const newStartMin = getShiftMinutes(formData.startTime);
-                const newEndMin = getShiftMinutes(formData.endTime);
-                
-                const duration = newEndMin - newStartMin;
-                if (duration <= 0) {
-                    return showNotify("Jam selesai harus setelah jam mulai!", "error");
-                }
-                if (duration > 480) {
-                    return showNotify("Maksimal durasi shift adalah 8 jam (480 menit)!", "error");
-                }
-
-                // Check Bentrok dengan logika yang lebih ketat
-                const conflict = schedules.find(s => {
-                    if (editScheduleId && String(s.id) === String(editScheduleId)) return false;
-                    
-                    // Pastikan tanggal sama (normalize date comparison)
-                    const schedDate = String(s.date).split('T')[0];
-                    const formDate = String(formData.date).split('T')[0];
-                    if (schedDate !== formDate) return false;
-                    
-                    const existingStart = getShiftMinutes(formatTime(s.startTime));
-                    const existingEnd = getShiftMinutes(formatTime(s.endTime));
-                    
-                    // Cek overlap: new start sebelum existing end DAN new end sesudah existing start
-                    return (newStartMin < existingEnd && newEndMin > existingStart);
-                });
-
-                if (conflict) {
-                    return showNotify(`⚠️ BENTROK! ${getUserName(conflict.userId, conflict.userName)} sudah booking jam ${formatTime(conflict.startTime)}-${formatTime(conflict.endTime)}`, "error");
-                }
-
-                setLoading(true);
-
-                if (editScheduleId) {
-                    try { 
-                        await sendData({ action: 'deleteSchedule', id: editScheduleId }); 
-                    } catch(e) {
-                        console.error("Error deleting old schedule:", e);
-                    }
-                }
-
-                const payload = {
-                    action: 'addSchedule',
-                    id: editScheduleId || ('sch_' + Date.now()),
-                    userId: currentUser,
-                    userName: getUserName(currentUser), 
-                    date: formData.date,
-                    startTime: formData.startTime,
-                    endTime: formData.endTime,
-                    notes: ''
-                };
-
-                try {
-                    await sendData(payload);
-                    showNotify(editScheduleId ? "✅ Jadwal berhasil diupdate!" : "✅ Jadwal berhasil ditambahkan!");
-                    setEditScheduleId(null);
                     setScheduleForm({ date: '', startTime: '15:00', endTime: '16:00' });
-                    await fetchAllData();
-                } catch (e) {
-                    showNotify("❌ Gagal menyimpan jadwal", "error");
+                    setEditScheduleId(null);
+                } catch (err) {
+                    showNotify(err.message, "error");
                 } finally {
                     setLoading(false);
                 }
             };
 
-            const handleDeleteSchedule = async (id) => {
-                if(!confirm("⚠️ Yakin ingin menghapus jadwal ini?")) return;
-                setLoading(true);
-                try {
-                    await sendData({ action: 'deleteSchedule', id: id });
-                    showNotify("✅ Jadwal berhasil dihapus");
-                    await fetchAllData();
-                } catch (e) {
-                    showNotify("❌ Gagal menghapus jadwal", "error");
-                } finally {
-                    setLoading(false);
-                }
+            const deleteSchedule = async (id) => {
+                if (!confirm("Hapus?")) return;
+                try { await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); showNotify("Dihapus"); } 
+                catch (e) { showNotify("Gagal", "error"); }
             };
 
-            const handleEditSchedule = (item) => {
-                setScheduleForm({
-                    date: String(item.date).split('T')[0],
-                    startTime: formatTime(item.startTime),
-                    endTime: formatTime(item.endTime)
-                });
+            const editSchedule = (item) => {
+                setScheduleForm({ date: item.date, startTime: item.startTime, endTime: item.endTime });
                 setEditScheduleId(item.id);
-                setView('schedule');
-                setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-                showNotify("📝 Mode Edit aktif. Ubah jadwal lalu klik Update.", "warning");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showNotify("Edit Mode", "warning");
             };
 
-            const cancelEdit = () => {
-                setEditScheduleId(null);
-                setScheduleForm({ date: '', startTime: '15:00', endTime: '16:00' });
-                showNotify("Edit dibatalkan", "warning");
-            };
-
-            const handleAddTimesheet = async (formData) => {
-                if(!currentUser) { 
-                    return showNotify("Pilih akun Anda terlebih dahulu!", "error"); 
-                }
-                
-                setLoading(true);
-                const rate = parseFloat(settings.hourly_rate) || 17;
-                const exchange = parseFloat(settings.exchange_rate) || 16770;
-                
-                const durMin = parseFloat(formData.duration) || 0;
-                const hours = durMin / 60;
-                const usd = hours * rate;
-                const idr = usd * exchange;
-
-                const payload = {
-                    action: 'addTimesheet',
-                    id: 'ts_' + Date.now(),
-                    userId: currentUser,
-                    userName: getUserName(currentUser),
-                    date: formData.date,
-                    startTime: formData.startTime,
-                    duration: durMin,
-                    payment: usd.toFixed(2),
-                    paymentIDR: Math.round(idr),
-                    notes: '',
-                    status: 'pending'
-                };
-
-                try {
-                    await sendData(payload);
-                    showNotify("✅ Laporan berhasil tersimpan!");
-                    await fetchAllData();
-                } catch (e) {
-                    showNotify("❌ Gagal menyimpan laporan", "error");
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleDeleteTimesheet = async (id) => {
-                if(!confirm("⚠️ Yakin menghapus laporan ini?")) return;
+            // TIMESHEET HANDLERS
+            const saveTimesheet = async (e) => {
+                e.preventDefault();
+                if (!currentUser) return showNotify("Pilih akun!", "error");
                 setLoading(true);
                 try {
-                    await sendData({ action: 'deleteTimesheet', id: id });
-                    showNotify("✅ Laporan berhasil dihapus");
-                    await fetchAllData();
-                } catch (e) {
-                    showNotify("❌ Gagal menghapus laporan", "error");
-                } finally {
-                    setLoading(false);
-                }
+                    const dur = parseInt(timesheetForm.duration);
+                    const usd = (dur / 60) * HOURLY_RATE_USD;
+                    const idr = Math.round(usd * EXCHANGE_RATE);
+                    const payload = {
+                        userId: currentUser,
+                        date: timesheetForm.date,
+                        startTime: timesheetForm.startTime,
+                        duration: dur,
+                        paymentUSD: usd.toFixed(2),
+                        paymentIDR: idr,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+                    await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload);
+                    showNotify("Tersimpan!");
+                    setTimesheetForm({ date: '', startTime: '', duration: '' });
+                } catch (e) { showNotify("Gagal", "error"); }
+                finally { setLoading(false); }
+            };
+
+            const deleteTimesheet = async (id) => {
+                if (!confirm("Hapus?")) return;
+                try { await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); showNotify("Dihapus"); }
+                catch (e) { showNotify("Gagal", "error"); }
             };
 
             return (
-                <div className="max-w-md mx-auto min-h-screen bg-slate-100 pb-20">
-                    {notification && <Alert type={notification.type} message={notification.message} onClose={() => setNotification(null)} />}
+                <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col">
+                    {notify && <Notification msg={notify.msg} type={notify.type} onClose={() => setNotify(null)} />}
                     
-                    <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-10 flex justify-between items-center">
-                        <h1 className="font-bold text-xl text-blue-700 tracking-tight">Outlier<span className="text-gray-800">Team</span></h1>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] text-gray-400">Akun Anda:</span>
-                            <select 
-                                className={`text-xs border rounded p-1 max-w-[120px] outline-none transition font-medium ${!currentUser ? 'border-red-500 ring-2 ring-red-200' : 'bg-gray-50 border-gray-200'}`}
-                                value={currentUser || ''}
-                                onChange={handleUserChange}
-                            >
-                                <option value="">-- Pilih --</option>
+                    <header className="bg-white sticky top-0 z-20 px-4 py-3 shadow-sm border-b border-slate-100 flex justify-between items-center">
+                        <h1 className="font-bold text-lg text-blue-700 flex items-center gap-2">
+                            <i className="fas fa-layer-group"></i> Outlier<span className="text-slate-700">Team</span>
+                        </h1>
+                        <div className="flex items-center gap-2">
+                            <i className="fas fa-user-circle text-slate-300 text-xl"></i>
+                            <select className="text-xs bg-slate-50 border border-slate-200 rounded-md p-1.5 outline-none focus:ring-1 focus:ring-blue-500"
+                                value={currentUser || ''} onChange={e => { setCurrentUser(e.target.value); localStorage.setItem('remote_user_id', e.target.value); }}>
+                                <option value="">Pilih Akun...</option>
                                 {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                             </select>
                         </div>
-                    </div>
+                    </header>
 
-                    <div className="p-4">
+                    <main className="flex-1 p-4">
                         {loading && !users.length ? (
-                            <div className="flex justify-center items-center h-64 text-gray-500">
-                                <div className="text-center">
-                                    <Spinner /> <br/>
-                                    <span className="text-sm mt-2 block">Menghubungkan Database...</span>
-                                </div>
+                            <div className="flex flex-col items-center justify-center h-64 text-slate-400 animate-pulse">
+                                <i className="fas fa-database text-4xl mb-3"></i>
+                                <p className="text-sm">Menghubungkan Database...</p>
                             </div>
                         ) : (
                             <>
-                                {view === 'dashboard' && <DashboardView 
-                                    users={users} currentUser={currentUser} schedules={schedules} timesheets={timesheets} 
-                                    setView={setView} getUserName={getUserName} isOwner={isOwner} 
-                                />}
-                                {view === 'schedule' && <ScheduleView 
-                                    schedules={schedules} users={users} currentUser={currentUser} loading={loading}
-                                    handleAddSchedule={handleAddSchedule} handleDeleteSchedule={handleDeleteSchedule} 
-                                    handleEditSchedule={handleEditSchedule} cancelEdit={cancelEdit}
-                                    scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} editScheduleId={editScheduleId}
-                                    isOwner={isOwner} getUserName={getUserName}
-                                />}
-                                {view === 'timesheet' && <TimesheetView 
-                                    timesheets={timesheets} users={users} currentUser={currentUser} loading={loading} settings={settings}
-                                    handleAddTimesheet={handleAddTimesheet} handleDeleteTimesheet={handleDeleteTimesheet}
-                                    isOwner={isOwner} getUserName={getUserName} formatCurrency={formatCurrency}
-                                />}
+                                {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} getUserColor={getUserColor} />}
+                                {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} />}
+                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} />}
                             </>
                         )}
-                    </div>
+                    </main>
 
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 z-20 max-w-md mx-auto">
-                        <button onClick={() => setView('dashboard')} className={`flex flex-col items-center transition ${view === 'dashboard' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            <i className="fas fa-home text-lg mb-1"></i>
-                            <span className="text-[10px] font-medium">Home</span>
-                        </button>
-                        <button onClick={() => setView('schedule')} className={`flex flex-col items-center transition ${view === 'schedule' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            <i className="fas fa-calendar-alt text-lg mb-1"></i>
-                            <span className="text-[10px] font-medium">Jadwal</span>
-                        </button>
-                        <button onClick={() => setView('timesheet')} className={`flex flex-col items-center transition ${view === 'timesheet' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            <i className="fas fa-file-invoice-dollar text-lg mb-1"></i>
-                            <span className="text-[10px] font-medium">Laporan</span>
-                        </button>
-                    </div>
+                    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 z-30 max-w-md mx-auto">
+                        <div className="grid grid-cols-3 gap-1 px-2">
+                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                <i className="fas fa-home text-lg mb-1"></i> <span className="text-[10px] font-medium">Home</span>
+                            </button>
+                            <button onClick={() => setView('schedule')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'schedule' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                <i className="fas fa-calendar-alt text-lg mb-1"></i> <span className="text-[10px] font-medium">Jadwal</span>
+                            </button>
+                            <button onClick={() => setView('timesheet')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'timesheet' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                <i className="fas fa-file-invoice-dollar text-lg mb-1"></i> <span className="text-[10px] font-medium">Laporan</span>
+                            </button>
+                        </div>
+                    </nav>
                 </div>
             );
         }
