@@ -74,8 +74,7 @@
             { id: '7', name: 'Yuni', color: '#22c55e' },
             { id: '8', name: 'Nida', color: '#0ea5e9' },
             { id: '9', name: 'Yayan', color: '#a855f7' },
-            { id: '10', name: 'Halim', color: '#64748b' },
-            { id: '11', name: 'Musyafa', color: '#14b8a6' }
+            { id: '10', name: 'Halim', color: '#64748b' }
         ];
 
         // --- UTILITIES ---
@@ -151,6 +150,22 @@
         // --- ADMIN PANEL ---
         const AdminPanel = ({ timesheets, users, loading, setLoading, showNotify }) => {
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
+            
+            // Calculate Global Stats
+            const totalMinsGlobal = pendingSheets.reduce((sum, t) => sum + (parseInt(t.duration) || 0), 0);
+            const totalUSDGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentUSD) || 0), 0);
+            const totalIDRGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentIDR) || 0), 0);
+
+            let periodText = "Tidak ada tagihan";
+            if (pendingSheets.length > 0) {
+                const sortedDates = pendingSheets.map(t => new Date(t.date)).sort((a,b) => a-b);
+                const start = sortedDates[0];
+                const end = sortedDates[sortedDates.length - 1];
+                const startStr = `${start.getDate()} ${start.toLocaleString('id-ID', { month: 'short' })}`;
+                const endStr = `${end.getDate()} ${end.toLocaleString('id-ID', { month: 'short' })}`;
+                periodText = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
+            }
+
             const recap = {};
             pendingSheets.forEach(t => {
                 if (!recap[t.userId]) {
@@ -170,7 +185,6 @@
             });
 
             const recapList = Object.keys(recap).map(uid => ({ userId: uid, ...recap[uid] }));
-            const totalPayout = recapList.reduce((sum, item) => sum + item.totalIDR, 0);
 
             const handleMarkPaid = async (userId, sheetIds, userName) => {
                 if(!confirm(`Tandai ${sheetIds.length} laporan milik ${userName} sebagai LUNAS?`)) return;
@@ -193,11 +207,28 @@
             return (
                 <div className="space-y-4 fade-in pb-20">
                     <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
-                        <h2 className="text-xl font-bold mb-1"><i className="fas fa-user-shield mr-2"></i>Admin Panel</h2>
-                        <p className="text-purple-200 text-sm">Rekap Gaji Mingguan (Pending)</p>
-                        <div className="mt-4 bg-white/10 backdrop-blur rounded-lg p-3 border border-white/20">
-                            <p className="text-xs text-purple-200 uppercase">Total Tagihan</p>
-                            <p className="text-2xl font-bold">{formatCurrency(totalPayout, 'IDR')}</p>
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 className="text-xl font-bold mb-1"><i className="fas fa-user-shield mr-2"></i>Admin Panel</h2>
+                                <p className="text-purple-200 text-xs mt-1 bg-white/10 px-2 py-1 rounded inline-block">
+                                    <i className="far fa-calendar-alt mr-1"></i> Periode: {periodText}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20 col-span-2">
+                                <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total Tagihan (IDR)</p>
+                                <p className="text-2xl font-bold">{formatCurrency(totalIDRGlobal, 'IDR')}</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
+                                <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total Jam</p>
+                                <p className="text-lg font-bold">{(totalMinsGlobal/60).toFixed(1)} Jam</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
+                                <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total USD</p>
+                                <p className="text-lg font-bold">${totalUSDGlobal.toFixed(2)}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -209,21 +240,22 @@
                             </div>
                         ) : (
                             <div className="space-y-4">
+                                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide mb-2">Rincian Transfer</h3>
                                 {recapList.map(item => (
                                     <div key={item.userId} className="border border-slate-100 rounded-xl p-4 bg-slate-50 hover:bg-white hover:shadow-md transition">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <p className="font-bold text-slate-800 text-lg">{item.name}</p>
-                                                <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                                                <div className="flex items-center gap-1 text-xs text-slate-500 mt-1 mb-2">
                                                     <i className="fas fa-university text-slate-400"></i>
-                                                    <span className="font-mono bg-slate-100 px-1 rounded">
+                                                    <span className="font-mono bg-slate-100 px-1 rounded select-all">
                                                         {item.bankName} - {item.accountNumber}
                                                     </span>
                                                 </div>
+                                                <p className="text-xs text-slate-400">{(item.totalMins/60).toFixed(2)} Jam • {item.sheetIds.length} Laporan</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-green-600 text-lg">{formatCurrency(item.totalIDR, 'IDR')}</p>
-                                                <p className="text-xs text-slate-400">{(item.totalMins/60).toFixed(1)} Jam</p>
                                             </div>
                                         </div>
                                         <button 
@@ -254,10 +286,8 @@
                 const sortedDates = myPending.map(t => new Date(t.date)).sort((a,b) => a-b);
                 const start = sortedDates[0];
                 const end = sortedDates[sortedDates.length - 1];
-                
                 const startStr = `${start.getDate()} ${start.toLocaleString('id-ID', { month: 'short' })}`;
                 const endStr = `${end.getDate()} ${end.toLocaleString('id-ID', { month: 'short' })}`;
-                
                 periodText = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
             }
 
@@ -401,7 +431,40 @@
             );
         };
 
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet }) => {
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile }) => {
+            
+            // LOGIC UTAMA: Tampilkan Warning jika Info Pembayaran belum ada
+            if (!hasPaymentInfo) {
+                return (
+                    <div className="space-y-4 fade-in">
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm">
+                            <div className="flex items-center gap-3 mb-2">
+                                <i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                                <h3 className="font-bold text-yellow-700">Info Pembayaran Belum Lengkap</h3>
+                            </div>
+                            <p className="text-sm text-yellow-600 mb-4">
+                                Mohon lengkapi data bank/e-wallet Anda agar gaji bisa ditransfer. Anda tidak bisa input laporan sebelum data ini lengkap.
+                            </p>
+                            <button 
+                                onClick={onOpenProfile}
+                                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95"
+                            >
+                                <i className="fas fa-wallet mr-2"></i> Lengkapi Sekarang
+                            </button>
+                        </div>
+                        
+                        <div className="pb-20 opacity-50 pointer-events-none">
+                            <h3 className="font-bold text-slate-400 text-xs uppercase tracking-wide ml-1 mb-2">Riwayat (Terkunci)</h3>
+                            {/* Placeholder dummy items biar gak kosong banget */}
+                            <div className="bg-white p-4 rounded-xl border border-slate-100 h-24 flex items-center justify-center text-slate-300">
+                                <i className="fas fa-lock text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Jika Info Pembayaran Lengkap, Tampilkan Form Normal
             return (
                 <div className="space-y-4 fade-in">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
@@ -733,6 +796,10 @@
 
             // CHECK ADMIN
             const isAdmin = String(currentUser) === ADMIN_ID;
+            
+            // CHECK PAYMENT INFO
+            const activeUser = users.find(u => String(u.id) === String(currentUser));
+            const hasPaymentInfo = activeUser && activeUser.bankName && activeUser.accountNumber;
 
             return (
                 <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col">
@@ -766,7 +833,21 @@
                                     setShowProfileModal(true);
                                 }} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} />}
-                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} />}
+                                {view === 'timesheet' && <ReportManager 
+                                    saveTimesheet={saveTimesheet} 
+                                    timesheetForm={timesheetForm} 
+                                    setTimesheetForm={setTimesheetForm} 
+                                    loading={loading} 
+                                    timesheets={timesheets} 
+                                    getUserName={getUserName} 
+                                    currentUser={currentUser} 
+                                    deleteTimesheet={deleteTimesheet} 
+                                    editTimesheetId={editTimesheetId} 
+                                    setEditTimesheetId={setEditTimesheetId} 
+                                    editTimesheet={editTimesheet}
+                                    hasPaymentInfo={hasPaymentInfo}
+                                    onOpenProfile={() => setShowProfileModal(true)}
+                                />}
                                 {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} loading={loading} setLoading={setLoading} showNotify={showNotify} />}
                             </>
                         )}
