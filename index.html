@@ -108,10 +108,10 @@
             </div>
         );
 
-        // --- MODAL COMPONENT ---
+        // --- MODAL COMPONENT (FIXED) ---
         const ProfileModal = ({ user, onClose, onSave, loading }) => {
-            const [bankName, setBankName] = React.useState(user.bankName || '');
-            const [accNumber, setAccNumber] = React.useState(user.accountNumber || '');
+            const [bankName, setBankName] = React.useState(user?.bankName || '');
+            const [accNumber, setAccNumber] = React.useState(user?.accountNumber || '');
 
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -147,7 +147,7 @@
             );
         };
 
-        // --- ADMIN PANEL (UPDATED) ---
+        // --- ADMIN PANEL (UPDATED WITH WIB TIMEZONE FIX) ---
         const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify }) => {
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
             
@@ -156,15 +156,22 @@
             const totalUSDGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentUSD) || 0), 0);
             const totalIDRGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentIDR) || 0), 0);
 
-            // Active Workers Logic
-            const now = new Date();
+            // ACTIVE WORKERS LOGIC (WIB BASED)
+            const nowUTC = new Date();
+            const wibString = nowUTC.toLocaleString("en-US", {timeZone: "Asia/Jakarta", hour12: false}); 
+            const currentWIB = new Date(wibString); 
+            
             const activeWorkers = schedules.filter(s => {
-                const sStart = new Date(`${s.date}T${s.startTime}`);
-                let sEnd = new Date(`${s.date}T${s.endTime}`);
-                // Handle shift crossing midnight logic roughly for display (assuming standard usage)
-                if (sEnd < sStart) sEnd.setDate(sEnd.getDate() + 1);
+                const sDate = new Date(s.date);
                 
-                return now >= sStart && now <= sEnd;
+                const sStart = new Date(s.date + 'T' + s.startTime);
+                let sEnd = new Date(s.date + 'T' + s.endTime);
+                
+                if (sEnd < sStart) {
+                    sEnd.setDate(sEnd.getDate() + 1);
+                }
+
+                return currentWIB >= sStart && currentWIB <= sEnd;
             }).map(s => {
                 const u = users.find(u => String(u.id) === String(s.userId));
                 return { name: u?.name || 'Unknown', endTime: s.endTime, color: u?.color };
@@ -223,13 +230,19 @@
                 <div className="space-y-4 fade-in pb-20">
                     {/* Live Status Card */}
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100">
-                        <h3 className="font-bold text-slate-700 mb-3 text-sm uppercase tracking-wide flex items-center gap-2">
-                            <span className="relative flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        <div className="flex justify-between items-start mb-3">
+                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                </span>
+                                Sedang Bekerja Sekarang (WIB)
+                            </h3>
+                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">
+                                {wibString.split(',')[1].trim().substring(0,5)} WIB
                             </span>
-                            Sedang Bekerja Sekarang
-                        </h3>
+                        </div>
+                        
                         {activeWorkers.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {activeWorkers.map((w, idx) => (
@@ -325,8 +338,10 @@
                 const sortedDates = myPending.map(t => new Date(t.date)).sort((a,b) => a-b);
                 const start = sortedDates[0];
                 const end = sortedDates[sortedDates.length - 1];
+                
                 const startStr = `${start.getDate()} ${start.toLocaleString('id-ID', { month: 'short' })}`;
                 const endStr = `${end.getDate()} ${end.toLocaleString('id-ID', { month: 'short' })}`;
+                
                 periodText = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
             }
 
@@ -406,7 +421,6 @@
 
         const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule, isAdmin }) => {
             
-            // UPDATED: Filter logic
             const [showHistory, setShowHistory] = React.useState(false);
             
             const filteredSchedules = schedules.filter(s => {
@@ -518,12 +532,11 @@
                 );
             }
 
-            // UPDATED: Filter Logic
             const [showHistory, setShowHistory] = React.useState(false);
             
             const filteredTimesheets = timesheets.filter(t => {
                 if (showHistory) return true;
-                return t.status === 'pending'; // Default: Only show Pending (Active Period)
+                return t.status === 'pending'; // Default: Only show Pending
             });
 
             return (
