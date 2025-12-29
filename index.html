@@ -423,7 +423,7 @@
             
             const [showHistory, setShowHistory] = React.useState(false);
             
-            // --- LOGIKA HITUNG SISA WAKTU (UPDATED: GLOBAL / SEMUA USER) ---
+            // --- LOGIKA HITUNG SISA WAKTU (GLOBAL / SEMUA USER) ---
             const MAX_MINUTES = 480; // 8 Jam Total Tim per Hari
             
             // Hitung total jam yang SUDAH dibooking OLEH SEMUA USER pada tanggal yang dipilih
@@ -433,27 +433,39 @@
                 return schedules
                     .filter(s => 
                         s.date === scheduleForm.date && 
-                        s.id !== editScheduleId // Jangan hitung jadwal yang sedang diedit (agar bisa di-update)
+                        s.id !== editScheduleId // Jangan hitung jadwal yang sedang diedit
                     )
                     .reduce((acc, s) => {
                          const start = getShiftMinutes(s.startTime);
                          const end = getShiftMinutes(s.endTime);
                          return acc + (end - start);
                     }, 0);
-            }, [schedules, scheduleForm.date, editScheduleId]); // Hapus dependency currentUser
+            }, [schedules, scheduleForm.date, editScheduleId]);
 
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
             const isCritical = remainingMinutes < 60; // Kurang dari 1 jam warnanya merah
 
-            // Filter List Jadwal
-            const filteredSchedules = schedules.filter(s => {
-                if (showHistory) return true;
-                const sDate = new Date(s.date);
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                return sDate >= today;
-            });
+            // --- FILTER JADWAL (UPDATED: H-1 s/d Future, WIB) ---
+            const filteredSchedules = React.useMemo(() => {
+                if (showHistory) return schedules; // Tampilkan semua jika mode history
+
+                // Hitung Tanggal Kemarin (Yesterday) dalam WIB
+                const now = new Date();
+                const wibString = now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
+                const wibDate = new Date(wibString);
+                
+                // Mundur 1 hari
+                wibDate.setDate(wibDate.getDate() - 1);
+                
+                // Format ke YYYY-MM-DD untuk perbandingan string
+                const y = wibDate.getFullYear();
+                const m = String(wibDate.getMonth() + 1).padStart(2, '0');
+                const d = String(wibDate.getDate()).padStart(2, '0');
+                const yesterdayStr = `${y}-${m}-${d}`;
+
+                return schedules.filter(s => s.date >= yesterdayStr);
+            }, [schedules, showHistory]);
 
             return (
                 <div className="space-y-4 fade-in">
@@ -465,7 +477,7 @@
                             {editScheduleId && <button onClick={() => {setEditScheduleId(null); setScheduleForm({date:'', startTime:'15:00', endTime:'16:00'})}} className="text-xs text-red-500">Batal</button>}
                         </div>
 
-                        {/* --- INDIKATOR SISA WAKTU GLOBAL (UPDATED) --- */}
+                        {/* --- INDIKATOR SISA WAKTU GLOBAL --- */}
                         {scheduleForm.date && (
                             <div className={`rounded-xl p-4 mb-5 border transition-all duration-300 ${isCritical && remainingMinutes < MAX_MINUTES ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
                                 <div className="flex justify-between items-end mb-2">
@@ -531,16 +543,16 @@
                     <div className="space-y-3 pb-20">
                         <div className="flex justify-between items-center mb-1">
                             <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1">
-                                {showHistory ? "Semua Jadwal (Historis)" : "Jadwal Aktif"}
+                                {showHistory ? "Semua Jadwal (Arsip)" : "Jadwal"}
                             </h3>
                             {isAdmin && (
                                 <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
-                                    {showHistory ? "Sembunyikan Lewat" : "Lihat History"}
+                                    {showHistory ? "Sembunyikan Arsip" : "Lihat Arsip Lama"}
                                 </button>
                             )}
                         </div>
                         
-                        {filteredSchedules.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Tidak ada jadwal aktif.</p>}
+                        {filteredSchedules.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Tidak ada jadwal.</p>}
 
                         {filteredSchedules.map(s => {
                             const isMine = String(s.userId) === String(currentUser);
