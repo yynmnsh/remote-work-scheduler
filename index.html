@@ -108,13 +108,9 @@
             </div>
         );
 
-        // --- NEW COMPONENT: ADMIN PANEL ---
+        // --- ADMIN PANEL ---
         const AdminPanel = ({ timesheets, users, loading, setLoading, showNotify }) => {
-            
-            // Logika Rekap: Filter Pending -> Group by User
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
-            
-            // Grouping data
             const recap = {};
             pendingSheets.forEach(t => {
                 if (!recap[t.userId]) {
@@ -130,14 +126,11 @@
                 recap[t.userId].sheetIds.push(t.id);
             });
 
-            // Convert object to array for rendering
             const recapList = Object.keys(recap).map(uid => ({ userId: uid, ...recap[uid] }));
             const totalPayout = recapList.reduce((sum, item) => sum + item.totalIDR, 0);
 
-            // Handler: Mark as Paid (Bulk Update)
             const handleMarkPaid = async (userId, sheetIds, userName) => {
                 if(!confirm(`Tandai ${sheetIds.length} laporan milik ${userName} sebagai LUNAS?`)) return;
-                
                 setLoading(true);
                 try {
                     const batch = window.fs.writeBatch(window.db);
@@ -160,7 +153,6 @@
                     <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
                         <h2 className="text-xl font-bold mb-1"><i className="fas fa-user-shield mr-2"></i>Admin Panel</h2>
                         <p className="text-purple-200 text-sm">Rekap Pembayaran Mingguan (Rabu)</p>
-                        
                         <div className="mt-4 bg-white/10 backdrop-blur rounded-lg p-3 border border-white/20">
                             <p className="text-xs text-purple-200 uppercase">Total Tagihan Minggu Ini</p>
                             <p className="text-2xl font-bold">{formatCurrency(totalPayout, 'IDR')}</p>
@@ -169,7 +161,6 @@
 
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                         <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">Daftar Transfer Pending</h3>
-                        
                         {recapList.length === 0 ? (
                             <div className="text-center py-8 text-slate-400">
                                 <i className="fas fa-check-circle text-4xl mb-2 text-green-100"></i>
@@ -188,7 +179,6 @@
                                                 <p className="font-bold text-green-600 text-lg">{formatCurrency(item.totalIDR, 'IDR')}</p>
                                             </div>
                                         </div>
-                                        
                                         <button 
                                             onClick={() => handleMarkPaid(item.userId, item.sheetIds, item.name)}
                                             disabled={loading}
@@ -212,7 +202,6 @@
             const estEarned = myPending.reduce((acc, curr) => acc + (curr.paymentIDR || 0), 0);
             const totalMins = myPending.reduce((acc, curr) => acc + (curr.duration || 0), 0);
 
-            // UPDATED LOGIC: Filter & Sort for Dashboard (Upcoming 5)
             const now = new Date();
             const upcomingSchedules = schedules
                 .filter(s => {
@@ -250,7 +239,7 @@
 
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center">
-                            <i className="fas fa-calendar-day text-blue-500 mr-2"></i> Jadwal Terkini
+                            <i className="fas fa-calendar-day text-blue-500 mr-2"></i> Jadwal Terkini (5 Terdekat)
                         </h3>
                         <div className="space-y-3">
                             {upcomingSchedules.map(s => (
@@ -311,7 +300,7 @@
                     </div>
 
                     <div className="space-y-3 pb-20">
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Daftar Jadwal</h3>
+                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Daftar Jadwal (Ascending)</h3>
                         {schedules.map(s => {
                             const isMine = String(s.userId) === String(currentUser);
                             return (
@@ -342,11 +331,16 @@
             );
         };
 
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet }) => {
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet }) => {
             return (
                 <div className="space-y-4 fade-in">
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-green-500">
-                        <h3 className="font-bold text-slate-700 mb-4">Input Laporan Kerja</h3>
+                    <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-700">
+                                {editTimesheetId ? 'Edit Laporan' : 'Input Laporan Kerja'}
+                            </h3>
+                            {editTimesheetId && <button onClick={() => {setEditTimesheetId(null); setTimesheetForm({date:'', startTime:'', duration:''})}} className="text-xs text-red-500">Batal</button>}
+                        </div>
                         <form onSubmit={saveTimesheet} className="space-y-3">
                             <input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                                 value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} />
@@ -360,8 +354,8 @@
                                 <span>Estimasi:</span>
                                 <span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*HOURLY_RATE_USD*EXCHANGE_RATE, 'IDR') : 'Rp 0'}</span>
                             </div>
-                            <button disabled={loading} className="w-full py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm shadow-md transition-all active:scale-95">
-                                {loading ? <Spinner/> : 'Kirim Laporan'}
+                            <button disabled={loading} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>
+                                {loading ? <Spinner/> : (editTimesheetId ? 'Update Laporan' : 'Kirim Laporan')}
                             </button>
                         </form>
                     </div>
@@ -384,9 +378,14 @@
                                         {t.status === 'paid' ? 'LUNAS' : 'PENDING'}
                                     </span>
                                     {String(t.userId) === String(currentUser) && t.status !== 'paid' && (
-                                        <button onClick={() => deleteTimesheet(t.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
-                                            <i className="fas fa-trash"></i> Hapus
-                                        </button>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => editTimesheet(t)} className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
+                                                <i className="fas fa-pen"></i> Edit
+                                            </button>
+                                            <button onClick={() => deleteTimesheet(t.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                                                <i className="fas fa-trash"></i> Hapus
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -410,7 +409,10 @@
             // FORM STATES
             const [scheduleForm, setScheduleForm] = React.useState({ date: '', startTime: '15:00', endTime: '16:00' });
             const [editScheduleId, setEditScheduleId] = React.useState(null);
+            
+            // UPDATED: Timesheet Form States
             const [timesheetForm, setTimesheetForm] = React.useState({ date: '', startTime: '', duration: '' });
+            const [editTimesheetId, setEditTimesheetId] = React.useState(null);
 
             // FIREBASE INIT
             React.useEffect(() => {
@@ -519,7 +521,7 @@
                 showNotify("Edit Mode", "warning");
             };
 
-            // TIMESHEET HANDLERS
+            // TIMESHEET HANDLERS (UPDATED)
             const saveTimesheet = async (e) => {
                 e.preventDefault();
                 if (!currentUser) return showNotify("Pilih akun!", "error");
@@ -528,6 +530,7 @@
                     const dur = parseInt(timesheetForm.duration);
                     const usd = (dur / 60) * HOURLY_RATE_USD;
                     const idr = Math.round(usd * EXCHANGE_RATE);
+                    
                     const payload = {
                         userId: currentUser,
                         date: timesheetForm.date,
@@ -536,12 +539,26 @@
                         paymentUSD: usd.toFixed(2),
                         paymentIDR: idr,
                         status: 'pending',
-                        createdAt: new Date().toISOString()
+                        updatedAt: new Date().toISOString()
                     };
-                    await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload);
-                    showNotify("Tersimpan!");
+
+                    if (editTimesheetId) {
+                         // Update existing
+                         await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload);
+                         showNotify("Laporan diperbarui!");
+                    } else {
+                        // Create new
+                        payload.createdAt = new Date().toISOString();
+                        await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload);
+                        showNotify("Tersimpan!");
+                    }
+                    
                     setTimesheetForm({ date: '', startTime: '', duration: '' });
-                } catch (e) { showNotify("Gagal", "error"); }
+                    setEditTimesheetId(null);
+                } catch (e) { 
+                    console.error(e);
+                    showNotify("Gagal", "error"); 
+                }
                 finally { setLoading(false); }
             };
 
@@ -549,6 +566,13 @@
                 if (!confirm("Hapus?")) return;
                 try { await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); showNotify("Dihapus"); }
                 catch (e) { showNotify("Gagal", "error"); }
+            };
+
+            const editTimesheet = (item) => {
+                setTimesheetForm({ date: item.date, startTime: item.startTime, duration: item.duration });
+                setEditTimesheetId(item.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showNotify("Mode Edit Laporan", "warning");
             };
 
             // CHECK ADMIN
@@ -582,7 +606,7 @@
                             <>
                                 {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} getUserColor={getUserColor} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} />}
-                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} />}
+                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} />}
                                 {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} loading={loading} setLoading={setLoading} showNotify={showNotify} />}
                             </>
                         )}
