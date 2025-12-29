@@ -74,7 +74,8 @@
             { id: '7', name: 'Yuni', color: '#22c55e' },
             { id: '8', name: 'Nida', color: '#0ea5e9' },
             { id: '9', name: 'Yayan', color: '#a855f7' },
-            { id: '10', name: 'Halim', color: '#64748b' }
+            { id: '10', name: 'Halim', color: '#64748b' },
+            { id: '11', name: 'Musyafa', color: '#14b8a6' }
         ];
 
         // --- UTILITIES ---
@@ -89,12 +90,6 @@
             const options = { weekday: 'short', day: 'numeric', month: 'short' };
             return new Date(dateString).toLocaleDateString('id-ID', options);
         };
-
-        const formatDateShort = (dateString) => {
-            if (!dateString) return '-';
-            const d = new Date(dateString);
-            return `${d.getDate()}/${d.getMonth()+1}`;
-        }
 
         const getShiftMinutes = (timeStr) => {
             if(!timeStr) return 0;
@@ -159,7 +154,6 @@
             const recap = {};
             pendingSheets.forEach(t => {
                 if (!recap[t.userId]) {
-                    // Cari data user lengkap termasuk bank
                     const uObj = users.find(u => String(u.id) === String(t.userId));
                     recap[t.userId] = { 
                         name: uObj?.name || 'Unknown',
@@ -255,15 +249,12 @@
             const estEarned = myPending.reduce((acc, curr) => acc + (curr.paymentIDR || 0), 0);
             const totalMins = myPending.reduce((acc, curr) => acc + (curr.duration || 0), 0);
 
-            // Logika Periode (Clean UI)
             let periodText = "Belum ada kerjaan";
             if (myPending.length > 0) {
-                // Urutkan berdasarkan tanggal
                 const sortedDates = myPending.map(t => new Date(t.date)).sort((a,b) => a-b);
                 const start = sortedDates[0];
                 const end = sortedDates[sortedDates.length - 1];
                 
-                // Format simpel
                 const startStr = `${start.getDate()} ${start.toLocaleString('id-ID', { month: 'short' })}`;
                 const endStr = `${end.getDate()} ${end.toLocaleString('id-ID', { month: 'short' })}`;
                 
@@ -469,7 +460,7 @@
                     </div>
 
                     <div className="pb-20">
-                        <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1 mb-2">Riwayat</h3>
+                        <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1 mb-2">Riwayat (Terbaru)</h3>
                         {timesheets.map(t => (
                             <div key={t.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
                                 <div className="flex justify-between items-start">
@@ -604,7 +595,26 @@
                     const duration = endMin - startMin;
 
                     if (duration <= 0) throw new Error("Jam selesai harus setelah mulai!");
-                    if (duration > 480) throw new Error("Maksimal 8 jam!");
+                    if (duration > 480) throw new Error("Maksimal durasi satu shift adalah 8 jam!");
+
+                    // --- CUMULATIVE DURATION CHECK ---
+                    const existingSchedules = schedules.filter(s => 
+                        String(s.userId) === String(currentUser) && 
+                        s.date === scheduleForm.date &&
+                        s.id !== editScheduleId
+                    );
+
+                    const currentTotalMinutes = existingSchedules.reduce((total, s) => {
+                        const sStart = getShiftMinutes(s.startTime);
+                        const sEnd = getShiftMinutes(s.endTime);
+                        return total + (sEnd - sStart);
+                    }, 0);
+
+                    if (currentTotalMinutes + duration > 480) {
+                        const remaining = 480 - currentTotalMinutes;
+                        throw new Error(`Total jam hari ini melebihi 8 jam! Sisa kuota: ${(remaining/60).toFixed(1)} jam.`);
+                    }
+                    // ---------------------------------
 
                     const hasConflict = schedules.find(s => {
                         if (editScheduleId && s.id === editScheduleId) return false;
@@ -789,4 +799,3 @@
     </script>
 </body>
 </html>
-
