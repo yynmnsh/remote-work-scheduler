@@ -682,6 +682,143 @@
                 </div>
             );
         };
+        
+        // --- ADDED MISSING ReportManager COMPONENT ---
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin }) => {
+            
+            if (!hasPaymentInfo) {
+                return (
+                    <div className="space-y-4 fade-in">
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm">
+                            <div className="flex items-center gap-3 mb-2">
+                                <i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                                <h3 className="font-bold text-yellow-700">Info Pembayaran Belum Lengkap</h3>
+                            </div>
+                            <p className="text-sm text-yellow-600 mb-4">
+                                Mohon lengkapi data bank/e-wallet Anda agar gaji bisa ditransfer. Anda tidak bisa input laporan sebelum data ini lengkap.
+                            </p>
+                            <button 
+                                onClick={onOpenProfile}
+                                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95"
+                            >
+                                <i className="fas fa-wallet mr-2"></i> Lengkapi Sekarang
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const [showHistory, setShowHistory] = React.useState(false);
+            
+            const filteredTimesheets = timesheets.filter(t => {
+                if (showHistory) return true;
+                return t.status === 'pending'; // Default: Only show Pending
+            });
+
+            return (
+                <div className="space-y-4 fade-in">
+                    <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-700">
+                                {editTimesheetId ? 'Edit Laporan' : 'Input Laporan Kerja'}
+                            </h3>
+                            {editTimesheetId && <button onClick={() => {setEditTimesheetId(null); setTimesheetForm({date:'', startTime:'', duration:''})}} className="text-xs text-red-500">Batal</button>}
+                        </div>
+                        <form onSubmit={saveTimesheet} className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Tanggal Kerja</label>
+                                <input 
+                                    type="date" 
+                                    required 
+                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none text-slate-600"
+                                    value={timesheetForm.date} 
+                                    onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} 
+                                />
+                                <p className="text-[10px] text-slate-400 mt-1 italic">Masukkan tanggal Anda telah bekerja</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Waktu Mulai</label>
+                                    <input 
+                                        type="time" 
+                                        required 
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none text-slate-600"
+                                        value={timesheetForm.startTime} 
+                                        onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} 
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-1 italic">Masukkan waktu mulai</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Durasi</label>
+                                    <input 
+                                        type="number" 
+                                        placeholder="Durasi (Menit)" 
+                                        required 
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                        value={timesheetForm.duration} 
+                                        onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg">
+                                <span>Estimasi:</span>
+                                <span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*HOURLY_RATE_USD*EXCHANGE_RATE, 'IDR') : 'Rp 0'}</span>
+                            </div>
+                            <button disabled={loading} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>
+                                {loading ? <Spinner/> : (editTimesheetId ? 'Update Laporan' : 'Kirim Laporan')}
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="pb-20">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1">
+                                {showHistory ? "Semua Riwayat (Lunas & Pending)" : "Riwayat (Pending/Aktif)"}
+                            </h3>
+                            {isAdmin && (
+                                <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
+                                    {showHistory ? "Sembunyikan Lunas" : "Lihat Semua"}
+                                </button>
+                            )}
+                        </div>
+
+                        {filteredTimesheets.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Tidak ada laporan aktif.</p>}
+
+                        {filteredTimesheets.map(t => (
+                            <div key={t.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold text-slate-700 text-sm">{getUserName(t.userId)}</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">{formatDate(t.date)} • {t.startTime}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-green-600 text-sm">{formatCurrency(t.paymentIDR, 'IDR')}</p>
+                                        <p className="text-xs text-slate-400">{t.duration} Menit</p>
+                                    </div>
+                                </div>
+                                <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${t.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                                        {t.status === 'paid' ? 'LUNAS' : 'PENDING'}
+                                    </span>
+                                    {String(t.userId) === String(currentUser) && t.status !== 'paid' && (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => editTimesheet(t)} className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
+                                                <i className="fas fa-pen"></i> Edit
+                                            </button>
+                                            <button onClick={() => deleteTimesheet(t.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+                                                <i className="fas fa-trash"></i> Hapus
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
 
         // --- MAIN APP ---
         function App() {
