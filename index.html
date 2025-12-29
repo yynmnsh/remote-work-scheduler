@@ -421,14 +421,43 @@
                             {editTimesheetId && <button onClick={() => {setEditTimesheetId(null); setTimesheetForm({date:'', startTime:'', duration:''})}} className="text-xs text-red-500">Batal</button>}
                         </div>
                         <form onSubmit={saveTimesheet} className="space-y-3">
-                            <input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} />
-                            <div className="grid grid-cols-2 gap-3">
-                                <input type="time" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                    value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} />
-                                <input type="number" placeholder="Durasi (Menit)" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                    value={timesheetForm.duration} onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} />
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Tanggal Kerja</label>
+                                <input 
+                                    type="date" 
+                                    required 
+                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none text-slate-600"
+                                    value={timesheetForm.date} 
+                                    onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} 
+                                />
+                                <p className="text-[10px] text-slate-400 mt-1 italic">Masukkan tanggal Anda telah bekerja</p>
                             </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Waktu Mulai</label>
+                                    <input 
+                                        type="time" 
+                                        required 
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none text-slate-600"
+                                        value={timesheetForm.startTime} 
+                                        onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} 
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-1 italic">Masukkan waktu mulai</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Durasi</label>
+                                    <input 
+                                        type="number" 
+                                        placeholder="Durasi (Menit)" 
+                                        required 
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                        value={timesheetForm.duration} 
+                                        onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+
                             <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg">
                                 <span>Estimasi:</span>
                                 <span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*HOURLY_RATE_USD*EXCHANGE_RATE, 'IDR') : 'Rp 0'}</span>
@@ -440,7 +469,7 @@
                     </div>
 
                     <div className="pb-20">
-                        <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1 mb-2">Riwayat</h3>
+                        <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1 mb-2">Riwayat (Terbaru)</h3>
                         {timesheets.map(t => (
                             <div key={t.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
                                 <div className="flex justify-between items-start">
@@ -760,4 +789,3 @@
     </script>
 </body>
 </html>
-
