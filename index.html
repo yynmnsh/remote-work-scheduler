@@ -90,6 +90,43 @@
             return new Date(dateString).toLocaleDateString('id-ID', options);
         };
 
+        // Helper untuk menampilkan PT (Pacific Time)
+        // Asumsi: WIB = PT + 15 Jam (untuk Standard Time, simplifikasi sesuai request user)
+        const getPTDisplay = (dateStr, timeStr) => {
+            if (!dateStr || !timeStr) return "-";
+            try {
+                const wibDate = new Date(`${dateStr}T${timeStr}`);
+                // Kurangi 15 jam
+                const ptDate = new Date(wibDate.getTime() - (15 * 60 * 60 * 1000));
+                
+                const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+                return ptDate.toLocaleDateString('en-US', options) + " PT";
+            } catch (e) {
+                return "-";
+            }
+        };
+
+        // Helper untuk menentukan "Operational Day"
+        // Hari dimulai jam 15:00 WIB.
+        // Contoh: 27 Okt 16:00 WIB => OpDay 2023-10-27
+        // Contoh: 28 Okt 02:00 WIB => OpDay 2023-10-27 (karena belum jam 15:00 tgl 28)
+        const getOpDay = (dateStr, timeStr) => {
+            if (!dateStr || !timeStr) return null;
+            const dt = new Date(`${dateStr}T${timeStr}`);
+            const hour = dt.getHours();
+            
+            // Jika jam < 15, maka shift ini milik Operational Day hari sebelumnya
+            if (hour < 15) {
+                dt.setDate(dt.getDate() - 1);
+            }
+            
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, '0');
+            const d = String(dt.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
+        // Helper Legacy untuk Timesheet (masih pakai logika simple)
         const getShiftMinutes = (timeStr) => {
             if(!timeStr) return 0;
             const [h, m] = timeStr.split(':').map(Number);
@@ -147,7 +184,7 @@
             );
         };
 
-        // --- ADMIN PANEL (UPDATED WITH WIB TIMEZONE FIX) ---
+        // --- ADMIN PANEL ---
         const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify }) => {
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
             
@@ -162,12 +199,15 @@
             const currentWIB = new Date(wibString); 
             
             const activeWorkers = schedules.filter(s => {
-                const sDate = new Date(s.date);
+                // Compatibility: Jika data lama, anggap s.date + s.startTime
+                const startDateStr = s.startDate || s.date;
+                const endDateStr = s.endDate || s.date;
+
+                const sStart = new Date(`${startDateStr}T${s.startTime}`);
+                const sEnd = new Date(`${endDateStr}T${s.endTime}`);
                 
-                const sStart = new Date(s.date + 'T' + s.startTime);
-                let sEnd = new Date(s.date + 'T' + s.endTime);
-                
-                if (sEnd < sStart) {
+                // Handle legacy data where End < Start meant next day implicitly
+                if (!s.endDate && sEnd < sStart) {
                     sEnd.setDate(sEnd.getDate() + 1);
                 }
 
@@ -347,14 +387,17 @@
 
             const upcomingSchedules = schedules
                 .filter(s => {
-                    const sDate = new Date(s.date);
+                    const dateStr = s.startDate || s.date; // Support legacy
+                    const sDate = new Date(dateStr);
                     const today = new Date();
                     today.setHours(0,0,0,0);
                     return sDate >= today; 
                 })
                 .sort((a,b) => {
-                    const dateA = new Date(`${a.date}T${a.startTime}`);
-                    const dateB = new Date(`${b.date}T${b.startTime}`);
+                    const da = a.startDate || a.date;
+                    const db = b.startDate || b.date;
+                    const dateA = new Date(`${da}T${a.startTime}`);
+                    const dateB = new Date(`${db}T${b.startTime}`);
                     return dateA - dateB;
                 })
                 .slice(0, 5);
@@ -396,22 +439,25 @@
                             <i className="fas fa-calendar-alt text-blue-500 mr-2"></i> Jadwal Mendatang
                         </h3>
                         <div className="space-y-3">
-                            {upcomingSchedules.map(s => (
-                                <div key={s.id} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm" style={{backgroundColor: getUserColor(s.userId)}}>
-                                        {getUserName(s.userId).substring(0,2).toUpperCase()}
-                                    </div>
-                                    <div className="ml-3 flex-1">
-                                        <div className="flex justify-between">
-                                            <span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span>
-                                            <span className="text-[10px] bg-white border px-2 py-0.5 rounded-full text-slate-500">{formatDate(s.date)}</span>
+                            {upcomingSchedules.map(s => {
+                                const showDate = s.startDate || s.date;
+                                return (
+                                    <div key={s.id} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm" style={{backgroundColor: getUserColor(s.userId)}}>
+                                            {getUserName(s.userId).substring(0,2).toUpperCase()}
                                         </div>
-                                        <div className="text-xs text-slate-500 mt-1">
-                                            {s.startTime} - {s.endTime}
+                                        <div className="ml-3 flex-1">
+                                            <div className="flex justify-between">
+                                                <span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span>
+                                                <span className="text-[10px] bg-white border px-2 py-0.5 rounded-full text-slate-500">{formatDate(showDate)}</span>
+                                            </div>
+                                            <div className="text-xs text-slate-500 mt-1">
+                                                {s.startTime} - {s.endTime}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                             {upcomingSchedules.length === 0 && <p className="text-center text-slate-400 text-xs py-4">Tidak ada jadwal dalam waktu dekat.</p>}
                         </div>
                     </div>
@@ -426,21 +472,41 @@
             // --- LOGIKA HITUNG SISA WAKTU (GLOBAL / SEMUA USER) ---
             const MAX_MINUTES = 480; // 8 Jam Total Tim per Hari
             
-            // Hitung total jam yang SUDAH dibooking OLEH SEMUA USER pada tanggal yang dipilih
+            // Hitung total jam yang SUDAH dibooking OLEH SEMUA USER pada Operational Day yang sedang dipilih
             const dailyUsedMinutes = React.useMemo(() => {
-                if (!scheduleForm.date) return 0;
+                const currentOpDay = getOpDay(scheduleForm.startDate, scheduleForm.startTime);
+                if (!currentOpDay) return 0;
                 
                 return schedules
-                    .filter(s => 
-                        s.date === scheduleForm.date && 
-                        s.id !== editScheduleId // Jangan hitung jadwal yang sedang diedit
-                    )
+                    .filter(s => {
+                        // Jangan hitung diri sendiri saat edit
+                        if (editScheduleId && s.id === editScheduleId) return false;
+                        
+                        // Cek apakah jadwal lain ini jatuh pada OpDay yang sama dengan yang sedang diinput
+                        // Support legacy data (s.date) vs new data (s.startDate)
+                        const otherStartD = s.startDate || s.date;
+                        const otherStartT = s.startTime;
+                        const otherOpDay = getOpDay(otherStartD, otherStartT);
+                        
+                        return otherOpDay === currentOpDay;
+                    })
                     .reduce((acc, s) => {
-                         const start = getShiftMinutes(s.startTime);
-                         const end = getShiftMinutes(s.endTime);
-                         return acc + (end - start);
+                         // Hitung durasi real menggunakan Date diff
+                         const startD = s.startDate || s.date;
+                         const endD = s.endDate || s.date; // legacy fallback
+                         
+                         const d1 = new Date(`${startD}T${s.startTime}`);
+                         let d2 = new Date(`${endD}T${s.endTime}`);
+                         
+                         // Fix legacy crossing midnight issue (if endTime < startTime and no endDate)
+                         if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1);
+
+                         const diffMs = d2 - d1;
+                         const diffMins = Math.floor(diffMs / 60000);
+                         
+                         return acc + diffMins;
                     }, 0);
-            }, [schedules, scheduleForm.date, editScheduleId]);
+            }, [schedules, scheduleForm.startDate, scheduleForm.startTime, editScheduleId]);
 
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
@@ -450,21 +516,20 @@
             const filteredSchedules = React.useMemo(() => {
                 if (showHistory) return schedules; // Tampilkan semua jika mode history
 
-                // Hitung Tanggal Kemarin (Yesterday) dalam WIB
                 const now = new Date();
                 const wibString = now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
                 const wibDate = new Date(wibString);
+                wibDate.setDate(wibDate.getDate() - 1); // Mundur 1 hari
                 
-                // Mundur 1 hari
-                wibDate.setDate(wibDate.getDate() - 1);
-                
-                // Format ke YYYY-MM-DD untuk perbandingan string
                 const y = wibDate.getFullYear();
                 const m = String(wibDate.getMonth() + 1).padStart(2, '0');
                 const d = String(wibDate.getDate()).padStart(2, '0');
                 const yesterdayStr = `${y}-${m}-${d}`;
 
-                return schedules.filter(s => s.date >= yesterdayStr);
+                return schedules.filter(s => {
+                    const checkDate = s.startDate || s.date;
+                    return checkDate >= yesterdayStr;
+                });
             }, [schedules, showHistory]);
 
             return (
@@ -474,16 +539,16 @@
                             <h3 className="font-bold text-slate-700">
                                 {editScheduleId ? 'Edit Jadwal' : 'Booking Jadwal'}
                             </h3>
-                            {editScheduleId && <button onClick={() => {setEditScheduleId(null); setScheduleForm({date:'', startTime:'15:00', endTime:'16:00'})}} className="text-xs text-red-500">Batal</button>}
+                            {editScheduleId && <button onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'15:00', endDate: '', endTime:'16:00'})}} className="text-xs text-red-500">Batal</button>}
                         </div>
 
                         {/* --- INDIKATOR SISA WAKTU GLOBAL --- */}
-                        {scheduleForm.date && (
+                        {scheduleForm.startDate && scheduleForm.startTime && (
                             <div className={`rounded-xl p-4 mb-5 border transition-all duration-300 ${isCritical && remainingMinutes < MAX_MINUTES ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
                                 <div className="flex justify-between items-end mb-2">
                                     <div>
                                         <p className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-600' : 'text-blue-600'}`}>
-                                            <i className="fas fa-users mr-1"></i> Kuota Tim Harian (Maks 8 Jam)
+                                            <i className="fas fa-users mr-1"></i> Kuota Tim (Op Day: {getOpDay(scheduleForm.startDate, scheduleForm.startTime)})
                                         </p>
                                         <p className="text-xs text-slate-600 mt-1">
                                             Total Terbooking: <span className="font-bold text-slate-800">{(dailyUsedMinutes/60).toFixed(1)}</span> jam
@@ -505,30 +570,57 @@
                                 </div>
                                 {remainingMinutes === 0 && (
                                     <p className="text-[10px] text-red-500 mt-2 text-center font-bold animate-pulse">
-                                        Kuota tim penuh untuk tanggal ini!
+                                        Kuota tim penuh untuk operational day ini!
                                     </p>
                                 )}
                             </div>
                         )}
 
                         <form onSubmit={saveSchedule} className="space-y-3">
-                            <div>
-                                <label className="text-xs font-semibold text-slate-500 uppercase">Tanggal</label>
-                                <input type="date" required className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={scheduleForm.date} onChange={e => setScheduleForm({...scheduleForm, date: e.target.value})} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-500 uppercase">Mulai</label>
-                                    <input type="time" required className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                        value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} />
+                            {/* START SECTION */}
+                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Waktu Mulai (WIB)</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <input type="date" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
+                                            value={scheduleForm.startDate} onChange={e => {
+                                                // Auto set end date same as start date for convenience
+                                                if(!scheduleForm.endDate) setScheduleForm({...scheduleForm, startDate: e.target.value, endDate: e.target.value});
+                                                else setScheduleForm({...scheduleForm, startDate: e.target.value});
+                                            }} />
+                                    </div>
+                                    <div>
+                                        <input type="time" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
+                                            value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-500 uppercase">Selesai</label>
-                                    <input type="time" required className="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
-                                        value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} />
+                                <div className="mt-1 text-right">
+                                    <span className="text-[10px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded">
+                                        {getPTDisplay(scheduleForm.startDate, scheduleForm.startTime)}
+                                    </span>
                                 </div>
                             </div>
+
+                            {/* END SECTION */}
+                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Waktu Selesai (WIB)</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <input type="date" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
+                                            value={scheduleForm.endDate} onChange={e => setScheduleForm({...scheduleForm, endDate: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <input type="time" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500"
+                                            value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="mt-1 text-right">
+                                    <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                        {getPTDisplay(scheduleForm.endDate, scheduleForm.endTime)}
+                                    </span>
+                                </div>
+                            </div>
+
                             <button 
                                 disabled={loading || (remainingMinutes <= 0 && !editScheduleId)} 
                                 className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -556,6 +648,10 @@
 
                         {filteredSchedules.map(s => {
                             const isMine = String(s.userId) === String(currentUser);
+                            // Handling Legacy Data Display
+                            const showStartDate = s.startDate || s.date;
+                            const showEndDate = s.endDate || s.date; // If legacy, assume same day unless implied crossing
+
                             return (
                                 <div key={s.id} className={`p-4 rounded-xl border flex justify-between items-center ${isMine ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
                                     <div className="flex items-center gap-3">
@@ -566,7 +662,10 @@
                                                 {isMine && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 rounded font-bold">YOU</span>}
                                             </div>
                                             <div className="text-xs text-slate-500 mt-1">
-                                                {formatDate(s.date)} • {s.startTime} - {s.endTime}
+                                                {formatDate(showStartDate)} {s.startTime} - {showStartDate !== showEndDate ? formatDate(showEndDate) : ''} {s.endTime}
+                                            </div>
+                                            <div className="text-[10px] text-slate-400 mt-0.5 italic">
+                                                OpDay: {getOpDay(showStartDate, s.startTime)}
                                             </div>
                                         </div>
                                     </div>
@@ -584,142 +683,6 @@
             );
         };
 
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin }) => {
-            
-            if (!hasPaymentInfo) {
-                return (
-                    <div className="space-y-4 fade-in">
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm">
-                            <div className="flex items-center gap-3 mb-2">
-                                <i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
-                                <h3 className="font-bold text-yellow-700">Info Pembayaran Belum Lengkap</h3>
-                            </div>
-                            <p className="text-sm text-yellow-600 mb-4">
-                                Mohon lengkapi data bank/e-wallet Anda agar gaji bisa ditransfer. Anda tidak bisa input laporan sebelum data ini lengkap.
-                            </p>
-                            <button 
-                                onClick={onOpenProfile}
-                                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95"
-                            >
-                                <i className="fas fa-wallet mr-2"></i> Lengkapi Sekarang
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
-
-            const [showHistory, setShowHistory] = React.useState(false);
-            
-            const filteredTimesheets = timesheets.filter(t => {
-                if (showHistory) return true;
-                return t.status === 'pending'; // Default: Only show Pending
-            });
-
-            return (
-                <div className="space-y-4 fade-in">
-                    <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-slate-700">
-                                {editTimesheetId ? 'Edit Laporan' : 'Input Laporan Kerja'}
-                            </h3>
-                            {editTimesheetId && <button onClick={() => {setEditTimesheetId(null); setTimesheetForm({date:'', startTime:'', duration:''})}} className="text-xs text-red-500">Batal</button>}
-                        </div>
-                        <form onSubmit={saveTimesheet} className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Tanggal Kerja</label>
-                                <input 
-                                    type="date" 
-                                    required 
-                                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none text-slate-600"
-                                    value={timesheetForm.date} 
-                                    onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} 
-                                />
-                                <p className="text-[10px] text-slate-400 mt-1 italic">Masukkan tanggal Anda telah bekerja</p>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Waktu Mulai</label>
-                                    <input 
-                                        type="time" 
-                                        required 
-                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none text-slate-600"
-                                        value={timesheetForm.startTime} 
-                                        onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} 
-                                    />
-                                    <p className="text-[10px] text-slate-400 mt-1 italic">Masukkan waktu mulai</p>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Durasi</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="Durasi (Menit)" 
-                                        required 
-                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                        value={timesheetForm.duration} 
-                                        onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} 
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg">
-                                <span>Estimasi:</span>
-                                <span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*HOURLY_RATE_USD*EXCHANGE_RATE, 'IDR') : 'Rp 0'}</span>
-                            </div>
-                            <button disabled={loading} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>
-                                {loading ? <Spinner/> : (editTimesheetId ? 'Update Laporan' : 'Kirim Laporan')}
-                            </button>
-                        </form>
-                    </div>
-
-                    <div className="pb-20">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1">
-                                {showHistory ? "Semua Riwayat (Lunas & Pending)" : "Riwayat (Pending/Aktif)"}
-                            </h3>
-                            {isAdmin && (
-                                <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
-                                    {showHistory ? "Sembunyikan Lunas" : "Lihat Semua"}
-                                </button>
-                            )}
-                        </div>
-
-                        {filteredTimesheets.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Tidak ada laporan aktif.</p>}
-
-                        {filteredTimesheets.map(t => (
-                            <div key={t.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-bold text-slate-700 text-sm">{getUserName(t.userId)}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">{formatDate(t.date)} • {t.startTime}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-green-600 text-sm">{formatCurrency(t.paymentIDR, 'IDR')}</p>
-                                        <p className="text-xs text-slate-400">{t.duration} Menit</p>
-                                    </div>
-                                </div>
-                                <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${t.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                                        {t.status === 'paid' ? 'LUNAS' : 'PENDING'}
-                                    </span>
-                                    {String(t.userId) === String(currentUser) && t.status !== 'paid' && (
-                                        <div className="flex gap-2">
-                                            <button onClick={() => editTimesheet(t)} className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
-                                                <i className="fas fa-pen"></i> Edit
-                                            </button>
-                                            <button onClick={() => deleteTimesheet(t.id)} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
-                                                <i className="fas fa-trash"></i> Hapus
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
         // --- MAIN APP ---
         function App() {
             // STATES
@@ -731,11 +694,10 @@
             const [loading, setLoading] = React.useState(false);
             const [notify, setNotify] = React.useState(null);
             
-            // Modal States
             const [showProfileModal, setShowProfileModal] = React.useState(false);
 
-            // FORM STATES
-            const [scheduleForm, setScheduleForm] = React.useState({ date: '', startTime: '15:00', endTime: '16:00' });
+            // FORM STATES (UPDATED with start/end date)
+            const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
             const [editScheduleId, setEditScheduleId] = React.useState(null);
             const [timesheetForm, setTimesheetForm] = React.useState({ date: '', startTime: '', duration: '' });
             const [editTimesheetId, setEditTimesheetId] = React.useState(null);
@@ -760,8 +722,10 @@
                     // Schedules Sync
                     window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'schedules')), (snapshot) => {
                         setSchedules(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => {
-                            const dateA = new Date(`${a.date}T${a.startTime}`);
-                            const dateB = new Date(`${b.date}T${b.startTime}`);
+                            const da = a.startDate || a.date;
+                            const db = b.startDate || b.date;
+                            const dateA = new Date(`${da}T${a.startTime}`);
+                            const dateB = new Date(`${db}T${b.startTime}`);
                             return dateA - dateB;
                         }));
                     });
@@ -809,53 +773,77 @@
                 }
             };
 
-            // SCHEDULE HANDLERS
+            // SCHEDULE HANDLERS (UPDATED for Multi-day logic)
             const saveSchedule = async (e) => {
                 e.preventDefault();
                 if (!currentUser) return showNotify("Pilih akun Anda!", "error");
+                
+                // Construct Date Objects
+                const startD = new Date(`${scheduleForm.startDate}T${scheduleForm.startTime}`);
+                const endD = new Date(`${scheduleForm.endDate}T${scheduleForm.endTime}`);
+                
+                if (isNaN(startD.getTime()) || isNaN(endD.getTime())) return showNotify("Waktu tidak valid", "error");
+                
+                // Validation 1: End > Start
+                if (endD <= startD) return showNotify("Waktu Selesai harus setelah Waktu Mulai!", "error");
+                
+                // Validation 2: Max 8 Hours for this specific booking
+                const durationMs = endD - startD;
+                const durationMins = Math.floor(durationMs / 60000);
+                if (durationMins > 480) return showNotify("Satu sesi booking maksimal 8 jam!", "error");
+
                 setLoading(true);
                 try {
-                    const startMin = getShiftMinutes(scheduleForm.startTime);
-                    const endMin = getShiftMinutes(scheduleForm.endTime);
-                    const duration = endMin - startMin;
+                    // --- CUMULATIVE DURATION CHECK (GLOBAL per OpDay) ---
+                    const currentOpDay = getOpDay(scheduleForm.startDate, scheduleForm.startTime);
+                    
+                    // Hitung total booking orang lain di OpDay yang sama
+                    const existingTotalMinutes = schedules
+                        .filter(s => {
+                            if (editScheduleId && s.id === editScheduleId) return false;
+                            
+                            // Compatibility with legacy data
+                            const sDate = s.startDate || s.date;
+                            return getOpDay(sDate, s.startTime) === currentOpDay;
+                        })
+                        .reduce((acc, s) => {
+                             const sd = s.startDate || s.date;
+                             const ed = s.endDate || s.date;
+                             const d1 = new Date(`${sd}T${s.startTime}`);
+                             let d2 = new Date(`${ed}T${s.endTime}`);
+                             if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1); // legacy fix
+                             
+                             return acc + Math.floor((d2 - d1)/60000);
+                        }, 0);
 
-                    if (duration <= 0) throw new Error("Jam selesai harus setelah mulai!");
-                    if (duration > 480) throw new Error("Maksimal 8 jam!");
-
-                    // --- CUMULATIVE DURATION CHECK (UPDATED: GLOBAL) ---
-                    // Cek total jam yang sudah dibooking SEMUA ORANG di tanggal ini
-                    const existingSchedules = schedules.filter(s => 
-                        // String(s.userId) === String(currentUser) &&  <-- DIHAPUS agar menghitung semua user
-                        s.date === scheduleForm.date &&
-                        s.id !== editScheduleId
-                    );
-
-                    const currentTotalMinutes = existingSchedules.reduce((total, s) => {
-                        const sStart = getShiftMinutes(s.startTime);
-                        const sEnd = getShiftMinutes(s.endTime);
-                        return total + (sEnd - sStart);
-                    }, 0);
-
-                    if (currentTotalMinutes + duration > 480) {
-                        const remaining = 480 - currentTotalMinutes;
+                    if (existingTotalMinutes + durationMins > 480) {
+                        const remaining = 480 - existingTotalMinutes;
                         throw new Error(`Kuota Harian Tim Penuh! Sisa waktu tersedia: ${(remaining/60).toFixed(1)} jam.`);
                     }
-                    // ---------------------------------
 
+                    // --- CONFLICT CHECK ---
+                    // Cek overlap waktu yang sebenarnya (absolute time overlap)
                     const hasConflict = schedules.find(s => {
                         if (editScheduleId && s.id === editScheduleId) return false;
-                        if (s.date !== scheduleForm.date) return false;
-                        const sStart = getShiftMinutes(s.startTime);
-                        const sEnd = getShiftMinutes(s.endTime);
-                        return (startMin < sEnd && endMin > sStart);
+                        
+                        const sStartD = new Date(`${s.startDate || s.date}T${s.startTime}`);
+                        let sEndD = new Date(`${s.endDate || s.date}T${s.endTime}`);
+                        if (!s.endDate && sEndD < sStartD) sEndD.setDate(sEndD.getDate() + 1);
+
+                        // Overlap logic: (StartA < EndB) and (EndA > StartB)
+                        return (startD < sEndD && endD > sStartD);
                     });
 
                     if (hasConflict) throw new Error(`Bentrok dengan ${getUserName(hasConflict.userId)}!`);
 
+                    // --- SAVE ---
+                    // Simpan startDate/endDate terpisah. Untuk legacy field 'date', pakai startDate.
                     const payload = {
                         userId: currentUser,
-                        date: scheduleForm.date,
+                        date: scheduleForm.startDate, // Legacy support
+                        startDate: scheduleForm.startDate,
                         startTime: scheduleForm.startTime,
+                        endDate: scheduleForm.endDate,
                         endTime: scheduleForm.endTime,
                         updatedAt: new Date().toISOString()
                     };
@@ -867,7 +855,8 @@
                         await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload);
                         showNotify("Jadwal dibuat!");
                     }
-                    setScheduleForm({ date: '', startTime: '15:00', endTime: '16:00' });
+                    // Reset form
+                    setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
                     setEditScheduleId(null);
                 } catch (err) {
                     showNotify(err.message, "error");
@@ -883,7 +872,31 @@
             };
 
             const editSchedule = (item) => {
-                setScheduleForm({ date: item.date, startTime: item.startTime, endTime: item.endTime });
+                // Handle legacy data where endDate might be missing
+                const sDate = item.startDate || item.date;
+                let eDate = item.endDate || item.date;
+                
+                // If legacy data implied overnight shift, adjust display
+                if (!item.endDate) {
+                    const d1 = new Date(`${sDate}T${item.startTime}`);
+                    const d2 = new Date(`${sDate}T${item.endTime}`);
+                    if (d2 < d1) {
+                         // EndTime is smaller than StartTime, assume next day
+                         const nextDay = new Date(d2);
+                         nextDay.setDate(nextDay.getDate() + 1);
+                         const y = nextDay.getFullYear();
+                         const m = String(nextDay.getMonth() + 1).padStart(2, '0');
+                         const d = String(nextDay.getDate()).padStart(2, '0');
+                         eDate = `${y}-${m}-${d}`;
+                    }
+                }
+
+                setScheduleForm({ 
+                    startDate: sDate, 
+                    startTime: item.startTime, 
+                    endDate: eDate, 
+                    endTime: item.endTime 
+                });
                 setEditScheduleId(item.id);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 showNotify("Edit Mode", "warning");
