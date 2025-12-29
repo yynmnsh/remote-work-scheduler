@@ -15,7 +15,7 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // CONFIG
         const firebaseConfig = {
@@ -32,7 +32,7 @@
         const db = getFirestore(app);
         
         window.db = db;
-        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc };
+        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch };
     </script>
 
     <script>
@@ -61,8 +61,9 @@
         // --- CONSTANTS ---
         const HOURLY_RATE_USD = 17;
         const EXCHANGE_RATE = 16770;
+        const ADMIN_ID = '9'; // ID Yayan sebagai Admin
         
-        // UPDATED: Initial Seed Data (10 Users)
+        // Initial Seed Data (10 Users)
         const INITIAL_USERS = [
             { id: '1', name: 'Habib', color: '#3b82f6' },
             { id: '2', name: 'Yusuf', color: '#ef4444' },
@@ -107,7 +108,104 @@
             </div>
         );
 
-        // --- SUB-VIEWS (DEFINED OUTSIDE APP TO PREVENT RE-RENDER LAG) ---
+        // --- NEW COMPONENT: ADMIN PANEL ---
+        const AdminPanel = ({ timesheets, users, loading, setLoading, showNotify }) => {
+            
+            // Logika Rekap: Filter Pending -> Group by User
+            const pendingSheets = timesheets.filter(t => t.status === 'pending');
+            
+            // Grouping data
+            const recap = {};
+            pendingSheets.forEach(t => {
+                if (!recap[t.userId]) {
+                    recap[t.userId] = { 
+                        name: users.find(u => String(u.id) === String(t.userId))?.name || 'Unknown',
+                        totalMins: 0,
+                        totalIDR: 0,
+                        sheetIds: []
+                    };
+                }
+                recap[t.userId].totalMins += (t.duration || 0);
+                recap[t.userId].totalIDR += (t.paymentIDR || 0);
+                recap[t.userId].sheetIds.push(t.id);
+            });
+
+            // Convert object to array for rendering
+            const recapList = Object.keys(recap).map(uid => ({ userId: uid, ...recap[uid] }));
+            const totalPayout = recapList.reduce((sum, item) => sum + item.totalIDR, 0);
+
+            // Handler: Mark as Paid (Bulk Update)
+            const handleMarkPaid = async (userId, sheetIds, userName) => {
+                if(!confirm(`Tandai ${sheetIds.length} laporan milik ${userName} sebagai LUNAS?`)) return;
+                
+                setLoading(true);
+                try {
+                    const batch = window.fs.writeBatch(window.db);
+                    sheetIds.forEach(id => {
+                        const docRef = window.fs.doc(window.db, "timesheets", id);
+                        batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() });
+                    });
+                    await batch.commit();
+                    showNotify(`Sukses! Pembayaran ke ${userName} telah dicatat.`);
+                } catch (e) {
+                    console.error(e);
+                    showNotify("Gagal update data.", "error");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="space-y-4 fade-in pb-20">
+                    <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
+                        <h2 className="text-xl font-bold mb-1"><i className="fas fa-user-shield mr-2"></i>Admin Panel</h2>
+                        <p className="text-purple-200 text-sm">Rekap Pembayaran Mingguan (Rabu)</p>
+                        
+                        <div className="mt-4 bg-white/10 backdrop-blur rounded-lg p-3 border border-white/20">
+                            <p className="text-xs text-purple-200 uppercase">Total Tagihan Minggu Ini</p>
+                            <p className="text-2xl font-bold">{formatCurrency(totalPayout, 'IDR')}</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">Daftar Transfer Pending</h3>
+                        
+                        {recapList.length === 0 ? (
+                            <div className="text-center py-8 text-slate-400">
+                                <i className="fas fa-check-circle text-4xl mb-2 text-green-100"></i>
+                                <p>Semua beres! Tidak ada tagihan pending.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {recapList.map(item => (
+                                    <div key={item.userId} className="border border-slate-100 rounded-xl p-4 bg-slate-50 hover:bg-white hover:shadow-md transition">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="font-bold text-slate-800 text-lg">{item.name}</p>
+                                                <p className="text-xs text-slate-500">{(item.totalMins/60).toFixed(2)} Jam Kerja • {item.sheetIds.length} Laporan</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-green-600 text-lg">{formatCurrency(item.totalIDR, 'IDR')}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={() => handleMarkPaid(item.userId, item.sheetIds, item.name)}
+                                            disabled={loading}
+                                            className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition active:scale-95"
+                                        >
+                                            {loading ? <Spinner/> : <><i className="fas fa-check-double"></i> Tandai Sudah Transfer</>}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SUB-VIEWS ---
 
         const DashboardView = ({ currentUser, getUserName, timesheets, schedules, getUserColor }) => {
             const myPending = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
@@ -118,24 +216,11 @@
             const now = new Date();
             const upcomingSchedules = schedules
                 .filter(s => {
-                    // Buat object tanggal selesai shift
-                    // Kita anggap shift selesai di hari yang sama atau besoknya.
-                    // Sederhananya: Tampilkan jadwal yang tanggalnya >= hari ini.
-                    // Lebih presisi: Gabungkan Date + EndTime.
-                    const sEnd = new Date(`${s.date}T${s.endTime}`);
-                    // Jika jam selesai < jam mulai, berarti shift lintas hari (besok)
-                    // Tapi untuk simplifikasi dashboard, kita filter yang tanggalnya >= tanggal hari ini
-                    // Atau: jadwal yang belum lewat (End Time > Now)
-                    
-                    // Logic aman: Filter yang tanggalnya hari ini atau masa depan
                     const sDate = new Date(s.date);
-                    // Reset jam now ke 00:00 untuk perbandingan tanggal murni
                     const today = new Date();
                     today.setHours(0,0,0,0);
-                    
                     return sDate >= today; 
                 })
-                // Urutkan lagi dari yang terdekat (Ascending)
                 .sort((a,b) => {
                     const dateA = new Date(`${a.date}T${a.startTime}`);
                     const dateB = new Date(`${b.date}T${b.startTime}`);
@@ -344,10 +429,9 @@
                         });
                     }
 
-                    // Schedules Sync - UPDATED SORTING ASCENDING (Earliest to Latest)
+                    // Schedules Sync
                     window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'schedules')), (snapshot) => {
                         setSchedules(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => {
-                            // Sort by Date then Time (Ascending)
                             const dateA = new Date(`${a.date}T${a.startTime}`);
                             const dateB = new Date(`${b.date}T${b.startTime}`);
                             return dateA - dateB;
@@ -467,6 +551,9 @@
                 catch (e) { showNotify("Gagal", "error"); }
             };
 
+            // CHECK ADMIN
+            const isAdmin = String(currentUser) === ADMIN_ID;
+
             return (
                 <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col">
                     {notify && <Notification msg={notify.msg} type={notify.type} onClose={() => setNotify(null)} />}
@@ -496,12 +583,13 @@
                                 {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} getUserColor={getUserColor} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} />}
                                 {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} />}
+                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} loading={loading} setLoading={setLoading} showNotify={showNotify} />}
                             </>
                         )}
                     </main>
 
                     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 z-30 max-w-md mx-auto">
-                        <div className="grid grid-cols-3 gap-1 px-2">
+                        <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-1 px-2`}>
                             <button onClick={() => setView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 <i className="fas fa-home text-lg mb-1"></i> <span className="text-[10px] font-medium">Home</span>
                             </button>
@@ -511,6 +599,11 @@
                             <button onClick={() => setView('timesheet')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'timesheet' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 <i className="fas fa-file-invoice-dollar text-lg mb-1"></i> <span className="text-[10px] font-medium">Laporan</span>
                             </button>
+                            {isAdmin && (
+                                <button onClick={() => setView('admin')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'admin' ? 'text-purple-600 bg-purple-50' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                    <i className="fas fa-user-shield text-lg mb-1"></i> <span className="text-[10px] font-medium">Admin</span>
+                                </button>
+                            )}
                         </div>
                     </nav>
                 </div>
@@ -522,4 +615,3 @@
     </script>
 </body>
 </html>
-
