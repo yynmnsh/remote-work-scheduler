@@ -239,7 +239,7 @@
 
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center">
-                            <i className="fas fa-calendar-day text-blue-500 mr-2"></i> Jadwal Terkini (5 Terdekat)
+                            <i className="fas fa-calendar-day text-blue-500 mr-2"></i> Jadwal Terkini
                         </h3>
                         <div className="space-y-3">
                             {upcomingSchedules.map(s => (
@@ -300,7 +300,7 @@
                     </div>
 
                     <div className="space-y-3 pb-20">
-                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Daftar Jadwal (Ascending)</h3>
+                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Daftar Jadwal</h3>
                         {schedules.map(s => {
                             const isMine = String(s.userId) === String(currentUser);
                             return (
@@ -440,9 +440,18 @@
                         }));
                     });
 
-                    // Timesheets Sync
+                    // Timesheets Sync - UPDATED SORTING: Newest Top (Descending)
                     window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'timesheets')), (snapshot) => {
-                        setTimesheets(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => new Date(b.date) - new Date(a.date)));
+                        setTimesheets(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => {
+                            const dateA = new Date(a.date);
+                            const dateB = new Date(b.date);
+                            // Sort by Date Descending
+                            if (dateA.getTime() !== dateB.getTime()) {
+                                return dateB - dateA;
+                            }
+                            // Same Date: Sort by Time (Descending)
+                            return getShiftMinutes(b.startTime) - getShiftMinutes(a.startTime);
+                        }));
                     });
 
                     // Load User
@@ -521,13 +530,37 @@
                 showNotify("Edit Mode", "warning");
             };
 
-            // TIMESHEET HANDLERS (UPDATED)
+            // TIMESHEET HANDLERS (UPDATED CONFLICT CHECK)
             const saveTimesheet = async (e) => {
                 e.preventDefault();
                 if (!currentUser) return showNotify("Pilih akun!", "error");
                 setLoading(true);
                 try {
+                    // Calculate Start & End Minutes for new Report
+                    const startMin = getShiftMinutes(timesheetForm.startTime);
                     const dur = parseInt(timesheetForm.duration);
+                    const endMin = startMin + dur;
+
+                    // CONFLICT CHECK FOR REPORTS
+                    const conflict = timesheets.find(t => {
+                        // Skip checking against itself if editing
+                        if (editTimesheetId && t.id === editTimesheetId) return false;
+                        // Only check own timesheets
+                        if (String(t.userId) !== String(currentUser)) return false;
+                        // Check date
+                        if (t.date !== timesheetForm.date) return false;
+
+                        const tStart = getShiftMinutes(t.startTime);
+                        const tEnd = tStart + parseInt(t.duration);
+
+                        // Overlap Logic: (StartA < EndB) && (EndA > StartB)
+                        return (startMin < tEnd && endMin > tStart);
+                    });
+
+                    if (conflict) {
+                        throw new Error(`Waktu bentrok dengan laporan Anda pukul ${conflict.startTime}!`);
+                    }
+
                     const usd = (dur / 60) * HOURLY_RATE_USD;
                     const idr = Math.round(usd * EXCHANGE_RATE);
                     
@@ -557,7 +590,7 @@
                     setEditTimesheetId(null);
                 } catch (e) { 
                     console.error(e);
-                    showNotify("Gagal", "error"); 
+                    showNotify(e.message || "Gagal", "error"); 
                 }
                 finally { setLoading(false); }
             };
