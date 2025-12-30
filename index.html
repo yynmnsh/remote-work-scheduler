@@ -214,10 +214,10 @@
             const myTotalMinutes = mySheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
             const myTotalEarnings = mySheets.reduce((acc, t) => acc + parseFloat(t.paymentIDR || 0), 0);
 
-            // 5. Adherence & Daily Activity - Last 14 Days
-            const getLast14Days = () => {
+            // 5. Adherence & Daily Activity - Last 7 Days (Updated to 7 days)
+            const getLast7Days = () => {
                 const dates = [];
-                for(let i=13; i>=0; i--) {
+                for(let i=6; i>=0; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const y = d.getFullYear();
@@ -228,15 +228,24 @@
                 return dates;
             };
             
-            const rangeDays = getLast14Days();
+            const rangeDays = getLast7Days();
             
-            const adherenceData = rangeDays.slice(7).map(dateStr => { 
+            const adherenceData = rangeDays.map(dateStr => { 
                 const scheduledMins = schedules
-                    .filter(s => String(s.userId) === String(currentUser) && (s.startDate === dateStr || s.date === dateStr))
+                    .filter(s => {
+                        // FIX: Ensure checking both new startDate and legacy date
+                        const sDate = s.startDate || s.date;
+                        return String(s.userId) === String(currentUser) && sDate === dateStr;
+                    })
                     .reduce((acc, s) => {
-                        const start = new Date(`${s.startDate || s.date}T${s.startTime}`);
-                        let end = new Date(`${s.endDate || s.date}T${s.endTime}`);
-                        if (end < start) end.setDate(end.getDate() + 1);
+                        const sd = s.startDate || s.date;
+                        const ed = s.endDate || s.date;
+                        const start = new Date(`${sd}T${s.startTime}`);
+                        let end = new Date(`${ed}T${s.endTime}`);
+                        
+                        // Fix for legacy data or if endDate missing but time crosses midnight
+                        if (!s.endDate && end < start) end.setDate(end.getDate() + 1);
+                        
                         return acc + Math.floor((end - start)/60000);
                     }, 0);
 
@@ -247,7 +256,7 @@
                 return { date: dateStr, scheduled: scheduledMins, actual: actualMins };
             });
 
-            // 6. Daily Activity (Team) - Last 14 Days - Uses GLOBAL timesheets
+            // 6. Daily Activity (Team) - Last 7 Days - Uses GLOBAL timesheets
             const dailyActivityTeam = rangeDays.map(dateStr => {
                 const mins = timesheets
                     .filter(t => t.date === dateStr) // Matches exact YYYY-MM-DD string
@@ -306,9 +315,9 @@
                                                 <div className="flex justify-between mb-1 text-slate-500">
                                                     <span>{dateLabel}</span>
                                                     <span className="font-mono">
-                                                        <span className="text-slate-400">{Math.round(d.scheduled/60)}h Plan</span> / 
+                                                        <span className="text-slate-400">{(d.scheduled/60).toFixed(1)}h Plan</span> / 
                                                         <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold ml-1" : "text-slate-700 ml-1"}>
-                                                            {Math.round(d.actual/60)}h Act
+                                                            {(d.actual/60).toFixed(1)}h Act
                                                         </span>
                                                     </span>
                                                 </div>
@@ -342,7 +351,7 @@
 
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="font-bold text-slate-700 text-sm">Aktivitas Tim (14 Hari)</h3>
+                                    <h3 className="font-bold text-slate-700 text-sm">Aktivitas Tim (7 Hari)</h3>
                                     <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded">
                                         Total Laporan: {timesheets.length}
                                     </span>
@@ -351,7 +360,7 @@
                                 {isActivityEmpty && !loading && (
                                     <div className="absolute inset-0 top-12 bg-white/80 z-10 flex flex-col items-center justify-center text-center p-4">
                                         <p className="text-slate-400 text-xs mb-2">
-                                            Belum ada data aktivitas di 14 hari terakhir.
+                                            Belum ada data aktivitas di 7 hari terakhir.
                                         </p>
                                     </div>
                                 )}
@@ -414,7 +423,7 @@
 
         // --- SUB-VIEWS ---
 
-        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, getUserColor, onEditProfile }) => {
+        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, getUserColor, onEditProfile, setView }) => {
             const myPending = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
             const estEarned = myPending.reduce((acc, curr) => acc + (curr.paymentIDR || 0), 0);
             const totalMins = myPending.reduce((acc, curr) => acc + (curr.duration || 0), 0);
@@ -683,11 +692,11 @@
                             <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1">
                                 {showHistory ? "Semua Jadwal (Arsip)" : "Jadwal"}
                             </h3>
-                            {isAdmin && (
-                                <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
-                                    {showHistory ? "Sembunyikan Arsip" : "Lihat Arsip Lama"}
-                                </button>
-                            )}
+                            
+                            {/* UPDATED: Button for all users, renamed */}
+                            <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
+                                {showHistory ? "Sembunyikan Jadwal Lengkap" : "Lihat Jadwal Lengkap"}
+                            </button>
                         </div>
                         
                         {filteredSchedules.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Tidak ada jadwal.</p>}
