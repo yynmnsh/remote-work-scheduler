@@ -52,6 +52,9 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        /* Bar Chart Animations */
+        .bar-fill { transition: height 1s ease-out; }
     </style>
 </head>
 <body>
@@ -90,43 +93,27 @@
             return new Date(dateString).toLocaleDateString('id-ID', options);
         };
 
-        // Helper untuk menampilkan PT (Pacific Time)
-        // Asumsi: WIB = PT + 15 Jam (untuk Standard Time, simplifikasi sesuai request user)
         const getPTDisplay = (dateStr, timeStr) => {
             if (!dateStr || !timeStr) return "-";
             try {
                 const wibDate = new Date(`${dateStr}T${timeStr}`);
-                // Kurangi 15 jam
                 const ptDate = new Date(wibDate.getTime() - (15 * 60 * 60 * 1000));
-                
                 const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
                 return ptDate.toLocaleDateString('en-US', options) + " PT";
-            } catch (e) {
-                return "-";
-            }
+            } catch (e) { return "-"; }
         };
 
-        // Helper untuk menentukan "Operational Day"
-        // Hari dimulai jam 15:00 WIB.
-        // Contoh: 27 Okt 16:00 WIB => OpDay 2023-10-27
-        // Contoh: 28 Okt 02:00 WIB => OpDay 2023-10-27 (karena belum jam 15:00 tgl 28)
         const getOpDay = (dateStr, timeStr) => {
             if (!dateStr || !timeStr) return null;
             const dt = new Date(`${dateStr}T${timeStr}`);
             const hour = dt.getHours();
-            
-            // Jika jam < 15, maka shift ini milik Operational Day hari sebelumnya
-            if (hour < 15) {
-                dt.setDate(dt.getDate() - 1);
-            }
-            
+            if (hour < 15) dt.setDate(dt.getDate() - 1);
             const y = dt.getFullYear();
             const m = String(dt.getMonth() + 1).padStart(2, '0');
             const d = String(dt.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         };
 
-        // Helper Legacy untuk Timesheet (masih pakai logika simple)
         const getShiftMinutes = (timeStr) => {
             if(!timeStr) return 0;
             const [h, m] = timeStr.split(':').map(Number);
@@ -145,7 +132,6 @@
             </div>
         );
 
-        // --- MODAL COMPONENT (FIXED) ---
         const ProfileModal = ({ user, onClose, onSave, loading }) => {
             const [bankName, setBankName] = React.useState(user?.bankName || '');
             const [accNumber, setAccNumber] = React.useState(user?.accountNumber || '');
@@ -180,6 +166,240 @@
                             </div>
                         </form>
                     </div>
+                </div>
+            );
+        };
+
+        // --- NEW: ANALYTICS VIEW COMPONENT ---
+        const AnalyticsView = ({ timesheets, schedules, users, currentUser }) => {
+            const [tab, setTab] = React.useState('personal'); // 'team' or 'personal'
+
+            // --- Calculation Logic ---
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // Filter Timesheets for Current Month
+            const thisMonthSheets = timesheets.filter(t => {
+                const d = new Date(t.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+
+            // 1. Total Hours This Month (Team)
+            const totalMinutesTeam = thisMonthSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+            
+            // 2. Total Earnings This Month (Team)
+            const totalEarnedTeam = thisMonthSheets.reduce((acc, t) => acc + parseFloat(t.paymentIDR || 0), 0);
+
+            // 3. Leaderboard Logic
+            const userStats = {};
+            thisMonthSheets.forEach(t => {
+                if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0, earnings: 0 };
+                userStats[t.userId].minutes += parseInt(t.duration || 0);
+                userStats[t.userId].earnings += parseFloat(t.paymentIDR || 0);
+            });
+            
+            const leaderboard = Object.keys(userStats)
+                .map(uid => ({ 
+                    uid, 
+                    ...userStats[uid], 
+                    name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown',
+                    color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1'
+                }))
+                .sort((a,b) => b.minutes - a.minutes)
+                .slice(0, 5); // Top 5
+
+            // 4. Personal Stats
+            const mySheets = thisMonthSheets.filter(t => String(t.userId) === String(currentUser));
+            const myTotalMinutes = mySheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+            const myTotalEarnings = mySheets.reduce((acc, t) => acc + parseFloat(t.paymentIDR || 0), 0);
+
+            // 5. Adherence (Schedule vs Actual) - Last 7 Days
+            const getLast7Days = () => {
+                const dates = [];
+                for(let i=6; i>=0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth()+1).padStart(2,'0');
+                    const day = String(d.getDate()).padStart(2,'0');
+                    dates.push(`${y}-${m}-${day}`);
+                }
+                return dates;
+            };
+            
+            const last7Days = getLast7Days();
+            
+            const adherenceData = last7Days.map(dateStr => {
+                // Scheduled Minutes for currentUser on this date
+                const scheduledMins = schedules
+                    .filter(s => String(s.userId) === String(currentUser) && (s.startDate === dateStr || s.date === dateStr))
+                    .reduce((acc, s) => {
+                        const start = new Date(`${s.startDate || s.date}T${s.startTime}`);
+                        let end = new Date(`${s.endDate || s.date}T${s.endTime}`);
+                        if (end < start) end.setDate(end.getDate() + 1);
+                        return acc + Math.floor((end - start)/60000);
+                    }, 0);
+
+                // Actual Minutes for currentUser on this date
+                const actualMins = timesheets
+                    .filter(t => String(t.userId) === String(currentUser) && t.date === dateStr)
+                    .reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+
+                return { date: dateStr, scheduled: scheduledMins, actual: actualMins };
+            });
+
+            // 6. Daily Activity (Team) - Last 7 Days
+            const dailyActivityTeam = last7Days.map(dateStr => {
+                const mins = timesheets
+                    .filter(t => t.date === dateStr)
+                    .reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+                return { date: dateStr, minutes: mins };
+            });
+            const maxDailyMins = Math.max(...dailyActivityTeam.map(d => d.minutes), 1); // Avoid div by 0
+
+            return (
+                <div className="space-y-4 fade-in pb-24">
+                    {/* Header Tabs */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex">
+                        <button 
+                            onClick={() => setTab('personal')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tab === 'personal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Personal
+                        </button>
+                        <button 
+                            onClick={() => setTab('team')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tab === 'team' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Tim
+                        </button>
+                    </div>
+
+                    {tab === 'personal' && (
+                        <div className="space-y-4 animate-fadeIn">
+                            {/* Personal Summary Card */}
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-lg">
+                                <h3 className="text-xs text-blue-200 uppercase tracking-widest font-bold mb-4">Statistik Saya (Bulan Ini)</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-3xl font-bold">{(myTotalMinutes/60).toFixed(1)}</p>
+                                        <p className="text-xs text-blue-200">Jam Kerja</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xl font-bold">{formatCurrency(myTotalEarnings, 'IDR')}</p>
+                                        <p className="text-xs text-blue-200">Estimasi Pendapatan</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Adherence Chart */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                    <i className="fas fa-chart-bar text-blue-500"></i> Disiplin: Jadwal vs Realisasi
+                                </h3>
+                                <div className="space-y-3">
+                                    {adherenceData.map((d, idx) => {
+                                        const dateLabel = new Date(d.date).toLocaleDateString('id-ID', {weekday:'short', day:'numeric'});
+                                        const maxVal = Math.max(d.scheduled, d.actual, 60); // min scale 1h
+                                        
+                                        return (
+                                            <div key={idx} className="text-xs">
+                                                <div className="flex justify-between mb-1 text-slate-500">
+                                                    <span>{dateLabel}</span>
+                                                    <span className="font-mono">
+                                                        <span className="text-slate-400">{Math.round(d.scheduled/60)}h Plan</span> / 
+                                                        <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold ml-1" : "text-slate-700 ml-1"}>
+                                                            {Math.round(d.actual/60)}h Act
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative flex">
+                                                    {/* Scheduled Bar (Background Grey/Striped) */}
+                                                    <div 
+                                                        className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" 
+                                                        style={{ width: `${(d.scheduled/maxVal)*100}%` }}
+                                                    ></div>
+                                                    {/* Actual Bar (Blue/Green) */}
+                                                    <div 
+                                                        className={`h-full rounded-full ${d.actual > d.scheduled ? 'bg-green-500' : 'bg-blue-500'}`} 
+                                                        style={{ width: `${(d.actual/maxVal)*100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-3 italic text-center">
+                                    *Bar abu-abu: Rencana (Jadwal). Bar berwarna: Realisasi (Laporan).
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {tab === 'team' && (
+                        <div className="space-y-4 animate-fadeIn">
+                            {/* Team Summary Card */}
+                            <div className="bg-gradient-to-br from-indigo-700 to-purple-800 rounded-2xl p-5 text-white shadow-lg">
+                                <h3 className="text-xs text-indigo-200 uppercase tracking-widest font-bold mb-4">Overview Tim (Bulan Ini)</h3>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <p className="text-4xl font-bold">{(totalMinutesTeam/60).toFixed(0)}<span className="text-lg font-normal text-indigo-300">h</span></p>
+                                        <p className="text-xs text-indigo-200 mt-1">Total Jam Produktif</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-lg font-bold">{formatCurrency(totalEarnedTeam, 'USD')}</p>
+                                        <p className="text-xs text-indigo-200">Burn Rate (USD)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Daily Activity Chart (Simple Vertical Bars) */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 className="font-bold text-slate-700 mb-4 text-sm">Aktivitas Tim (7 Hari Terakhir)</h3>
+                                <div className="flex items-end justify-between h-32 gap-2">
+                                    {dailyActivityTeam.map((d, idx) => {
+                                        const h = (d.minutes / maxDailyMins) * 100;
+                                        const dayName = new Date(d.date).toLocaleDateString('id-ID', {weekday:'narrow'});
+                                        return (
+                                            <div key={idx} className="flex-1 flex flex-col items-center group">
+                                                <div className="w-full bg-indigo-50 rounded-t-md relative hover:bg-indigo-100 transition-all flex flex-col justify-end" style={{height: '100%'}}>
+                                                    <div className="w-full bg-indigo-500 rounded-t-md bar-fill" style={{height: `${h}%`}}></div>
+                                                    {/* Tooltip */}
+                                                    <div className="absolute bottom-full mb-1 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                                                        {Math.round(d.minutes/60)} Jam
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 mt-2 font-medium">{dayName}</span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Leaderboard */}
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                    <i className="fas fa-trophy text-yellow-500"></i> Top Kontributor
+                                </h3>
+                                <div className="space-y-3">
+                                    {leaderboard.map((u, idx) => (
+                                        <div key={u.uid} className="flex items-center justify-between border-b border-slate-50 last:border-0 pb-2 last:pb-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${idx === 0 ? 'ring-2 ring-yellow-400' : ''}`} style={{backgroundColor: u.color}}>
+                                                    {idx + 1}
+                                                </div>
+                                                <span className="text-sm font-medium text-slate-700">{u.name}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-sm font-bold text-indigo-600">{(u.minutes/60).toFixed(1)}h</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -683,7 +903,6 @@
             );
         };
         
-        // --- ADDED MISSING ReportManager COMPONENT ---
         const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin }) => {
             
             if (!hasPaymentInfo) {
@@ -1162,13 +1381,14 @@
                                     onOpenProfile={() => setShowProfileModal(true)}
                                     isAdmin={isAdmin}
                                 />}
+                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} />}
                                 {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} />}
                             </>
                         )}
                     </main>
 
                     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 z-30 max-w-md mx-auto">
-                        <div className={`grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} gap-1 px-2`}>
+                        <div className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} gap-1 px-2`}>
                             <button onClick={() => setView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 <i className="fas fa-home text-lg mb-1"></i> <span className="text-[10px] font-medium">Home</span>
                             </button>
@@ -1177,6 +1397,9 @@
                             </button>
                             <button onClick={() => setView('timesheet')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'timesheet' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 <i className="fas fa-file-invoice-dollar text-lg mb-1"></i> <span className="text-[10px] font-medium">Laporan</span>
+                            </button>
+                            <button onClick={() => setView('analytics')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'analytics' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                <i className="fas fa-chart-pie text-lg mb-1"></i> <span className="text-[10px] font-medium">Analitik</span>
                             </button>
                             {isAdmin && (
                                 <button onClick={() => setView('admin')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'admin' ? 'text-purple-600 bg-purple-50' : 'text-slate-400 hover:bg-slate-50'}`}>
