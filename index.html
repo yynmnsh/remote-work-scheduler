@@ -170,7 +170,7 @@
             );
         };
 
-        // --- NEW: ANALYTICS VIEW COMPONENT ---
+        // --- ANALYTICS VIEW COMPONENT ---
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, onGenerateDummy, isAdmin, loading }) => {
             const [tab, setTab] = React.useState('team'); 
 
@@ -423,183 +423,6 @@
                             </div>
                         </div>
                     )}
-                </div>
-            );
-        };
-
-        // --- ADMIN PANEL ---
-        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, onGenerateDummy }) => {
-            const pendingSheets = timesheets.filter(t => t.status === 'pending');
-            
-            // Stats
-            const totalMinsGlobal = pendingSheets.reduce((sum, t) => sum + (parseInt(t.duration) || 0), 0);
-            const totalUSDGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentUSD) || 0), 0);
-            const totalIDRGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentIDR) || 0), 0);
-
-            // ACTIVE WORKERS LOGIC (WIB BASED)
-            const nowUTC = new Date();
-            const wibString = nowUTC.toLocaleString("en-US", {timeZone: "Asia/Jakarta", hour12: false}); 
-            const currentWIB = new Date(wibString); 
-            
-            const activeWorkers = schedules.filter(s => {
-                const startDateStr = s.startDate || s.date;
-                const endDateStr = s.endDate || s.date;
-                const sStart = new Date(`${startDateStr}T${s.startTime}`);
-                const sEnd = new Date(`${endDateStr}T${s.endTime}`);
-                if (!s.endDate && sEnd < sStart) {
-                    sEnd.setDate(sEnd.getDate() + 1);
-                }
-                return currentWIB >= sStart && currentWIB <= sEnd;
-            }).map(s => {
-                const u = users.find(u => String(u.id) === String(s.userId));
-                return { name: u?.name || 'Unknown', endTime: s.endTime, color: u?.color };
-            });
-
-            // Period Text
-            let periodText = "Tidak ada tagihan";
-            if (pendingSheets.length > 0) {
-                const sortedDates = pendingSheets.map(t => new Date(t.date)).sort((a,b) => a-b);
-                const start = sortedDates[0];
-                const end = sortedDates[sortedDates.length - 1];
-                const startStr = `${start.getDate()} ${start.toLocaleString('id-ID', { month: 'short' })}`;
-                const endStr = `${end.getDate()} ${end.toLocaleString('id-ID', { month: 'short' })}`;
-                periodText = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
-            }
-
-            const recap = {};
-            pendingSheets.forEach(t => {
-                if (!recap[t.userId]) {
-                    const uObj = users.find(u => String(u.id) === String(t.userId));
-                    recap[t.userId] = { 
-                        name: uObj?.name || 'Unknown',
-                        bankName: uObj?.bankName || '-',
-                        accountNumber: uObj?.accountNumber || '-',
-                        totalMins: 0,
-                        totalIDR: 0,
-                        sheetIds: []
-                    };
-                }
-                recap[t.userId].totalMins += (t.duration || 0);
-                recap[t.userId].totalIDR += (t.paymentIDR || 0);
-                recap[t.userId].sheetIds.push(t.id);
-            });
-
-            const recapList = Object.keys(recap).map(uid => ({ userId: uid, ...recap[uid] }));
-
-            const handleMarkPaid = async (userId, sheetIds, userName) => {
-                if(!confirm(`Tandai ${sheetIds.length} laporan milik ${userName} sebagai LUNAS?`)) return;
-                setLoading(true);
-                try {
-                    const batch = window.fs.writeBatch(window.db);
-                    sheetIds.forEach(id => {
-                        const docRef = window.fs.doc(window.db, "timesheets", id);
-                        batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() });
-                    });
-                    await batch.commit();
-                    showNotify(`Sukses! Pembayaran ke ${userName} dicatat.`);
-                } catch (e) {
-                    showNotify("Gagal update data.", "error");
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            return (
-                <div className="space-y-4 fade-in pb-20">
-                    {/* Live Status Card */}
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100">
-                        <div className="flex justify-between items-start mb-3">
-                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
-                                <span className="relative flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                                </span>
-                                Sedang Bekerja Sekarang (WIB)
-                            </h3>
-                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">
-                                {wibString.split(',')[1].trim().substring(0,5)} WIB
-                            </span>
-                        </div>
-                        
-                        {activeWorkers.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                {activeWorkers.map((w, idx) => (
-                                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: w.color}}></div>
-                                        <span className="text-sm font-bold text-slate-700">{w.name}</span>
-                                        <span className="text-xs text-slate-400">sampai {w.endTime}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-slate-400 italic">Tidak ada yang bekerja saat ini.</p>
-                        )}
-                    </div>
-
-                    <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h2 className="text-xl font-bold mb-1"><i className="fas fa-user-shield mr-2"></i>Admin Panel</h2>
-                                <p className="text-purple-200 text-xs mt-1 bg-white/10 px-2 py-1 rounded inline-block">
-                                    <i className="far fa-calendar-alt mr-1"></i> Periode: {periodText}
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20 col-span-2">
-                                <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total Tagihan (IDR)</p>
-                                <p className="text-2xl font-bold">{formatCurrency(totalIDRGlobal, 'IDR')}</p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
-                                <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total Jam</p>
-                                <p className="text-lg font-bold">{(totalMinsGlobal/60).toFixed(1)} Jam</p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
-                                <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total USD</p>
-                                <p className="text-lg font-bold">${totalUSDGlobal.toFixed(2)}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                        {recapList.length === 0 ? (
-                            <div className="text-center py-8 text-slate-400">
-                                <i className="fas fa-check-circle text-4xl mb-2 text-green-100"></i>
-                                <p>Semua lunas! Tidak ada tagihan pending.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide mb-2">Rincian Transfer</h3>
-                                {recapList.map(item => (
-                                    <div key={item.userId} className="border border-slate-100 rounded-xl p-4 bg-slate-50 hover:bg-white hover:shadow-md transition">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <p className="font-bold text-slate-800 text-lg">{item.name}</p>
-                                                <div className="flex items-center gap-1 text-xs text-slate-500 mt-1 mb-2">
-                                                    <i className="fas fa-university text-slate-400"></i>
-                                                    <span className="font-mono bg-slate-100 px-1 rounded select-all">
-                                                        {item.bankName} - {item.accountNumber}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-slate-400">{(item.totalMins/60).toFixed(2)} Jam • {item.sheetIds.length} Laporan</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-green-600 text-lg">{formatCurrency(item.totalIDR, 'IDR')}</p>
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={() => handleMarkPaid(item.userId, item.sheetIds, item.name)}
-                                            disabled={loading}
-                                            className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition active:scale-95"
-                                        >
-                                            {loading ? <Spinner/> : <><i className="fas fa-check-double"></i> Tandai Lunas (Reset)</>}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
             );
         };
@@ -1014,11 +837,11 @@
                             <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide ml-1">
                                 {showHistory ? "Semua Riwayat (Lunas & Pending)" : "Riwayat (Pending/Aktif)"}
                             </h3>
-                            {isAdmin && (
-                                <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
-                                    {showHistory ? "Sembunyikan Lunas" : "Lihat Semua"}
-                                </button>
-                            )}
+                            
+                            {/* UPDATED: Removed isAdmin check so all users can see history */}
+                            <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">
+                                {showHistory ? "Sembunyikan Lunas" : "Lihat Riwayat Lengkap"}
+                            </button>
                         </div>
 
                         {filteredTimesheets.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Tidak ada laporan aktif.</p>}
@@ -1053,6 +876,278 @@
                             </div>
                         ))}
                     </div>
+                </div>
+            );
+        };
+
+        // --- ADMIN PANEL (UPDATED) ---
+        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, onGenerateDummy }) => {
+            const [viewMode, setViewMode] = React.useState('pending'); // 'pending' or 'history'
+
+            // --- PENDING LOGIC ---
+            const pendingSheets = timesheets.filter(t => t.status === 'pending');
+            
+            const totalMinsGlobal = pendingSheets.reduce((sum, t) => sum + (parseInt(t.duration) || 0), 0);
+            const totalUSDGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentUSD) || 0), 0);
+            const totalIDRGlobal = pendingSheets.reduce((sum, t) => sum + (parseFloat(t.paymentIDR) || 0), 0);
+
+            // Recap for Pending
+            const recap = {};
+            pendingSheets.forEach(t => {
+                if (!recap[t.userId]) {
+                    const uObj = users.find(u => String(u.id) === String(t.userId));
+                    recap[t.userId] = { 
+                        name: uObj?.name || 'Unknown',
+                        bankName: uObj?.bankName || '-',
+                        accountNumber: uObj?.accountNumber || '-',
+                        totalMins: 0,
+                        totalIDR: 0,
+                        sheetIds: []
+                    };
+                }
+                recap[t.userId].totalMins += (t.duration || 0);
+                recap[t.userId].totalIDR += (t.paymentIDR || 0);
+                recap[t.userId].sheetIds.push(t.id);
+            });
+            const recapList = Object.keys(recap).map(uid => ({ userId: uid, ...recap[uid] }));
+
+            // --- HISTORY LOGIC ---
+            const paidSheets = timesheets.filter(t => t.status === 'paid').sort((a,b) => new Date(b.paidAt) - new Date(a.paidAt));
+            const totalPaidIDR = paidSheets.reduce((sum, t) => sum + (parseFloat(t.paymentIDR) || 0), 0);
+
+            // Group by Date (paidAt)
+            const historyGroups = {};
+            paidSheets.forEach(t => {
+                const dateKey = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown'; // YYYY-MM-DD
+                if (!historyGroups[dateKey]) historyGroups[dateKey] = [];
+                historyGroups[dateKey].push(t);
+            });
+            const sortedHistoryDates = Object.keys(historyGroups).sort((a,b) => new Date(b) - new Date(a));
+
+            // --- ACTIVE WORKERS LOGIC ---
+            const nowUTC = new Date();
+            const wibString = nowUTC.toLocaleString("en-US", {timeZone: "Asia/Jakarta", hour12: false}); 
+            const currentWIB = new Date(wibString); 
+            
+            const activeWorkers = schedules.filter(s => {
+                const startDateStr = s.startDate || s.date;
+                const endDateStr = s.endDate || s.date;
+                const sStart = new Date(`${startDateStr}T${s.startTime}`);
+                const sEnd = new Date(`${endDateStr}T${s.endTime}`);
+                if (!s.endDate && sEnd < sStart) {
+                    sEnd.setDate(sEnd.getDate() + 1);
+                }
+                return currentWIB >= sStart && currentWIB <= sEnd;
+            }).map(s => {
+                const u = users.find(u => String(u.id) === String(s.userId));
+                return { name: u?.name || 'Unknown', endTime: s.endTime, color: u?.color };
+            });
+
+            // Period Text
+            let periodText = "Tidak ada tagihan";
+            if (pendingSheets.length > 0) {
+                const sortedDates = pendingSheets.map(t => new Date(t.date)).sort((a,b) => a-b);
+                const start = sortedDates[0];
+                const end = sortedDates[sortedDates.length - 1];
+                const startStr = `${start.getDate()} ${start.toLocaleString('id-ID', { month: 'short' })}`;
+                const endStr = `${end.getDate()} ${end.toLocaleString('id-ID', { month: 'short' })}`;
+                periodText = startStr === endStr ? startStr : `${startStr} - ${endStr}`;
+            }
+
+            const handleMarkPaid = async (userId, sheetIds, userName) => {
+                if(!confirm(`Tandai ${sheetIds.length} laporan milik ${userName} sebagai LUNAS?`)) return;
+                setLoading(true);
+                try {
+                    const batch = window.fs.writeBatch(window.db);
+                    sheetIds.forEach(id => {
+                        const docRef = window.fs.doc(window.db, "timesheets", id);
+                        batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() });
+                    });
+                    await batch.commit();
+                    showNotify(`Sukses! Pembayaran ke ${userName} dicatat.`);
+                } catch (e) {
+                    showNotify("Gagal update data.", "error");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="space-y-4 fade-in pb-20">
+                    {/* Active Status Card */}
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100">
+                        <div className="flex justify-between items-start mb-3">
+                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                </span>
+                                Sedang Bekerja Sekarang (WIB)
+                            </h3>
+                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">
+                                {wibString.split(',')[1].trim().substring(0,5)} WIB
+                            </span>
+                        </div>
+                        {activeWorkers.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {activeWorkers.map((w, idx) => (
+                                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: w.color}}></div>
+                                        <span className="text-sm font-bold text-slate-700">{w.name}</span>
+                                        <span className="text-xs text-slate-400">sampai {w.endTime}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 italic">Tidak ada yang bekerja saat ini.</p>
+                        )}
+                    </div>
+
+                    {/* View Switcher */}
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2">
+                        <button 
+                            onClick={() => setViewMode('pending')}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${viewMode === 'pending' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Tagihan Pending
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('history')}
+                            className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${viewMode === 'history' ? 'bg-green-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                        >
+                            Riwayat Pembayaran
+                        </button>
+                    </div>
+
+                    {viewMode === 'pending' ? (
+                        <>
+                            {/* Summary Card */}
+                            <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h2 className="text-xl font-bold mb-1"><i className="fas fa-user-shield mr-2"></i>Admin Panel</h2>
+                                        <p className="text-purple-200 text-xs mt-1 bg-white/10 px-2 py-1 rounded inline-block">
+                                            <i className="far fa-calendar-alt mr-1"></i> Periode: {periodText}
+                                        </p>
+                                    </div>
+                                    <button 
+                                        onClick={onGenerateDummy}
+                                        disabled={loading}
+                                        className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-lg transition backdrop-blur-sm flex items-center gap-1"
+                                    >
+                                        <i className="fas fa-magic"></i> Data
+                                    </button>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20 col-span-2">
+                                        <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total Tagihan (IDR)</p>
+                                        <p className="text-2xl font-bold">{formatCurrency(totalIDRGlobal, 'IDR')}</p>
+                                    </div>
+                                    <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
+                                        <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total Jam</p>
+                                        <p className="text-lg font-bold">{(totalMinsGlobal/60).toFixed(1)} Jam</p>
+                                    </div>
+                                    <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/20">
+                                        <p className="text-[10px] text-purple-200 uppercase tracking-widest">Total USD</p>
+                                        <p className="text-lg font-bold">${totalUSDGlobal.toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Pending List */}
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                {recapList.length === 0 ? (
+                                    <div className="text-center py-8 text-slate-400">
+                                        <i className="fas fa-check-circle text-4xl mb-2 text-green-100"></i>
+                                        <p>Semua lunas! Tidak ada tagihan pending.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide mb-2">Rincian Transfer</h3>
+                                        {recapList.map(item => (
+                                            <div key={item.userId} className="border border-slate-100 rounded-xl p-4 bg-slate-50 hover:bg-white hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 text-lg">{item.name}</p>
+                                                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-1 mb-2">
+                                                            <i className="fas fa-university text-slate-400"></i>
+                                                            <span className="font-mono bg-slate-100 px-1 rounded select-all">
+                                                                {item.bankName} - {item.accountNumber}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-slate-400">{(item.totalMins/60).toFixed(2)} Jam • {item.sheetIds.length} Laporan</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="font-bold text-green-600 text-lg">{formatCurrency(item.totalIDR, 'IDR')}</p>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    onClick={() => handleMarkPaid(item.userId, item.sheetIds, item.name)}
+                                                    disabled={loading}
+                                                    className="w-full mt-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition active:scale-95"
+                                                >
+                                                    {loading ? <Spinner/> : <><i className="fas fa-check-double"></i> Tandai Lunas (Reset)</>}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="space-y-4 fade-in">
+                            {/* History Summary */}
+                            <div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+                                <h2 className="text-xl font-bold mb-1 flex items-center gap-2"><i className="fas fa-history"></i> Riwayat Pembayaran</h2>
+                                <p className="text-green-100 text-xs">Total Pembayaran Berhasil</p>
+                                <p className="text-3xl font-bold mt-2">{formatCurrency(totalPaidIDR, 'IDR')}</p>
+                            </div>
+
+                            {/* History List */}
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                {sortedHistoryDates.length === 0 ? (
+                                    <p className="text-center text-slate-400 py-8 italic">Belum ada riwayat pembayaran.</p>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {sortedHistoryDates.map(dateKey => {
+                                            const group = historyGroups[dateKey];
+                                            const totalGroup = group.reduce((sum, t) => sum + (parseFloat(t.paymentIDR) || 0), 0);
+                                            const displayDate = new Date(dateKey).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                                            return (
+                                                <div key={dateKey}>
+                                                    <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-1">
+                                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{displayDate}</h4>
+                                                        <span className="text-xs font-bold text-green-600">{formatCurrency(totalGroup, 'IDR')}</span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {group.map(t => {
+                                                            const u = users.find(u => String(u.id) === String(t.userId));
+                                                            return (
+                                                                <div key={t.id} className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 rounded-lg transition">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{backgroundColor: u?.color || '#ccc'}}>
+                                                                            {u?.name?.substring(0,2).toUpperCase()}
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="font-bold text-slate-700">{u?.name || 'Unknown'}</p>
+                                                                            <p className="text-[10px] text-slate-400">Kerja: {formatDate(t.date)} ({t.duration} m)</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="font-mono font-medium text-slate-600">{formatCurrency(t.paymentIDR, 'IDR')}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -1186,6 +1281,7 @@
                                 paymentUSD: usd.toFixed(2),
                                 paymentIDR: idr,
                                 status: status,
+                                paidAt: status === 'paid' ? new Date().toISOString() : null, // Add paidAt for dummy data
                                 createdAt: new Date().toISOString()
                             });
                         }
