@@ -171,15 +171,15 @@
         };
 
         // --- NEW: ANALYTICS VIEW COMPONENT ---
-        const AnalyticsView = ({ timesheets, schedules, users, currentUser }) => {
-            const [tab, setTab] = React.useState('personal'); // 'team' or 'personal'
+        const AnalyticsView = ({ timesheets, schedules, users, currentUser, onGenerateDummy, isAdmin, loading }) => {
+            const [tab, setTab] = React.useState('team'); 
 
             // --- Calculation Logic ---
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
 
-            // Filter Timesheets for Current Month
+            // Filter Timesheets for Current Month (Summary Cards)
             const thisMonthSheets = timesheets.filter(t => {
                 const d = new Date(t.date);
                 return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -214,10 +214,10 @@
             const myTotalMinutes = mySheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
             const myTotalEarnings = mySheets.reduce((acc, t) => acc + parseFloat(t.paymentIDR || 0), 0);
 
-            // 5. Adherence (Schedule vs Actual) - Last 7 Days
-            const getLast7Days = () => {
+            // 5. Adherence & Daily Activity - Last 14 Days (Extended range)
+            const getLast14Days = () => {
                 const dates = [];
-                for(let i=6; i>=0; i--) {
+                for(let i=13; i>=0; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const y = d.getFullYear();
@@ -228,10 +228,9 @@
                 return dates;
             };
             
-            const last7Days = getLast7Days();
+            const rangeDays = getLast14Days();
             
-            const adherenceData = last7Days.map(dateStr => {
-                // Scheduled Minutes for currentUser on this date
+            const adherenceData = rangeDays.slice(7).map(dateStr => { 
                 const scheduledMins = schedules
                     .filter(s => String(s.userId) === String(currentUser) && (s.startDate === dateStr || s.date === dateStr))
                     .reduce((acc, s) => {
@@ -241,7 +240,6 @@
                         return acc + Math.floor((end - start)/60000);
                     }, 0);
 
-                // Actual Minutes for currentUser on this date
                 const actualMins = timesheets
                     .filter(t => String(t.userId) === String(currentUser) && t.date === dateStr)
                     .reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
@@ -249,36 +247,48 @@
                 return { date: dateStr, scheduled: scheduledMins, actual: actualMins };
             });
 
-            // 6. Daily Activity (Team) - Last 7 Days
-            const dailyActivityTeam = last7Days.map(dateStr => {
+            // 6. Daily Activity (Team) - Last 14 Days - Uses GLOBAL timesheets (Paid & Pending)
+            const dailyActivityTeam = rangeDays.map(dateStr => {
                 const mins = timesheets
-                    .filter(t => t.date === dateStr)
+                    .filter(t => t.date === dateStr) // Matches exact YYYY-MM-DD string
                     .reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
                 return { date: dateStr, minutes: mins };
             });
-            const maxDailyMins = Math.max(...dailyActivityTeam.map(d => d.minutes), 1); // Avoid div by 0
+            const maxDailyMins = Math.max(...dailyActivityTeam.map(d => d.minutes), 60);
+            const isActivityEmpty = dailyActivityTeam.every(d => d.minutes === 0);
 
             return (
                 <div className="space-y-4 fade-in pb-24">
                     {/* Header Tabs */}
-                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex">
-                        <button 
-                            onClick={() => setTab('personal')}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tab === 'personal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-                        >
-                            Personal
-                        </button>
-                        <button 
-                            onClick={() => setTab('team')}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tab === 'team' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
-                        >
-                            Tim
-                        </button>
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
+                        <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
+                            <button 
+                                onClick={() => setTab('team')}
+                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}
+                            >
+                                Tim Global
+                            </button>
+                            <button 
+                                onClick={() => setTab('personal')}
+                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'personal' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-500'}`}
+                            >
+                                Personal
+                            </button>
+                        </div>
+                        {isAdmin && (
+                            <button 
+                                onClick={onGenerateDummy}
+                                disabled={loading}
+                                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-600 p-2 rounded-lg transition"
+                                title="Buat data dummy untuk tes grafik"
+                            >
+                                <i className="fas fa-magic text-xs"></i>
+                            </button>
+                        )}
                     </div>
 
                     {tab === 'personal' && (
                         <div className="space-y-4 animate-fadeIn">
-                            {/* Personal Summary Card */}
                             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-lg">
                                 <h3 className="text-xs text-blue-200 uppercase tracking-widest font-bold mb-4">Statistik Saya (Bulan Ini)</h3>
                                 <div className="grid grid-cols-2 gap-4">
@@ -293,16 +303,14 @@
                                 </div>
                             </div>
 
-                            {/* Adherence Chart */}
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                                    <i className="fas fa-chart-bar text-blue-500"></i> Disiplin: Jadwal vs Realisasi
+                                    <i className="fas fa-chart-bar text-blue-500"></i> Disiplin (7 Hari Terakhir)
                                 </h3>
                                 <div className="space-y-3">
                                     {adherenceData.map((d, idx) => {
                                         const dateLabel = new Date(d.date).toLocaleDateString('id-ID', {weekday:'short', day:'numeric'});
-                                        const maxVal = Math.max(d.scheduled, d.actual, 60); // min scale 1h
-                                        
+                                        const maxVal = Math.max(d.scheduled, d.actual, 60); 
                                         return (
                                             <div key={idx} className="text-xs">
                                                 <div className="flex justify-between mb-1 text-slate-500">
@@ -315,31 +323,19 @@
                                                     </span>
                                                 </div>
                                                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative flex">
-                                                    {/* Scheduled Bar (Background Grey/Striped) */}
-                                                    <div 
-                                                        className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" 
-                                                        style={{ width: `${(d.scheduled/maxVal)*100}%` }}
-                                                    ></div>
-                                                    {/* Actual Bar (Blue/Green) */}
-                                                    <div 
-                                                        className={`h-full rounded-full ${d.actual > d.scheduled ? 'bg-green-500' : 'bg-blue-500'}`} 
-                                                        style={{ width: `${(d.actual/maxVal)*100}%` }}
-                                                    ></div>
+                                                    <div className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" style={{ width: `${(d.scheduled/maxVal)*100}%` }}></div>
+                                                    <div className={`h-full rounded-full ${d.actual > d.scheduled ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${(d.actual/maxVal)*100}%` }}></div>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-3 italic text-center">
-                                    *Bar abu-abu: Rencana (Jadwal). Bar berwarna: Realisasi (Laporan).
-                                </p>
                             </div>
                         </div>
                     )}
 
                     {tab === 'team' && (
                         <div className="space-y-4 animate-fadeIn">
-                            {/* Team Summary Card */}
                             <div className="bg-gradient-to-br from-indigo-700 to-purple-800 rounded-2xl p-5 text-white shadow-lg">
                                 <h3 className="text-xs text-indigo-200 uppercase tracking-widest font-bold mb-4">Overview Tim (Bulan Ini)</h3>
                                 <div className="flex justify-between items-end">
@@ -354,30 +350,56 @@
                                 </div>
                             </div>
 
-                            {/* Daily Activity Chart (Simple Vertical Bars) */}
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                                <h3 className="font-bold text-slate-700 mb-4 text-sm">Aktivitas Tim (7 Hari Terakhir)</h3>
-                                <div className="flex items-end justify-between h-32 gap-2">
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="font-bold text-slate-700 text-sm">Aktivitas Tim (14 Hari)</h3>
+                                    <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                                        Total Laporan: {timesheets.length}
+                                    </span>
+                                </div>
+                                
+                                {isActivityEmpty && !loading && (
+                                    <div className="absolute inset-0 top-12 bg-white/80 z-10 flex flex-col items-center justify-center text-center p-4">
+                                        <p className="text-slate-400 text-xs mb-2">
+                                            Belum ada data aktivitas di 14 hari terakhir.
+                                        </p>
+                                        {isAdmin && (
+                                            <button onClick={onGenerateDummy} className="text-indigo-600 bg-indigo-50 px-3 py-1 rounded text-xs font-bold hover:bg-indigo-100 transition">
+                                                Generate Dummy Data
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* FIXED CSS: Removed items-end from parent, used h-full on child */}
+                                <div className="flex justify-between h-32 gap-1">
                                     {dailyActivityTeam.map((d, idx) => {
-                                        const h = (d.minutes / maxDailyMins) * 100;
-                                        const dayName = new Date(d.date).toLocaleDateString('id-ID', {weekday:'narrow'});
+                                        const h = Math.max((d.minutes / maxDailyMins) * 100, d.minutes > 0 ? 5 : 0);
+                                        const dateObj = new Date(d.date);
+                                        const dayName = dateObj.toLocaleDateString('id-ID', {weekday:'narrow'});
+                                        const dateNum = dateObj.getDate();
+                                        
                                         return (
-                                            <div key={idx} className="flex-1 flex flex-col items-center group">
-                                                <div className="w-full bg-indigo-50 rounded-t-md relative hover:bg-indigo-100 transition-all flex flex-col justify-end" style={{height: '100%'}}>
-                                                    <div className="w-full bg-indigo-500 rounded-t-md bar-fill" style={{height: `${h}%`}}></div>
-                                                    {/* Tooltip */}
-                                                    <div className="absolute bottom-full mb-1 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                                                        {Math.round(d.minutes/60)} Jam
-                                                    </div>
+                                            <div key={idx} className="flex-1 flex flex-col items-center group h-full justify-end">
+                                                <div className="w-full bg-slate-50 rounded-t-sm relative hover:bg-indigo-50 transition-all flex flex-col justify-end h-full">
+                                                    <div className={`w-full rounded-t-sm bar-fill ${d.minutes > 0 ? 'bg-indigo-500' : 'bg-transparent'}`} style={{height: `${h}%`}}></div>
+                                                    {d.minutes > 0 && (
+                                                        <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none shadow-lg">
+                                                            {d.date}<br/>
+                                                            <b>{(d.minutes/60).toFixed(1)} Jam</b>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <span className="text-[10px] text-slate-400 mt-2 font-medium">{dayName}</span>
+                                                <div className="mt-1 text-center h-6">
+                                                    <span className="text-[8px] text-slate-400 block leading-tight">{dayName}</span>
+                                                    <span className="text-[8px] text-slate-500 font-bold block leading-tight">{dateNum}</span>
+                                                </div>
                                             </div>
                                         )
                                     })}
                                 </div>
                             </div>
 
-                            {/* Leaderboard */}
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                                     <i className="fas fa-trophy text-yellow-500"></i> Top Kontributor
@@ -396,6 +418,7 @@
                                             </div>
                                         </div>
                                     ))}
+                                    {leaderboard.length === 0 && <p className="text-xs text-slate-400 text-center italic">Belum ada data kontributor bulan ini.</p>}
                                 </div>
                             </div>
                         </div>
@@ -405,7 +428,7 @@
         };
 
         // --- ADMIN PANEL ---
-        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify }) => {
+        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, onGenerateDummy }) => {
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
             
             // Stats
@@ -419,18 +442,13 @@
             const currentWIB = new Date(wibString); 
             
             const activeWorkers = schedules.filter(s => {
-                // Compatibility: Jika data lama, anggap s.date + s.startTime
                 const startDateStr = s.startDate || s.date;
                 const endDateStr = s.endDate || s.date;
-
                 const sStart = new Date(`${startDateStr}T${s.startTime}`);
                 const sEnd = new Date(`${endDateStr}T${s.endTime}`);
-                
-                // Handle legacy data where End < Start meant next day implicitly
                 if (!s.endDate && sEnd < sStart) {
                     sEnd.setDate(sEnd.getDate() + 1);
                 }
-
                 return currentWIB >= sStart && currentWIB <= sEnd;
             }).map(s => {
                 const u = users.find(u => String(u.id) === String(s.userId));
@@ -1129,6 +1147,59 @@
                 }
             };
 
+            // GENERATE DUMMY DATA HANDLER (MOVED FROM ADMIN PANEL)
+            const handleGenerateDummyData = async () => {
+                if(!confirm("Buat data dummy acak untuk 7 hari terakhir agar grafik terlihat?")) return;
+                setLoading(true);
+                try {
+                    const batch = window.fs.writeBatch(window.db);
+                    const today = new Date();
+                    
+                    // Generate for last 7 days
+                    for (let i = 0; i < 7; i++) {
+                        const d = new Date(today);
+                        d.setDate(d.getDate() - i);
+                        // Format YYYY-MM-DD manually to avoid timezone issues
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const dateStr = `${y}-${m}-${day}`;
+                        
+                        // Create 2-3 entries per day randomly
+                        const numEntries = Math.floor(Math.random() * 3) + 1; 
+                        
+                        for (let j = 0; j < numEntries; j++) {
+                            const randomUser = users[Math.floor(Math.random() * users.length)];
+                            if (!randomUser) continue;
+                            
+                            const duration = Math.floor(Math.random() * 180) + 60; // 60-240 mins
+                            const usd = (duration / 60) * HOURLY_RATE_USD;
+                            const idr = Math.round(usd * EXCHANGE_RATE);
+                            const status = Math.random() > 0.5 ? 'paid' : 'pending'; // Mix statuses
+                            
+                            const ref = window.fs.doc(window.fs.collection(window.db, 'timesheets'));
+                            batch.set(ref, {
+                                userId: randomUser.id,
+                                date: dateStr,
+                                startTime: "09:00", // Generic start time
+                                duration: duration,
+                                paymentUSD: usd.toFixed(2),
+                                paymentIDR: idr,
+                                status: status,
+                                createdAt: new Date().toISOString()
+                            });
+                        }
+                    }
+                    await batch.commit();
+                    showNotify("Data dummy (Pending & Paid) berhasil dibuat! Cek Analitik.");
+                } catch (e) {
+                    console.error(e);
+                    showNotify("Gagal membuat data dummy", "error");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
             // SCHEDULE HANDLERS (UPDATED for Multi-day logic)
             const saveSchedule = async (e) => {
                 e.preventDefault();
@@ -1381,8 +1452,24 @@
                                     onOpenProfile={() => setShowProfileModal(true)}
                                     isAdmin={isAdmin}
                                 />}
-                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} />}
-                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} />}
+                                {view === 'analytics' && <AnalyticsView 
+                                    timesheets={timesheets} 
+                                    schedules={schedules} 
+                                    users={users} 
+                                    currentUser={currentUser} 
+                                    onGenerateDummy={handleGenerateDummyData}
+                                    isAdmin={isAdmin}
+                                    loading={loading}
+                                />}
+                                {view === 'admin' && isAdmin && <AdminPanel 
+                                    timesheets={timesheets} 
+                                    users={users} 
+                                    schedules={schedules} 
+                                    loading={loading} 
+                                    setLoading={setLoading} 
+                                    showNotify={showNotify}
+                                    onGenerateDummy={handleGenerateDummyData}
+                                />}
                             </>
                         )}
                     </main>
