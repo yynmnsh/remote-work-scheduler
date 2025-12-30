@@ -171,7 +171,7 @@
         };
 
         // --- ANALYTICS VIEW COMPONENT ---
-        const AnalyticsView = ({ timesheets, schedules, users, currentUser, onGenerateDummy, isAdmin, loading }) => {
+        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading }) => {
             const [tab, setTab] = React.useState('team'); 
 
             // --- Calculation Logic ---
@@ -214,7 +214,7 @@
             const myTotalMinutes = mySheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
             const myTotalEarnings = mySheets.reduce((acc, t) => acc + parseFloat(t.paymentIDR || 0), 0);
 
-            // 5. Adherence & Daily Activity - Last 14 Days (Extended range)
+            // 5. Adherence & Daily Activity - Last 14 Days
             const getLast14Days = () => {
                 const dates = [];
                 for(let i=13; i>=0; i--) {
@@ -247,7 +247,7 @@
                 return { date: dateStr, scheduled: scheduledMins, actual: actualMins };
             });
 
-            // 6. Daily Activity (Team) - Last 14 Days - Uses GLOBAL timesheets (Paid & Pending)
+            // 6. Daily Activity (Team) - Last 14 Days - Uses GLOBAL timesheets
             const dailyActivityTeam = rangeDays.map(dateStr => {
                 const mins = timesheets
                     .filter(t => t.date === dateStr) // Matches exact YYYY-MM-DD string
@@ -275,16 +275,6 @@
                                 Personal
                             </button>
                         </div>
-                        {isAdmin && (
-                            <button 
-                                onClick={onGenerateDummy}
-                                disabled={loading}
-                                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-600 p-2 rounded-lg transition"
-                                title="Buat data dummy untuk tes grafik"
-                            >
-                                <i className="fas fa-magic text-xs"></i>
-                            </button>
-                        )}
                     </div>
 
                     {tab === 'personal' && (
@@ -363,11 +353,6 @@
                                         <p className="text-slate-400 text-xs mb-2">
                                             Belum ada data aktivitas di 14 hari terakhir.
                                         </p>
-                                        {isAdmin && (
-                                            <button onClick={onGenerateDummy} className="text-indigo-600 bg-indigo-50 px-3 py-1 rounded text-xs font-bold hover:bg-indigo-100 transition">
-                                                Generate Dummy Data
-                                            </button>
-                                        )}
                                     </div>
                                 )}
 
@@ -881,7 +866,7 @@
         };
 
         // --- ADMIN PANEL (UPDATED) ---
-        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, onGenerateDummy }) => {
+        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify }) => {
             const [viewMode, setViewMode] = React.useState('pending'); // 'pending' or 'history'
 
             // --- PENDING LOGIC ---
@@ -923,6 +908,25 @@
                 historyGroups[dateKey].push(t);
             });
             const sortedHistoryDates = Object.keys(historyGroups).sort((a,b) => new Date(b) - new Date(a));
+
+            // --- TOTAL GAJI USER (ALL TIME) ---
+            const totalEarningsByUser = React.useMemo(() => {
+                const stats = {};
+                timesheets.forEach(t => {
+                    if (t.status === 'paid') {
+                        if (!stats[t.userId]) stats[t.userId] = 0;
+                        stats[t.userId] += (t.paymentIDR || 0);
+                    }
+                });
+                return Object.keys(stats)
+                    .map(uid => ({
+                        uid,
+                        total: stats[uid],
+                        name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown',
+                        color: users.find(u => String(u.id) === String(uid))?.color || '#ccc'
+                    }))
+                    .sort((a, b) => b.total - a.total);
+            }, [timesheets, users]);
 
             // --- ACTIVE WORKERS LOGIC ---
             const nowUTC = new Date();
@@ -1030,13 +1034,6 @@
                                             <i className="far fa-calendar-alt mr-1"></i> Periode: {periodText}
                                         </p>
                                     </div>
-                                    <button 
-                                        onClick={onGenerateDummy}
-                                        disabled={loading}
-                                        className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-lg transition backdrop-blur-sm flex items-center gap-1"
-                                    >
-                                        <i className="fas fa-magic"></i> Data
-                                    </button>
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-3">
@@ -1104,8 +1101,30 @@
                                 <p className="text-3xl font-bold mt-2">{formatCurrency(totalPaidIDR, 'IDR')}</p>
                             </div>
 
+                            {/* TOTAL EARNINGS PER USER CARD */}
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
+                                    <i className="fas fa-users text-blue-500"></i> Total Pendapatan User (Lunas)
+                                </h3>
+                                <div className="space-y-2">
+                                    {totalEarningsByUser.map((u, idx) => (
+                                        <div key={u.uid} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg border-b border-slate-50 last:border-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{backgroundColor: u.color}}>
+                                                    {idx + 1}
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-700">{u.name}</span>
+                                            </div>
+                                            <span className="font-mono text-sm font-bold text-green-600">{formatCurrency(u.total, 'IDR')}</span>
+                                        </div>
+                                    ))}
+                                    {totalEarningsByUser.length === 0 && <p className="text-center text-slate-400 text-xs italic">Belum ada data pembayaran lunas.</p>}
+                                </div>
+                            </div>
+
                             {/* History List */}
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide mb-4">Rincian Per Tanggal</h3>
                                 {sortedHistoryDates.length === 0 ? (
                                     <p className="text-center text-slate-400 py-8 italic">Belum ada riwayat pembayaran.</p>
                                 ) : (
@@ -1237,60 +1256,6 @@
                     setShowProfileModal(false);
                 } catch(e) {
                     showNotify("Gagal menyimpan.", "error");
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            // GENERATE DUMMY DATA HANDLER (MOVED FROM ADMIN PANEL)
-            const handleGenerateDummyData = async () => {
-                if(!confirm("Buat data dummy acak untuk 7 hari terakhir agar grafik terlihat?")) return;
-                setLoading(true);
-                try {
-                    const batch = window.fs.writeBatch(window.db);
-                    const today = new Date();
-                    
-                    // Generate for last 7 days
-                    for (let i = 0; i < 7; i++) {
-                        const d = new Date(today);
-                        d.setDate(d.getDate() - i);
-                        // Format YYYY-MM-DD manually to avoid timezone issues
-                        const y = d.getFullYear();
-                        const m = String(d.getMonth() + 1).padStart(2, '0');
-                        const day = String(d.getDate()).padStart(2, '0');
-                        const dateStr = `${y}-${m}-${day}`;
-                        
-                        // Create 2-3 entries per day randomly
-                        const numEntries = Math.floor(Math.random() * 3) + 1; 
-                        
-                        for (let j = 0; j < numEntries; j++) {
-                            const randomUser = users[Math.floor(Math.random() * users.length)];
-                            if (!randomUser) continue;
-                            
-                            const duration = Math.floor(Math.random() * 180) + 60; // 60-240 mins
-                            const usd = (duration / 60) * HOURLY_RATE_USD;
-                            const idr = Math.round(usd * EXCHANGE_RATE);
-                            const status = Math.random() > 0.5 ? 'paid' : 'pending'; // Mix statuses
-                            
-                            const ref = window.fs.doc(window.fs.collection(window.db, 'timesheets'));
-                            batch.set(ref, {
-                                userId: randomUser.id,
-                                date: dateStr,
-                                startTime: "09:00", // Generic start time
-                                duration: duration,
-                                paymentUSD: usd.toFixed(2),
-                                paymentIDR: idr,
-                                status: status,
-                                paidAt: status === 'paid' ? new Date().toISOString() : null, // Add paidAt for dummy data
-                                createdAt: new Date().toISOString()
-                            });
-                        }
-                    }
-                    await batch.commit();
-                    showNotify("Data dummy (Pending & Paid) berhasil dibuat! Cek Analitik.");
-                } catch (e) {
-                    console.error(e);
-                    showNotify("Gagal membuat data dummy", "error");
                 } finally {
                     setLoading(false);
                 }
@@ -1553,7 +1518,6 @@
                                     schedules={schedules} 
                                     users={users} 
                                     currentUser={currentUser} 
-                                    onGenerateDummy={handleGenerateDummyData}
                                     isAdmin={isAdmin}
                                     loading={loading}
                                 />}
@@ -1564,7 +1528,6 @@
                                     loading={loading} 
                                     setLoading={setLoading} 
                                     showNotify={showNotify}
-                                    onGenerateDummy={handleGenerateDummyData}
                                 />}
                             </>
                         )}
