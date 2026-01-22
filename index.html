@@ -88,7 +88,7 @@
             id: {
                 nav: { home: 'Beranda', schedule: 'Jadwal', timesheet: 'Laporan', analytics: 'Analitik', admin: 'Admin' },
                 common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan' },
-                dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.' },
+                dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang' },
                 timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
                 analytics: { myStats: 'Statistik Saya', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi Pendapatan', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalReports: 'Total Laporan', personal: 'Personal', team: 'Tim Global' },
@@ -98,7 +98,7 @@
             en: {
                 nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
                 common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed' },
-                dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.' },
+                dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
                 analytics: { myStats: 'My Stats', teamOverview: 'Team Overview', teamActivity: 'Team Activity', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalReports: 'Total Reports', personal: 'Personal', team: 'Global Team' },
@@ -476,7 +476,7 @@
             );
         };
 
-        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, getUserColor, onEditProfile, setView, t, formatCurrency, lang }) => {
+        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, users, getUserColor, onEditProfile, setView, t, formatCurrency, lang }) => {
             const myPending = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
             const totalMins = myPending.reduce((acc, curr) => acc + (curr.duration || 0), 0);
             const estEarned = (totalMins / 60) * RATES[lang];
@@ -500,6 +500,25 @@
                 })
                 .sort((a,b) => new Date(a.startDate || a.date) - new Date(b.startDate || b.date))
                 .slice(0, 5);
+            
+            // --- ACTIVE WORKERS LOGIC (Duplicate from Admin for Dashboard) ---
+            const nowUTC = new Date();
+            const wibString = nowUTC.toLocaleString("en-US", {timeZone: "Asia/Jakarta", hour12: false}); 
+            const currentWIB = new Date(wibString); 
+            
+            const activeWorkers = schedules.filter(s => {
+                const startDateStr = s.startDate || s.date;
+                const endDateStr = s.endDate || s.date;
+                const sStart = new Date(`${startDateStr}T${s.startTime}`);
+                const sEnd = new Date(`${endDateStr}T${s.endTime}`);
+                if (!s.endDate && sEnd < sStart) {
+                    sEnd.setDate(sEnd.getDate() + 1);
+                }
+                return currentWIB >= sStart && currentWIB <= sEnd;
+            }).map(s => {
+                const u = users.find(u => String(u.id) === String(s.userId));
+                return { name: u?.name || 'Unknown', endTime: s.endTime, color: u?.color, hidden: u?.hidden };
+            }).filter(u => !u.hidden);
 
             return (
                 <div className="space-y-4 fade-in">
@@ -517,6 +536,36 @@
                         </div>
                         <i className="fas fa-coins absolute -right-6 -bottom-8 text-9xl text-white opacity-5"></i>
                     </div>
+
+                    {/* Active Status Card in Dashboard */}
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100">
+                        <div className="flex justify-between items-start mb-3">
+                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
+                                <span className="relative flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                </span>
+                                {t.dashboard.workingNow} ({TIMEZONE_LABELS[lang]})
+                            </h3>
+                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">
+                                {currentWIB.getHours().toString().padStart(2, '0')}:{currentWIB.getMinutes().toString().padStart(2, '0')} WIB
+                            </span>
+                        </div>
+                        {activeWorkers.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {activeWorkers.map((w, idx) => (
+                                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{backgroundColor: w.color}}></div>
+                                        <span className="text-sm font-bold text-slate-700">{w.name}</span>
+                                        <span className="text-xs text-slate-400">until {getDisplayTime(w.endTime, '2023-01-01', lang)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 italic">{t.dashboard.noActive}</p>
+                        )}
+                    </div>
+
                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center text-sm uppercase tracking-wide"><i className="fas fa-calendar-alt text-blue-500 mr-2"></i> {t.dashboard.upcoming}</h3>
                         <div className="space-y-3">
@@ -1101,7 +1150,7 @@
                     <main className="flex-1 p-4">
                         {loading && !users.length ? <div className="flex flex-col items-center justify-center h-64 text-slate-400 animate-pulse"><i className="fas fa-database text-4xl mb-3"></i><p>{t.common.loading}</p></div> : (
                             <>
-                                {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={dynamicFormatCurrency} lang={lang} />}
+                                {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={dynamicFormatCurrency} lang={lang} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} />}
                                 {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={dynamicFormatCurrency} />}
                                 {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={dynamicFormatCurrency} />}
