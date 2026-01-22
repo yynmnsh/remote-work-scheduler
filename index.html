@@ -548,7 +548,7 @@
             const [filterMine, setFilterMine] = React.useState(false);
             const [sortOrder, setSortOrder] = React.useState('asc');
             
-            const MAX_MINUTES = 480; 
+            const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
                 const currentOpDay = getOpDay(scheduleForm.startDate, scheduleForm.startTime); // uses DB time (WIB) in form state? No, form state is UI time.
                 // Wait, dailyUsedMinutes calculation needs DB times.
@@ -1128,3 +1128,4 @@
     </script>
 </body>
 </html>
+
