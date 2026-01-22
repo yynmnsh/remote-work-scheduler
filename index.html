@@ -61,9 +61,21 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- CONSTANTS & DICTIONARY ---
+        // --- CONSTANTS & CONFIGURATION ---
         const ADMIN_ID = '9'; 
         const ADMIN_PASSWORD = 'peiyi'; // Password Admin
+        
+        // RATES CONFIGURATION (Moved to top)
+        const BASE_HOURLY_RATE_USD = 15; // 15 Dollar (AUD base)
+        const USD_TO_IDR = 16000; // 1 Dollar = 16.000 IDR
+        
+        const RATES = { 
+            id: BASE_HOURLY_RATE_USD * USD_TO_IDR, // 240.000
+            en: BASE_HOURLY_RATE_USD // 15
+        };
+        
+        const TIMEZONES = { id: 'Asia/Jakarta', en: 'Australia/Melbourne' };
+        const TIMEZONE_LABELS = { id: 'WIB', en: 'Melbourne' };
         
         // Initial Seed (Fallback)
         const INITIAL_USERS = [
@@ -75,7 +87,7 @@
         const TRANSLATIONS = {
             id: {
                 nav: { home: 'Beranda', schedule: 'Jadwal', timesheet: 'Laporan', analytics: 'Analitik', admin: 'Admin' },
-                common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi' },
+                common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan' },
                 dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.' },
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 8 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang' },
                 timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
@@ -85,7 +97,7 @@
             },
             en: {
                 nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
-                common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration' },
+                common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed' },
                 dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.' },
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 8h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
@@ -95,12 +107,13 @@
             }
         };
 
-        const RATES = { id: 170000, en: 15 };
-        const CURRENCIES = { id: 'IDR', en: 'AUD' };
-        const TIMEZONES = { id: 'Asia/Jakarta', en: 'Australia/Melbourne' };
-        const TIMEZONE_LABELS = { id: 'WIB', en: 'Melbourne' };
+        // --- HELPERS ---
+        const formatDate = (dateString, lang = 'id') => {
+            if (!dateString) return '';
+            const options = { weekday: 'short', day: 'numeric', month: 'short' };
+            return new Date(dateString).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', options);
+        };
 
-        // --- TIMEZONE HELPERS ---
         const formatTimeInZone = (dateObj, timeZone) => {
             return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
         };
@@ -147,6 +160,13 @@
             return minutes - 900; 
         };
 
+        // --- UTILITIES ---
+        const formatCurrency = (amount, currency = 'USD') => {
+            const num = parseFloat(amount) || 0;
+            if (currency === 'IDR') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+        };
+
         // --- UI COMPONENTS ---
         const Spinner = () => <i className="fas fa-circle-notch fa-spin text-white"></i>;
 
@@ -156,6 +176,25 @@
                 <button onClick={onClose}><i className="fas fa-times opacity-70 hover:opacity-100"></i></button>
             </div>
         );
+
+        // --- NEW: GENERIC CONFIRMATION MODAL ---
+        const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel, t }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">{t.common.confirmTitle}</h3>
+                        <p className="text-slate-600 mb-6">{message}</p>
+                        <div className="flex gap-2">
+                            <button onClick={onCancel} className="flex-1 py-2 text-slate-500 font-medium text-sm hover:bg-slate-100 rounded-lg transition">{t.common.cancel}</button>
+                            <button onClick={onConfirm} className="flex-1 py-2 bg-red-600 text-white font-medium text-sm rounded-lg hover:bg-red-700 transition">
+                                {t.common.yes}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
         const ProfileModal = ({ user, onClose, onSave, loading, lang, t }) => {
             const [bankName, setBankName] = React.useState(user?.bankName || '');
@@ -651,6 +690,17 @@
             const [showHistory, setShowHistory] = React.useState(false); 
             const filteredTimesheets = timesheets.filter(t => showHistory ? t.status === 'paid' : t.status === 'pending');
 
+            // --- FIXED: Use getDisplayAmount helper inside ReportManager ---
+            const getDisplayAmount = (item) => {
+                const baseVal = parseFloat(item.paymentUSD) || 0;
+                if (lang === 'id') {
+                    // IDR logic: stored USD * 16000
+                    return baseVal * USD_TO_IDR;
+                }
+                // AUD/USD logic: as is
+                return baseVal;
+            };
+
             return (
                 <div className="space-y-4 fade-in">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
@@ -669,7 +719,7 @@
                         <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3><button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button></div>
                         {filteredTimesheets.map(item => (
                             <div key={item.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{formatDate(item.date)} • {item.startTime}</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(lang === 'id' ? item.paymentIDR : item.paymentUSD)}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
+                                <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{formatDate(item.date)} • {item.startTime}</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item))}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
                                 <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center"><span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${item.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>{item.status === 'paid' ? t.timesheet.paid : t.timesheet.pending}</span>{String(item.userId) === String(currentUser) && item.status !== 'paid' && (<div className="flex gap-2"><button onClick={() => editTimesheet(item)} className="text-xs text-blue-500"><i className="fas fa-pen"></i></button><button onClick={() => deleteTimesheet(item.id)} className="text-xs text-red-500"><i className="fas fa-trash"></i></button></div>)}</div>
                             </div>
                         ))}
@@ -678,15 +728,21 @@
             );
         };
 
-        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, onAddUser, onEditUser, onDeleteUser }) => {
+        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, onAddUser, onEditUser, onDeleteUser, onConfirmAction }) => {
             const [viewMode, setViewMode] = React.useState('pending'); // 'pending', 'history', 'users'
             
-            // Calc stats
+            // Calc stats using dynamic display logic
+            // We use item.paymentUSD as base since it is 15/hr based (approx)
+            const getAmount = (item) => {
+                const baseVal = parseFloat(item.paymentUSD) || 0;
+                return lang === 'id' ? baseVal * USD_TO_IDR : baseVal;
+            }
+
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
-            const totalPending = pendingSheets.reduce((sum, t) => sum + (parseFloat(lang === 'id' ? t.paymentIDR : t.paymentUSD) || 0), 0);
+            const totalPending = pendingSheets.reduce((sum, t) => sum + getAmount(t), 0);
             
             const paidSheets = timesheets.filter(t => t.status === 'paid');
-            const totalPaid = paidSheets.reduce((sum, t) => sum + (parseFloat(lang === 'id' ? t.paymentIDR : t.paymentUSD) || 0), 0);
+            const totalPaid = paidSheets.reduce((sum, t) => sum + getAmount(t), 0);
 
             // Group Paid by Date
             const paidHistory = {};
@@ -698,17 +754,18 @@
             const sortedHistory = Object.keys(paidHistory).sort((a,b) => new Date(b) - new Date(a));
 
             const handleMarkPaid = async (sheetIds) => {
-                if(!confirm(t.timesheet.confirmPaid)) return;
-                setLoading(true);
-                try {
-                    const batch = window.fs.writeBatch(window.db);
-                    sheetIds.forEach(id => {
-                        const docRef = window.fs.doc(window.db, "timesheets", id);
-                        batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() });
-                    });
-                    await batch.commit();
-                    showNotify("Marked as Paid!");
-                } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
+                onConfirmAction(t.timesheet.confirmPaid, async () => {
+                    setLoading(true);
+                    try {
+                        const batch = window.fs.writeBatch(window.db);
+                        sheetIds.forEach(id => {
+                            const docRef = window.fs.doc(window.db, "timesheets", id);
+                            batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() });
+                        });
+                        await batch.commit();
+                        showNotify("Marked as Paid!");
+                    } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
+                });
             };
 
             return (
@@ -731,7 +788,7 @@
                                         {/* Group by User */}
                                         {Object.values(pendingSheets.reduce((acc, curr) => {
                                             if(!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, sheets: [] };
-                                            acc[curr.userId].total += parseFloat(lang === 'id' ? curr.paymentIDR : curr.paymentUSD);
+                                            acc[curr.userId].total += getAmount(curr);
                                             acc[curr.userId].sheets.push(curr.id);
                                             return acc;
                                         }, {})).map(grp => {
@@ -764,7 +821,7 @@
                                         <h4 className="text-xs font-bold text-slate-500 uppercase border-b pb-1 mb-2">{d}</h4>
                                         {paidHistory[d].map(item => {
                                             const u = users.find(u => String(u.id) === String(item.userId));
-                                            return <div key={item.id} className="flex justify-between text-sm py-1"><span>{u?.name}</span><span className="font-mono">{formatCurrency(lang === 'id' ? item.paymentIDR : item.paymentUSD)}</span></div>
+                                            return <div key={item.id} className="flex justify-between text-sm py-1"><span>{u?.name}</span><span className="font-mono">{formatCurrency(getAmount(item))}</span></div>
                                         })}
                                     </div>
                                 ))}
@@ -824,6 +881,9 @@
             const [timesheetForm, setTimesheetForm] = React.useState({ date: '', startTime: '', duration: '' });
             const [editTimesheetId, setEditTimesheetId] = React.useState(null);
 
+            // New Confirm Modal State
+            const [confirmModal, setConfirmModal] = React.useState({ show: false, message: '', action: null });
+
             React.useEffect(() => {
                 const initData = async () => {
                     if (!window.db) return;
@@ -863,6 +923,15 @@
                 return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(num);
             };
 
+            const triggerConfirm = (message, action) => {
+                setConfirmModal({ show: true, message, action });
+            };
+
+            const executeConfirm = () => {
+                if (confirmModal.action) confirmModal.action();
+                setConfirmModal({ ...confirmModal, show: false, action: null });
+            };
+
             const saveUserProfile = async (data) => {
                 if(!currentUser) return;
                 setLoading(true);
@@ -891,12 +960,13 @@
                 } catch(e) { showNotify("Error saving user", "error"); } finally { setLoading(false); }
             };
 
-            const handleDeleteUser = async (uid) => {
-                if(!confirm("Delete user?")) return;
-                try {
-                    await window.fs.deleteDoc(window.fs.doc(window.db, 'users', uid));
-                    showNotify("User Deleted");
-                } catch(e) { showNotify("Error", "error"); }
+            const handleDeleteUser = (uid) => {
+                triggerConfirm("Delete user?", async () => {
+                    try {
+                        await window.fs.deleteDoc(window.fs.doc(window.db, 'users', uid));
+                        showNotify("User Deleted");
+                    } catch(e) { showNotify("Error", "error"); }
+                });
             };
 
             const handleUserChange = (e) => {
@@ -983,9 +1053,17 @@
                      setEditTimesheetId(null);
                 } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
             };
-            const deleteTimesheet = async (id) => { if(confirm(t.common.delete + "?")) { await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); } };
+            const deleteTimesheet = (id) => { 
+                triggerConfirm(t.common.delete + "?", async () => {
+                     await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); 
+                });
+            };
             const editTimesheet = (item) => { setTimesheetForm({date: item.date, startTime: item.startTime, duration: item.duration}); setEditTimesheetId(item.id); window.scrollTo({top:0,behavior:'smooth'}); };
-            const deleteSchedule = async (id) => { if(confirm(t.common.delete + "?")) { await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); } };
+            const deleteSchedule = (id) => { 
+                triggerConfirm(t.common.delete + "?", async () => {
+                    await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); 
+                });
+            };
             const editSchedule = (item) => { 
                 // Convert DB time to UI time
                 const uiStart = getDisplayTime(item.startTime, item.startDate || item.date, lang);
@@ -1005,6 +1083,7 @@
                     {showProfileModal && <ProfileModal user={users.find(u => String(u.id) === String(currentUser))} onClose={() => setShowProfileModal(false)} onSave={saveUserProfile} loading={loading} lang={lang} t={t} />}
                     {showUserModal && <UserModal user={editingUser} onClose={() => {setShowUserModal(false); setEditingUser(null);}} onSave={handleSaveUser} loading={loading} t={t} />}
                     {showAdminLogin && <AdminLoginModal onClose={() => setShowAdminLogin(false)} onLogin={handleAdminLogin} loading={loading} t={t} />}
+                    {confirmModal.show && <ConfirmationModal isOpen={confirmModal.show} message={confirmModal.message} onConfirm={executeConfirm} onCancel={() => setConfirmModal({ ...confirmModal, show: false })} t={t} />}
 
                     <header className="bg-white sticky top-0 z-20 px-4 py-3 shadow-sm border-b border-slate-100 flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -1026,7 +1105,7 @@
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} />}
                                 {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={dynamicFormatCurrency} />}
                                 {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={dynamicFormatCurrency} />}
-                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={dynamicFormatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} />}
+                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={dynamicFormatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} />}
                             </>
                         )}
                     </main>
