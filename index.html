@@ -362,6 +362,7 @@
             const adherenceData = rangeDays.map(dateStr => { 
                 const scheduledMins = schedules
                     .filter(s => {
+                        // Check both new startDate and legacy date field
                         const sDate = s.startDate || s.date;
                         return String(s.userId) === String(currentUser) && sDate === dateStr;
                     })
@@ -413,15 +414,29 @@
                                     {adherenceData.map((d, idx) => {
                                         const dateLabel = new Date(d.date).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {weekday:'short', day:'numeric'});
                                         const maxVal = Math.max(d.scheduled, d.actual, 60); 
+                                        const percent = d.scheduled > 0 ? Math.round((d.actual / d.scheduled) * 100) : (d.actual > 0 ? 100 : 0);
+                                        
+                                        let barColor = 'bg-blue-500';
+                                        if (percent > 110) barColor = 'bg-red-500'; // Overtime way too much
+                                        else if (percent >= 90) barColor = 'bg-green-500'; // Good
+                                        else if (percent > 0) barColor = 'bg-yellow-500'; // Under
+                                        
                                         return (
                                             <div key={idx} className="text-xs">
                                                 <div className="flex justify-between mb-1 text-slate-500">
                                                     <span>{dateLabel}</span>
-                                                    <span className="font-mono"><span className="text-slate-400">{(d.scheduled/60).toFixed(1)}h Plan</span> / <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold ml-1" : "text-slate-700 ml-1"}>{(d.actual/60).toFixed(1)}h Act</span></span>
+                                                    <span className="font-mono flex gap-2">
+                                                        <span className="text-slate-400">Plan: {(d.scheduled/60).toFixed(1)}h</span> 
+                                                        <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold" : "text-slate-700 font-bold"}>
+                                                            Act: {(d.actual/60).toFixed(1)}h ({percent}%)
+                                                        </span>
+                                                    </span>
                                                 </div>
                                                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative flex">
-                                                    <div className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" style={{ width: `${(d.scheduled/maxVal)*100}%` }}></div>
-                                                    <div className={`h-full rounded-full ${d.actual > d.scheduled ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${(d.actual/maxVal)*100}%` }}></div>
+                                                    {/* Plan Marker */}
+                                                    <div className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" style={{ width: `${Math.min(100, (d.scheduled/maxVal)*100)}%` }}></div>
+                                                    {/* Actual Bar */}
+                                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(100, (d.actual/maxVal)*100)}%` }}></div>
                                                 </div>
                                             </div>
                                         );
@@ -501,10 +516,13 @@
                 .sort((a,b) => new Date(a.startDate || a.date) - new Date(b.startDate || b.date))
                 .slice(0, 5);
             
-            // --- ACTIVE WORKERS LOGIC (Duplicate from Admin for Dashboard) ---
-            const nowUTC = new Date();
-            const wibString = nowUTC.toLocaleString("en-US", {timeZone: "Asia/Jakarta", hour12: false}); 
-            const currentWIB = new Date(wibString); 
+            // --- ACTIVE WORKERS LOGIC (Updated to show time in selected zone) ---
+            const now = new Date();
+            // Display Current Time based on selected LANG (WIB vs Melbourne)
+            const currentTimeDisplay = formatTimeInZone(now, TIMEZONES[lang]);
+            
+            // Active logic still compares against current WIB internally to match DB
+            const currentWIB = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
             
             const activeWorkers = schedules.filter(s => {
                 const startDateStr = s.startDate || s.date;
@@ -548,7 +566,7 @@
                                 {t.dashboard.workingNow} ({TIMEZONE_LABELS[lang]})
                             </h3>
                             <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">
-                                {currentWIB.getHours().toString().padStart(2, '0')}:{currentWIB.getMinutes().toString().padStart(2, '0')} WIB
+                                {currentTimeDisplay} {TIMEZONE_LABELS[lang]}
                             </span>
                         </div>
                         {activeWorkers.length > 0 ? (
@@ -698,7 +716,7 @@
                                 <div className="flex gap-1"><button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')} className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition"><i className={`fas fa-sort-amount-${sortOrder === 'asc' ? 'down-alt' : 'up'} text-xs`}></i></button></div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setShowHistory(!showHistory)} className={`flex-1 text-[10px] py-1.5 rounded border transition font-medium ${showHistory ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{showHistory ? t.schedule.showUpcoming : t.schedule.showAll}</button>
+                                <button onClick={() => setShowHistory(!showHistory)} className={`flex-1 text-[10px] py-1.5 rounded border transition font-medium ${showHistory ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{showHistory ? t.schedule.showAll : t.schedule.showUpcoming}</button>
                                 <button onClick={() => setFilterMine(!filterMine)} className={`flex-1 text-[10px] py-1.5 rounded border transition font-medium ${filterMine ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{filterMine ? t.schedule.onlyMe : t.schedule.allUsers}</button>
                             </div>
                         </div>
@@ -737,7 +755,10 @@
             if (!hasPaymentInfo) return <div className="space-y-4 fade-in"><div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm"><div className="flex items-center gap-3 mb-2"><i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i><h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3></div><button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">{t.timesheet.fillPayInfo}</button></div></div>;
 
             const [showHistory, setShowHistory] = React.useState(false); 
-            const filteredTimesheets = timesheets.filter(t => showHistory ? t.status === 'paid' : t.status === 'pending');
+            // FIX Sorting: Newest first based on date.
+            const filteredTimesheets = timesheets
+                .filter(t => showHistory ? t.status === 'paid' : t.status === 'pending')
+                .sort((a,b) => new Date(b.date) - new Date(a.date));
 
             // --- FIXED: Use getDisplayAmount helper inside ReportManager ---
             const getDisplayAmount = (item) => {
