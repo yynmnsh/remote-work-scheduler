@@ -17,6 +17,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyC-5NB0IjJff_-yXSBqSqZLJihx6kHvj2g",
             authDomain: "remotework-db.firebaseapp.com",
@@ -47,9 +48,12 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        /* Bar Chart Animations & Tooltip */
         .bar-fill { transition: height 1s ease-out; }
         .group:hover .tooltip { opacity: 1; visibility: visible; }
     </style>
@@ -62,17 +66,19 @@
         const ADMIN_ID = '9'; 
         const ADMIN_PASSWORD = 'peiyi'; 
         
+        // RATES CONFIGURATION
         const BASE_HOURLY_RATE_USD = 15; 
         const USD_TO_IDR = 16000; 
         
         const RATES = { 
-            id: BASE_HOURLY_RATE_USD * USD_TO_IDR, 
-            en: BASE_HOURLY_RATE_USD 
+            id: BASE_HOURLY_RATE_USD * USD_TO_IDR, // 240,000 IDR
+            en: BASE_HOURLY_RATE_USD // 15 AUD
         };
         
         const TIMEZONES = { id: 'Asia/Jakarta', en: 'Australia/Melbourne' };
         const TIMEZONE_LABELS = { id: 'WIB', en: 'Melb' };
         
+        // Initial Seed
         const INITIAL_USERS = [
             { id: '1', name: 'Habib', color: '#3b82f6', hidden: false },
             { id: '9', name: 'Yayan', color: '#a855f7', hidden: false },
@@ -85,7 +91,7 @@
                 dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang' },
                 timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
-                analytics: { myStats: 'Statistik Saya', last7Days: 'Kinerja (7 Hari Terakhir)', pendingBalance: 'Saldo Pending', totalUnpaid: 'Total Belum Dibayar', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada' },
+                analytics: { myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif' },
                 profile: { title: 'Info Pembayaran', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' }
             },
@@ -95,95 +101,13 @@
                 dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
-                analytics: { myStats: 'My Stats', last7Days: 'Performance (Last 7 Days)', pendingBalance: 'Pending Balance', totalUnpaid: 'Total Unpaid', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on' },
+                analytics: { myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive' },
                 profile: { title: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' }
             }
         };
 
-        // --- TIMEZONE HELPERS ---
-
-        // Convert Date Object to String for Display (HH:mm)
-        const formatTimeInZone = (dateObj, timeZone) => {
-            return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
-        };
-
-        // Display: DB Time (WIB) -> UI Time/Date (WIB or Melb)
-        // Returns { date: 'YYYY-MM-DD', time: 'HH:mm' } adjusted for target Lang
-        const getDisplayTime = (timeStr, dateStr, lang) => {
-            if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
-            
-            // Assume DB is always WIB (Asia/Jakarta, UTC+7)
-            // Construct ISO string with offset
-            const isoStr = `${dateStr}T${timeStr}:00+07:00`;
-            const d = new Date(isoStr);
-
-            // We use toLocaleString to do the heavy lifting of timezone conversion
-            const targetZone = TIMEZONES[lang];
-            
-            // Get parts in target zone
-            // We use 'en-CA' because it gives YYYY-MM-DD format which is easy to parse if needed, but here we just need components
-            // Actually, let's just get parts manually via Intl to be safe
-            const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
-            const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
-            
-            const newDateStr = formatterDate.format(d); // YYYY-MM-DD
-            const newTimeStr = formatterTime.format(d); // HH:mm
-            
-            return { date: newDateStr, time: newTimeStr };
-        };
-
-        // Input: UI Time (WIB or Melb) -> DB Time (WIB)
-        const getDbTime = (timeStr, dateStr, lang) => {
-            if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
-            
-            // If Lang is ID, input is already WIB. No change.
-            if (lang === 'id') return { date: dateStr, time: timeStr };
-            
-            // If Lang is EN (Melb), we need to convert TO WIB.
-            // Create date assuming it is Melbourne time
-            // Trick: Create ISO string with Melbourne offset (+11:00 approx, but DST varies)
-            // To be accurate without libraries, we can reverse the logic:
-            // 1. Create a date object from the string.
-            // 2. Adjust hours manually (-4 hours for Melb->WIB is a safe approximation for AEDT vs WIB)
-            // Ideally we'd use a library, but here: Melb is usually +4h ahead of WIB.
-            
-            const d = new Date(`${dateStr}T${timeStr}`);
-            d.setHours(d.getHours() - 4); // Melb -> WIB
-            
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const h = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-            
-            return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
-        };
-
-        // OpDay logic (Always based on WIB DB Values)
-        const getOpDay = (dateStr, timeStr) => {
-            if (!dateStr || !timeStr) return null;
-            const dt = new Date(`${dateStr}T${timeStr}`);
-            const hour = dt.getHours();
-            if (hour < 15) dt.setDate(dt.getDate() - 1);
-            const y = dt.getFullYear();
-            const m = String(dt.getMonth() + 1).padStart(2, '0');
-            const d = String(dt.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        };
-
-        const getShiftMinutes = (timeStr) => {
-            if(!timeStr) return 0;
-            const [h, m] = timeStr.split(':').map(Number);
-            return h * 60 + m;
-        };
-
-        const formatCurrency = (amount, currency = 'USD') => {
-            const num = parseFloat(amount) || 0;
-            if (currency === 'IDR') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
-        };
-
+        // --- HELPERS ---
         const formatDate = (dateString, lang = 'id') => {
             if (!dateString) return '';
             const options = { weekday: 'short', day: 'numeric', month: 'short' };
@@ -195,6 +119,67 @@
             return new Date(dateString).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
         };
 
+        const formatTimeInZone = (dateObj, timeZone) => {
+            return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
+        };
+
+        // Convert DB Time (WIB) -> UI Time (Melb or WIB)
+        const getDisplayTime = (timeStr, dateStr, lang) => {
+            if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
+            
+            // Construct ISO string with WIB offset (+07:00)
+            const isoStr = `${dateStr}T${timeStr}:00+07:00`;
+            const d = new Date(isoStr);
+
+            const targetZone = TIMEZONES[lang];
+            
+            // Format to parts in target timezone
+            const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+            const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            const newDateStr = formatterDate.format(d); // YYYY-MM-DD
+            const newTimeStr = formatterTime.format(d); // HH:mm
+            
+            return { date: newDateStr, time: newTimeStr };
+        };
+
+        // Convert UI Time (Melb or WIB) -> DB Time (WIB)
+        const getDbTime = (timeStr, dateStr, lang) => {
+            if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
+            if (lang === 'id') return { date: dateStr, time: timeStr };
+            
+            // If EN (Melb), we assume input is Melb time. We need WIB.
+            // Approx -4h for Logic.
+            const d = new Date(`${dateStr}T${timeStr}`);
+            d.setHours(d.getHours() - 4); 
+            
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const h = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            
+            return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
+        };
+
+        const getOpDay = (dateStr, timeStr) => {
+            if (!dateStr || !timeStr) return null;
+            const dt = new Date(`${dateStr}T${timeStr}`);
+            const hour = dt.getHours();
+            if (hour < 15) dt.setDate(dt.getDate() - 1);
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth() + 1).padStart(2, '0');
+            const d = String(dt.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
+        const formatCurrency = (amount, currency = 'USD') => {
+            const num = parseFloat(amount) || 0;
+            if (currency === 'IDR') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+        };
+
+        // --- UI COMPONENTS ---
         const Spinner = () => <i className="fas fa-circle-notch fa-spin text-white"></i>;
 
         const Notification = ({ msg, type, onClose }) => (
@@ -276,33 +261,48 @@
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency }) => {
             const [tab, setTab] = React.useState('team'); 
             const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // Team Data
+            const thisMonthSheets = timesheets.filter(t => { const d = new Date(t.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const totalMinutesTeam = thisMonthSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+            const rate = RATES[lang];
+            const totalEarnedTeam = (totalMinutesTeam / 60) * rate;
+
+            const userStats = {};
+            thisMonthSheets.forEach(t => { if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0 }; userStats[t.userId].minutes += parseInt(t.duration || 0); });
+            const leaderboard = Object.keys(userStats).map(uid => ({ uid, ...userStats[uid], name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown', color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1' })).sort((a,b) => b.minutes - a.minutes).slice(0, 5); 
+
+            // Personal Data Logic
+            const getLast7Days = () => {
+                const dates = [];
+                for(let i=6; i>=0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth()+1).padStart(2,'0');
+                    const day = String(d.getDate()).padStart(2,'0');
+                    dates.push(`${y}-${m}-${day}`);
+                }
+                return dates;
+            };
+            const rangeDays = getLast7Days();
             
-            // --- PERSONAL STATS ---
-            const rangeDays = [];
-            for(let i=6; i>=0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const y = d.getFullYear();
-                const m = String(d.getMonth()+1).padStart(2,'0');
-                const day = String(d.getDate()).padStart(2,'0');
-                rangeDays.push(`${y}-${m}-${day}`); // YYYY-MM-DD
-            }
-            
-            // Last 7 Days Performance
+            // 1. Last 7 Days Performance
             const my7DaysSheets = timesheets.filter(t => {
                 if (String(t.userId) !== String(currentUser)) return false;
-                return rangeDays.includes(t.date); // t.date is OpDay
+                return rangeDays.includes(t.date);
             });
             const my7DaysMinutes = my7DaysSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
-            const my7DaysEarnings = (my7DaysMinutes / 60) * RATES[lang];
+            const my7DaysEarnings = (my7DaysMinutes / 60) * rate;
 
-            // Pending Balance (All Time)
+            // 2. Pending Balance (All Time Unpaid)
             const myPendingSheets = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
             const myPendingMinutes = myPendingSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
-            // Dynamic pending value based on lang
             const myPendingEarnings = (myPendingMinutes / 60) * RATES[lang];
 
-            // Paid History Logic
+            // 3. Paid History Logic
             const myPaidSheets = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'paid');
             const paidGroups = {};
             myPaidSheets.forEach(t => {
@@ -315,51 +315,18 @@
 
             // Discipline Logic
             const adherenceData = rangeDays.map(dateStr => { 
-                const scheduledMins = schedules
-                    .filter(s => {
-                        if (String(s.userId) !== String(currentUser)) return false;
-                        const sDate = s.startDate || s.date;
-                        const opDay = getOpDay(sDate, s.startTime);
-                        return opDay === dateStr;
-                    })
-                    .reduce((acc, s) => {
-                        const startD = s.startDate || s.date;
-                        const endD = s.endDate || s.date;
-                        const d1 = new Date(`${startD}T${s.startTime}`);
-                        let d2 = new Date(`${endD}T${s.endTime}`);
-                        if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1);
-                        return acc + Math.floor((d2 - d1)/60000);
-                    }, 0);
-
-                const actualMins = timesheets
-                    .filter(t => String(t.userId) === String(currentUser) && t.date === dateStr)
-                    .reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
-
+                const scheduledMins = schedules.filter(s => { if (String(s.userId) !== String(currentUser)) return false; const sDate = s.startDate || s.date; const opDay = getOpDay(sDate, s.startTime); return opDay === dateStr; }).reduce((acc, s) => { const startD = s.startDate || s.date; const endD = s.endDate || s.date; const d1 = new Date(`${startD}T${s.startTime}`); let d2 = new Date(`${endD}T${s.endTime}`); if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1); return acc + Math.floor((d2 - d1)/60000); }, 0);
+                const actualMins = timesheets.filter(t => String(t.userId) === String(currentUser) && t.date === dateStr).reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
                 return { date: dateStr, scheduled: scheduledMins, actual: actualMins };
             });
 
-            // Team Stats
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            const thisMonthSheets = timesheets.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            });
-            const totalMinutesTeam = thisMonthSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
-            const totalEarnedTeam = (totalMinutesTeam / 60) * RATES[lang];
-            
-            // Team Activity (7 Days)
+            // Team Activity Logic
             const dailyActivityTeam = rangeDays.map(dateStr => {
                 const mins = timesheets.filter(t => t.date === dateStr).reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
                 return { date: dateStr, minutes: mins };
             });
             const maxDailyMins = Math.max(...dailyActivityTeam.map(d => d.minutes), 60);
             const totalActivityHours = dailyActivityTeam.reduce((acc, d) => acc + d.minutes, 0) / 60;
-            
-            // Leaderboard
-            const userStats = {};
-            thisMonthSheets.forEach(t => { if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0 }; userStats[t.userId].minutes += parseInt(t.duration || 0); });
-            const leaderboard = Object.keys(userStats).map(uid => ({ uid, ...userStats[uid], name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown', color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1' })).sort((a,b) => b.minutes - a.minutes).slice(0, 5); 
 
             return (
                 <div className="space-y-4 fade-in pb-24">
@@ -374,19 +341,20 @@
                         <div className="space-y-4 animate-fadeIn">
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-white p-4 rounded-xl border-l-4 border-blue-500 shadow-sm">
-                                    <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.last7Days}</h3>
+                                    <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.myStats}</h3>
                                     <p className="text-2xl font-bold text-slate-700">{(my7DaysMinutes/60).toFixed(1)} <span className="text-sm font-normal text-slate-400">{t.common.unitShort}</span></p>
                                     <p className="text-xs text-blue-600 font-medium mt-1">{formatCurrency(my7DaysEarnings)}</p>
                                 </div>
                                 <div className="bg-white p-4 rounded-xl border-l-4 border-orange-400 shadow-sm">
                                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.pendingBalance}</h3>
                                     <p className="text-xl font-bold text-orange-600 mt-1">{formatCurrency(myPendingEarnings)}</p>
-                                    <p className="text-[10px] text-slate-400 mt-1">{(myPendingMinutes/60).toFixed(1)} {t.common.unitShort} Pending</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">{(myPendingMinutes/60).toFixed(1)} {t.common.unitHour} {t.analytics.totalUnpaid}</p>
                                 </div>
                             </div>
 
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-chart-bar text-blue-500"></i> {t.analytics.discipline}</h3>
+                                <p className="text-[10px] text-slate-400 mb-3 italic">{t.analytics.planDesc} vs {t.analytics.actDesc}</p>
                                 <div className="space-y-3">
                                     {adherenceData.map((d, idx) => {
                                         const dateLabel = formatDate(d.date, lang);
@@ -399,14 +367,14 @@
                                         
                                         return (
                                             <div key={idx} className="text-xs group relative">
-                                                 <div className="flex justify-between mb-1 text-slate-500">
+                                                <div className="flex justify-between mb-1 text-slate-500">
                                                     <span>{dateLabel}</span>
-                                                    <span className="font-mono text-[10px]">
-                                                        <span className="text-slate-400">Plan: {(d.scheduled/60).toFixed(1)}h</span> / 
-                                                        <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold ml-1" : "text-slate-700 ml-1"}> Act: {(d.actual/60).toFixed(1)}h</span>
+                                                    <span className="font-mono flex gap-2">
+                                                        <span className="text-slate-400">{(d.scheduled/60).toFixed(1)}h Plan</span> / 
+                                                        <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold ml-1" : "text-slate-700 ml-1"}>{(d.actual/60).toFixed(1)}h Act</span>
                                                     </span>
                                                 </div>
-                                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative flex cursor-help">
+                                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative flex">
                                                     <div className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" style={{ width: `${Math.min(100, (d.scheduled/maxVal)*100)}%` }}></div>
                                                     <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(100, (d.actual/maxVal)*100)}%` }}></div>
                                                 </div>
@@ -471,7 +439,7 @@
                                                     <div className={`w-full rounded-t-sm bar-fill ${d.minutes > 0 ? 'bg-indigo-500' : 'bg-transparent'}`} style={{height: `${h}%`}}></div>
                                                 </div>
                                                 {d.minutes > 0 && (
-                                                    <div className="absolute bottom-10 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-lg">
+                                                    <div className="tooltip absolute bottom-10 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
                                                         {d.date}<br/><b>{hours} {t.common.unitHour}</b>
                                                     </div>
                                                 )}
@@ -481,8 +449,7 @@
                                     })}
                                 </div>
                             </div>
-                            {/* Top Contrib ... */}
-                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-trophy text-yellow-500"></i> {t.analytics.topContrib}</h3>
                                 <div className="space-y-3">
                                     {leaderboard.map((u, idx) => (
@@ -522,26 +489,24 @@
                     return sDate >= today; 
                 })
                 .sort((a,b) => {
-                    // Sorting Fix: Use Full Date+Time from DB
                     const timeA = `${a.startDate || a.date}T${a.startTime}`;
                     const timeB = `${b.startDate || b.date}T${b.startTime}`;
-                    return timeA.localeCompare(timeB); // Upcoming Ascending
+                    return timeA.localeCompare(timeB);
                 })
                 .slice(0, 5);
             
             const now = new Date();
-            // Get Current Time in Selected Zone
-            const currentZoneTimeStr = formatTimeInZone(now, TIMEZONES[lang]);
-            
-            // For logic, verify against WIB
-            const currentWIB = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"}));
-            
+            const tz = TIMEZONES[lang];
+            const currentTimeDisplay = formatTimeInZone(now, tz);
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const currentWIB = new Date(utc + (3600000 * 7)); // WIB is UTC+7
+
             const activeWorkers = schedules.filter(s => {
                 const startDateStr = s.startDate || s.date;
                 const endDateStr = s.endDate || s.date;
                 const sStart = new Date(`${startDateStr}T${s.startTime}`); 
                 let sEnd = new Date(`${endDateStr}T${s.endTime}`);
-                if (!s.endDate && sEnd < sStart) sEnd.setDate(sEnd.getDate() + 1);
+                if (!s.endDate && sEnd < sStart) sEnd.setDate(sEnd.getDate() + 1); // Legacy
                 return currentWIB >= sStart && currentWIB <= sEnd;
             }).map(s => {
                 const u = users.find(u => String(u.id) === String(s.userId));
@@ -571,7 +536,7 @@
                                 <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
                                 {t.dashboard.workingNow}
                             </h3>
-                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">{currentZoneTimeStr} {TIMEZONE_LABELS[lang]}</span>
+                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">{currentTimeDisplay} {TIMEZONE_LABELS[lang]}</span>
                         </div>
                         {activeWorkers.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
@@ -620,9 +585,8 @@
             
             const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
-                const dbVals = convertToDbTime(scheduleForm.startDate, scheduleForm.startTime, lang);
-                const currentOpDayDB = getOpDay(dbVals.date, dbVals.time);
-
+                const dbTime = getDbTime(scheduleForm.startTime, scheduleForm.startDate, lang);
+                const currentOpDayDB = getOpDay(scheduleForm.startDate, dbTime.time); 
                 if (!currentOpDayDB) return 0;
                 
                 return schedules
@@ -662,7 +626,6 @@
                 if (filterMine) filtered = filtered.filter(s => String(s.userId) === String(currentUser));
                 
                 filtered.sort((a,b) => {
-                    // STRICT SORTING using DB Time (WIB)
                     const timeA = `${a.startDate || a.date}T${a.startTime}`;
                     const timeB = `${b.startDate || b.date}T${b.startTime}`;
                     return sortOrder === 'asc' ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
@@ -719,12 +682,8 @@
                             const isMine = String(s.userId) === String(currentUser);
                             const dbStartDate = s.startDate || s.date;
                             const dbEndDate = s.endDate || s.date;
-                            
-                            // Convert DB Time -> UI Time
                             const startObj = getDisplayTime(s.startTime, dbStartDate, lang);
                             const endObj = getDisplayTime(s.endTime, dbEndDate, lang);
-                            
-                            // Date Display (Adjusted to UI date)
                             const dateDisp = formatDate(startObj.date, lang);
 
                             return (
@@ -766,10 +725,8 @@
 
             const getDisplayAmount = (item) => {
                 const baseVal = parseFloat(item.paymentUSD) || 0;
-                // Dynamic Currency: Always calc fresh based on RATE constant
-                // stored USD is 15/hr base.
-                const hours = parseFloat(item.duration) / 60;
-                return hours * RATES[lang];
+                if (lang === 'id') return baseVal * USD_TO_IDR;
+                return baseVal;
             };
 
             return (
@@ -777,7 +734,6 @@
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
                         <h3 className="font-bold text-slate-700 mb-4">{editTimesheetId ? t.timesheet.editTitle : t.timesheet.title}</h3>
                         <form onSubmit={saveTimesheet} className="space-y-3">
-                            {/* Input uses UI Time */}
                             <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.date} ({TIMEZONE_LABELS[lang]})</label><input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} /></div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.start} ({TIMEZONE_LABELS[lang]})</label><input type="time" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} /></div>
@@ -790,10 +746,8 @@
                     <div className="pb-20">
                         <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3><button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button></div>
                         {filteredTimesheets.map(item => {
-                            // Convert Display
                             const displayObj = getDisplayTime(item.startTime, item.date, lang);
                             const displayDate = formatDate(displayObj.date, lang);
-
                             return (
                                 <div key={item.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
                                     <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{displayDate} • {displayObj.time} ({TIMEZONE_LABELS[lang]})</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item))}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
@@ -808,11 +762,7 @@
 
         const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, onAddUser, onEditUser, onDeleteUser, onConfirmAction }) => {
              const [viewMode, setViewMode] = React.useState('pending');
-            // Admin always sees dynamic rate
-            const getAmount = (item) => { 
-                const hours = parseFloat(item.duration)/60;
-                return hours * RATES[lang];
-            }
+            const getAmount = (item) => { const baseVal = parseFloat(item.paymentUSD) || 0; return lang === 'id' ? baseVal * USD_TO_IDR : baseVal; }
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
             const totalPending = pendingSheets.reduce((sum, t) => sum + getAmount(t), 0);
             const paidSheets = timesheets.filter(t => t.status === 'paid');
@@ -844,15 +794,12 @@
             const [timesheets, setTimesheets] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
             const [notify, setNotify] = React.useState(null);
-            
             const [showProfileModal, setShowProfileModal] = React.useState(false);
             const [showUserModal, setShowUserModal] = React.useState(false);
             const [showAdminLogin, setShowAdminLogin] = React.useState(false);
             const [editingUser, setEditingUser] = React.useState(null);
-
             const [lang, setLang] = React.useState('id'); 
             const t = TRANSLATIONS[lang];
-
             const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
             const [editScheduleId, setEditScheduleId] = React.useState(null);
             const [timesheetForm, setTimesheetForm] = React.useState({ date: '', startTime: '', duration: '' });
@@ -888,10 +835,8 @@
 
             const saveSchedule = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
-                // Convert UI Inputs to DB Time (WIB)
-                const dbStart = convertToDbTime(scheduleForm.startDate, scheduleForm.startTime, lang);
-                const dbEnd = convertToDbTime(scheduleForm.endDate, scheduleForm.endTime, lang);
-
+                const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, lang);
+                const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, lang);
                 setLoading(true);
                 try {
                     const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
@@ -915,10 +860,7 @@
                     // Calc both currencies
                     const idr = Math.round((dur/60) * RATES.id);
                     const usd = ((dur/60) * RATES.en).toFixed(2); 
-                    
-                    // Convert UI to DB
-                    const dbTime = convertToDbTime(timesheetForm.date, timesheetForm.startTime, lang);
-
+                    const dbTime = getDbTime(timesheetForm.startTime, timesheetForm.date, lang);
                     const payload = { userId: currentUser, date: dbTime.date, startTime: dbTime.time, duration: dur, paymentUSD: usd, paymentIDR: idr, status: 'pending', updatedAt: new Date().toISOString() };
                     if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
                     showNotify("Saved!"); setTimesheetForm({ date: '', startTime: '', duration: '' }); setEditTimesheetId(null);
