@@ -456,15 +456,8 @@
                                 </div>
                             </div>
                             
-                            {/* Toggle Mode Control */}
-                            <div className="flex items-center justify-between px-2">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t.analytics.viewMode}</span>
-                                <div className="flex bg-slate-100 rounded-lg p-0.5">
-                                    <button onClick={() => setAnalyticsMode('local')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'local' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeLocal}</button>
-                                    <button onClick={() => setAnalyticsMode('operational')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'operational' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeOp}</button>
-                                </div>
-                            </div>
-
+                            {/* Toggle Mode Control - REMOVED as requested */}
+                            
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <div className="mb-4">
                                     <div className="flex justify-between items-center mb-1">
@@ -537,26 +530,32 @@
                                 </div>
                             </div>
 
-                            {/* UPDATED PAYMENT HISTORY CARD */}
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                                <div className="flex justify-between items-end mb-6">
-                                    <div>
-                                        <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-1">
-                                            <i className="fas fa-history text-green-500"></i> {t.analytics.paymentHistory}
-                                        </h3>
-                                        <p className="text-[10px] text-slate-400"></p>
+                            {/* UPDATED PAYMENT HISTORY CARD - New Premium Look */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
+                                {/* Hero Total Section */}
+                                <div className="relative z-10 text-center mb-8">
+                                    <div className="inline-flex items-center justify-center p-3 bg-green-50 rounded-full mb-3 shadow-inner">
+                                        <i className="fas fa-wallet text-green-600 text-xl"></i>
                                     </div>
-                                    {myPaidSheets.length > 0 && (
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.analytics.totalPaid}</p>
-                                            <div className="bg-green-50 text-green-700 px-3 py-1 rounded-lg border border-green-100 font-bold text-lg shadow-sm">
-                                                {formatCurrency(grandTotalPaid, lang)}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.analytics.totalPaid}</h3>
+                                    <p className="text-3xl font-extrabold text-slate-800 tracking-tight">
+                                        {formatCurrency(grandTotalPaid, lang)}
+                                    </p>
                                 </div>
-                                {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-4">No payment history.</p> : (
-                                    <div className="space-y-4">
+                                
+                                {/* Decoration */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -ml-12 -mb-12 opacity-50"></div>
+
+                                {/* List Header */}
+                                <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-50 relative z-10">
+                                    <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                        <i className="fas fa-history text-slate-400 text-xs"></i> {t.analytics.paymentHistory}
+                                    </h3>
+                                </div>
+
+                                {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-6 italic bg-slate-50 rounded-lg">No payment history available.</p> : (
+                                    <div className="space-y-4 relative z-10">
                                         {sortedPaidHistory.map(dateKey => {
                                             const group = paidGroups[dateKey];
                                             const totalAmount = (group.totalMinutes/60) * RATES[lang];
@@ -567,16 +566,19 @@
                                             const paidDate = formatFullDate(dateKey, lang);
 
                                             return (
-                                                <div key={dateKey} className="border-b border-slate-50 last:border-0 pb-4 last:pb-0">
-                                                    <div className="flex justify-between items-start">
+                                                <div key={dateKey} className="group flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all">
+                                                            <i className="fas fa-check text-xs"></i>
+                                                        </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-800">{dateRange}</p>
+                                                            <p className="text-xs font-bold text-slate-700">{dateRange}</p>
                                                             <p className="text-[10px] text-slate-400 mt-0.5">{t.analytics.paidOn}: {paidDate}</p>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <span className="block text-base font-bold text-green-600">{formatCurrency(totalAmount, lang)}</span>
-                                                            <span className="text-[10px] text-slate-400">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
-                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="block text-sm font-bold text-slate-800">{formatCurrency(totalAmount, lang)}</span>
+                                                        <span className="text-[9px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
                                                     </div>
                                                 </div>
                                             );
