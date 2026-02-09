@@ -75,8 +75,8 @@
             en: BASE_HOURLY_RATE_USD // 15 AUD
         };
         
-        const TIMEZONES = { id: 'Asia/Jakarta', en: 'Australia/Melbourne' };
-        const TIMEZONE_LABELS = { id: 'WIB', en: 'Melb' };
+        const TIMEZONES = { id: 'Asia/Jakarta', en: 'America/Los_Angeles' }; // EN used for Operational Mode
+        const TIMEZONE_LABELS = { id: 'WIB', en: 'PST' };
         
         // Initial Seed
         const INITIAL_USERS = [
@@ -91,7 +91,10 @@
                 dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang' },
                 timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
-                analytics: { myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar' },
+                analytics: { 
+                    myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
+                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan'
+                },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif' },
                 profile: { title: 'Info Pembayaran', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' }
             },
@@ -101,7 +104,10 @@
                 dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
-                analytics: { myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid' },
+                analytics: { 
+                    myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
+                    statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc'
+                },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive' },
                 profile: { title: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' }
             }
@@ -123,42 +129,44 @@
             return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
         };
 
-        // Convert DB Time (WIB) -> UI Time (Melb or WIB)
+        // Convert DB Time (WIB) -> UI Time (Local or Pacific)
         const getDisplayTime = (timeStr, dateStr, lang) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
-            
-            // Construct ISO string with WIB offset (+07:00)
             const isoStr = `${dateStr}T${timeStr}:00+07:00`;
             const d = new Date(isoStr);
-
             const targetZone = TIMEZONES[lang];
-            
-            // Format to parts in target timezone
             const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
             const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
-            
-            const newDateStr = formatterDate.format(d); // YYYY-MM-DD
-            const newTimeStr = formatterTime.format(d); // HH:mm
-            
+            const newDateStr = formatterDate.format(d); 
+            const newTimeStr = formatterTime.format(d); 
             return { date: newDateStr, time: newTimeStr };
         };
 
-        // Convert UI Time (Melb or WIB) -> DB Time (WIB)
+        // NEW: Strict Timezone Converter
+        // Converts a stored WIB Date/Time string into the Target Timezone Date/Time string
+        const convertToTimeZone = (dateStr, timeStr, targetZone) => {
+            if (!dateStr || !timeStr) return { date: dateStr, time: timeStr };
+            // Assume input is always WIB (+07:00) as per system design
+            const isoStr = `${dateStr}T${timeStr}:00+07:00`;
+            const d = new Date(isoStr);
+            
+            const fmtDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+            const fmtTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+            
+            return { date: fmtDate, time: fmtTime, originalObj: d };
+        };
+
+        // Convert UI Time (Local or Pacific) -> DB Time (WIB)
         const getDbTime = (timeStr, dateStr, lang) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
             if (lang === 'id') return { date: dateStr, time: timeStr };
-            
-            // If EN (Melb), we assume input is Melb time. We need WIB.
-            // Approx -4h for Logic.
             const d = new Date(`${dateStr}T${timeStr}`);
-            d.setHours(d.getHours() - 4); 
-            
+            d.setHours(d.getHours() - 4); // Approximate reverse for Melb, ideally should use strict reverse logic
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             const h = String(d.getHours()).padStart(2, '0');
             const min = String(d.getMinutes()).padStart(2, '0');
-            
             return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
         };
 
@@ -260,6 +268,8 @@
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency }) => {
             const [tab, setTab] = React.useState('team'); 
+            const [analyticsMode, setAnalyticsMode] = React.useState('local'); // 'local' (WIB) or 'operational' (Pacific)
+            
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
@@ -277,7 +287,7 @@
             // Personal Data Logic
             const getLast7Days = () => {
                 const dates = [];
-                for(let i=6; i>=0; i--) {
+                for(let i=0; i<7; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const y = d.getFullYear();
@@ -292,17 +302,18 @@
             // 1. Last 7 Days Performance
             const my7DaysSheets = timesheets.filter(t => {
                 if (String(t.userId) !== String(currentUser)) return false;
-                return rangeDays.includes(t.date);
+                const opDay = getOpDay(t.date, t.startTime); // Basic grouping for stats
+                return rangeDays.includes(opDay);
             });
             const my7DaysMinutes = my7DaysSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
             const my7DaysEarnings = (my7DaysMinutes / 60) * rate;
 
-            // 2. Pending Balance (All Time Unpaid)
+            // 2. Pending Balance
             const myPendingSheets = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
             const myPendingMinutes = myPendingSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
             const myPendingEarnings = (myPendingMinutes / 60) * RATES[lang];
 
-            // 3. Paid History Logic
+            // 3. Paid History
             const myPaidSheets = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'paid');
             const paidGroups = {};
             myPaidSheets.forEach(t => {
@@ -313,11 +324,79 @@
             });
             const sortedPaidHistory = Object.keys(paidGroups).sort((a,b) => new Date(b) - new Date(a));
 
-            // Discipline Logic
-            const adherenceData = rangeDays.map(dateStr => { 
-                const scheduledMins = schedules.filter(s => { if (String(s.userId) !== String(currentUser)) return false; const sDate = s.startDate || s.date; const opDay = getOpDay(sDate, s.startTime); return opDay === dateStr; }).reduce((acc, s) => { const startD = s.startDate || s.date; const endD = s.endDate || s.date; const d1 = new Date(`${startD}T${s.startTime}`); let d2 = new Date(`${endD}T${s.endTime}`); if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1); return acc + Math.floor((d2 - d1)/60000); }, 0);
-                const actualMins = timesheets.filter(t => String(t.userId) === String(currentUser) && t.date === dateStr).reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
-                return { date: dateStr, scheduled: scheduledMins, actual: actualMins };
+            // --- 4. DISCIPLINE LOGIC: Strict Timezone Conversion ---
+            const targetZone = analyticsMode === 'operational' ? 'America/Los_Angeles' : 'Asia/Jakarta';
+
+            // We need to fetch ALL distinct days present in schedules/timesheets for the last week
+            // But aligned to the Target Timezone's date.
+            
+            const disciplineData = rangeDays.map(localDateStr => {
+                // localDateStr is YYYY-MM-DD from the basic loop.
+                // In Strict Mode, we actually group by the 'converted' date.
+                // However, matching rangesDay index to actual data is complex if dates shift.
+                // Simplification: We look for items whose CONVERTED date matches localDateStr.
+                
+                // Schedules
+                const dailySchedules = schedules.filter(s => {
+                    if (String(s.userId) !== String(currentUser)) return false;
+                    const converted = convertToTimeZone(s.startDate || s.date, s.startTime, targetZone);
+                    return converted.date === localDateStr;
+                }).map(s => {
+                    const startConv = convertToTimeZone(s.startDate || s.date, s.startTime, targetZone);
+                    const endConv = convertToTimeZone(s.endDate || s.date, s.endTime, targetZone);
+                    
+                    return {
+                        id: s.id,
+                        start: startConv.time,
+                        end: endConv.time,
+                        // Use original for diff calc
+                        origStart: startConv.originalObj,
+                        planMins: (()=>{
+                            const d1 = new Date(`2000-01-01T${s.startTime}`);
+                            let d2 = new Date(`2000-01-01T${s.endTime}`);
+                            if(d2 < d1) d2.setDate(d2.getDate() + 1);
+                            return (d2 - d1) / 60000;
+                        })(),
+                        actualMins: 0,
+                        matched: []
+                    };
+                });
+
+                // Timesheets
+                const dailySheets = timesheets.filter(t => {
+                    if (String(t.userId) !== String(currentUser)) return false;
+                    const converted = convertToTimeZone(t.date, t.startTime, targetZone);
+                    return converted.date === localDateStr;
+                });
+
+                const unplanned = [];
+
+                dailySheets.forEach(t => {
+                    const tConv = convertToTimeZone(t.date, t.startTime, targetZone);
+                    let bestMatch = null;
+                    let minDiff = Infinity;
+
+                    dailySchedules.forEach(s => {
+                        // Compare Original Time Objects (Both are derived from WIB Source)
+                        // s.origStart vs tConv.originalObj
+                        let diff = Math.abs((s.origStart - tConv.originalObj) / 60000);
+                        if (diff < 180) { // 3 Hour Tolerance
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                bestMatch = s;
+                            }
+                        }
+                    });
+
+                    if (bestMatch) {
+                        bestMatch.actualMins += parseInt(t.duration || 0);
+                        bestMatch.matched.push(t);
+                    } else {
+                        unplanned.push({ ...t, displayTime: tConv.time });
+                    }
+                });
+
+                return { date: localDateStr, schedules: dailySchedules, unplanned };
             });
 
             // Team Activity Logic
@@ -330,11 +409,25 @@
 
             return (
                 <div className="space-y-4 fade-in pb-24">
-                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
-                        <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
-                            <button onClick={() => setTab('team')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}>{t.analytics.team}</button>
-                            <button onClick={() => setTab('personal')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'personal' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-500'}`}>{t.analytics.personal}</button>
+                    {/* Header Controls */}
+                    <div className="flex flex-col gap-2">
+                        <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
+                            <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
+                                <button onClick={() => setTab('team')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}>{t.analytics.team}</button>
+                                <button onClick={() => setTab('personal')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'personal' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-500'}`}>{t.analytics.personal}</button>
+                            </div>
                         </div>
+                        
+                        {/* TOGGLE MODE */}
+                        {tab === 'personal' && (
+                            <div className="flex items-center justify-between px-2">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t.analytics.viewMode}</span>
+                                <div className="flex bg-slate-100 rounded-lg p-0.5">
+                                    <button onClick={() => setAnalyticsMode('local')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'local' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeLocal}</button>
+                                    <button onClick={() => setAnalyticsMode('operational')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'operational' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeOp}</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {tab === 'personal' && (
@@ -353,33 +446,73 @@
                             </div>
 
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-chart-bar text-blue-500"></i> {t.analytics.discipline}</h3>
-                                <p className="text-[10px] text-slate-400 mb-3 italic">{t.analytics.planDesc} vs {t.analytics.actDesc}</p>
-                                <div className="space-y-3">
-                                    {adherenceData.map((d, idx) => {
+                                <div className="mb-4">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <h3 className="font-bold text-slate-700 flex items-center gap-2"><i className="fas fa-chart-bar text-blue-500"></i> {t.analytics.discipline}</h3>
+                                        {analyticsMode === 'operational' && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100">{t.analytics.logicPacific}</span>}
+                                    </div>
+                                    <p className="text-[9px] text-slate-400 italic">{t.analytics.legendTip}</p>
+                                </div>
+                                <div className="space-y-6">
+                                    {disciplineData.map((d, idx) => {
+                                        if (d.schedules.length === 0 && d.unplanned.length === 0) return null; 
                                         const dateLabel = formatDate(d.date, lang);
-                                        const maxVal = Math.max(d.scheduled, d.actual, 60); 
-                                        const percent = d.scheduled > 0 ? Math.round((d.actual / d.scheduled) * 100) : (d.actual > 0 ? 100 : 0);
-                                        let barColor = 'bg-blue-500';
-                                        if (percent > 110) barColor = 'bg-red-500';
-                                        else if (percent >= 90) barColor = 'bg-green-500';
-                                        else if (percent > 0) barColor = 'bg-yellow-500';
-                                        
                                         return (
-                                            <div key={idx} className="text-xs group relative">
-                                                <div className="flex justify-between mb-1 text-slate-500">
-                                                    <span>{dateLabel}</span>
-                                                    <span className="font-mono flex gap-2">
-                                                        <span className="text-slate-400">{(d.scheduled/60).toFixed(1)}h Plan</span> / 
-                                                        <span className={d.actual >= d.scheduled && d.scheduled > 0 ? "text-green-600 font-bold ml-1" : "text-slate-700 ml-1"}>{(d.actual/60).toFixed(1)}h Act</span>
-                                                    </span>
-                                                </div>
-                                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative flex">
-                                                    <div className="absolute top-0 left-0 h-full bg-slate-300 opacity-50" style={{ width: `${Math.min(100, (d.scheduled/maxVal)*100)}%` }}></div>
-                                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(100, (d.actual/maxVal)*100)}%` }}></div>
+                                            <div key={idx} className="border-l-2 border-slate-200 pl-3">
+                                                <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">{dateLabel}</p>
+                                                
+                                                {/* Scheduled Slots */}
+                                                <div className="space-y-3">
+                                                    {d.schedules.map(s => {
+                                                        const sStart = s.start;
+                                                        const sEnd = s.end;
+                                                        
+                                                        // Status Logic
+                                                        let status = t.analytics.statusOnTrack;
+                                                        let statusColor = "bg-green-100 text-green-700";
+                                                        let barColor = "bg-green-500";
+                                                        
+                                                        const diff = s.actualMins - s.planMins;
+                                                        if (s.actualMins === 0) { status = t.analytics.statusMissed; statusColor = "bg-slate-100 text-slate-500"; barColor = "bg-slate-300"; }
+                                                        else if (diff < -15) { status = t.analytics.statusUnder; statusColor = "bg-yellow-100 text-yellow-700"; barColor = "bg-yellow-500"; }
+                                                        else if (diff > 30) { status = t.analytics.statusOver; statusColor = "bg-red-100 text-red-700"; barColor = "bg-red-500"; }
+
+                                                        const percent = Math.min(100, (s.actualMins / s.planMins) * 100) || 0;
+
+                                                        return (
+                                                            <div key={s.id} className="relative">
+                                                                <div className="flex justify-between items-center text-xs mb-1">
+                                                                    <span className="font-medium text-slate-700">{sStart} - {sEnd} <span className="text-[10px] text-slate-400">({(s.planMins/60).toFixed(1)}h)</span></span>
+                                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${statusColor}`}>{status}</span>
+                                                                </div>
+                                                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden w-full relative">
+                                                                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${percent}%` }}></div>
+                                                                </div>
+                                                                {s.actualMins > 0 && <p className="text-[9px] text-right text-slate-400 mt-0.5">{t.analytics.labelAct}: {(s.actualMins/60).toFixed(1)}{t.common.unitShort}</p>}
+                                                            </div>
+                                                        );
+                                                    })}
+
+                                                    {/* Unplanned */}
+                                                    {d.unplanned.length > 0 && (
+                                                        <div className="mt-2">
+                                                            <div className="flex justify-between items-center text-xs mb-1">
+                                                                <span className="font-medium text-indigo-600 italic">{t.analytics.statusUnplanned}</span>
+                                                                <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-indigo-100 text-indigo-700">{t.analytics.tagAdhoc}</span>
+                                                            </div>
+                                                            {d.unplanned.map((u, i) => {
+                                                                return (
+                                                                    <div key={i} className="flex justify-between text-[10px] text-slate-500 pl-2 border-l-2 border-indigo-200 mb-1">
+                                                                        <span>{u.displayTime}</span>
+                                                                        <span>{u.duration}m</span>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                        );
+                                        )
                                     })}
                                 </div>
                             </div>
@@ -387,7 +520,7 @@
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-history text-green-600"></i> {t.analytics.paymentHistory}</h3>
                                 {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-4">No payment history.</p> : (
-                                    <div className="space-y-3">
+                                    <div className="space-y-4">
                                         {sortedPaidHistory.map(dateKey => {
                                             const group = paidGroups[dateKey];
                                             const totalAmount = (group.totalMinutes/60) * RATES[lang];
@@ -398,12 +531,15 @@
                                             const paidDate = formatFullDate(dateKey, lang);
 
                                             return (
-                                                <div key={dateKey} className="border-b border-slate-50 last:border-0 pb-3 last:pb-0">
+                                                <div key={dateKey} className="border-b border-slate-50 last:border-0 pb-4 last:pb-0">
                                                     <div className="flex justify-between items-start">
-                                                        <div><p className="text-xs font-bold text-slate-600">{dateRange}</p><p className="text-[10px] text-slate-400">{t.analytics.paidOn}: {paidDate}</p></div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-800">{dateRange}</p>
+                                                            <p className="text-[10px] text-slate-400 mt-0.5">{t.analytics.paidOn}: {paidDate}</p>
+                                                        </div>
                                                         <div className="text-right">
-                                                            <span className="block text-sm font-bold text-green-600">{formatCurrency(totalAmount)}</span>
-                                                            <span className="text-[9px] text-slate-400">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
+                                                            <span className="block text-base font-bold text-green-600">{formatCurrency(totalAmount)}</span>
+                                                            <span className="text-[10px] text-slate-400">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -427,7 +563,7 @@
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
                                 <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-slate-700 text-sm">{t.analytics.teamActivity}</h3><span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded">{t.analytics.totalHours}: {totalActivityHours.toFixed(1)} {t.common.unitShort}</span></div>
                                 <div className="flex justify-between h-32 gap-1 items-end">
-                                    {dailyActivityTeam.map((d, idx) => {
+                                    {dailyActivityTeam.reverse().map((d, idx) => {
                                         const h = Math.max((d.minutes / maxDailyMins) * 100, d.minutes > 0 ? 5 : 0);
                                         const dateObj = new Date(d.date);
                                         const dayName = dateObj.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {weekday:'narrow'});
@@ -482,16 +618,19 @@
             
             const upcomingSchedules = schedules
                 .filter(s => {
-                    const dateStr = s.startDate || s.date;
-                    const sDate = new Date(dateStr);
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-                    return sDate >= today; 
+                    const now = new Date();
+                    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                    const currentWIB = new Date(utc + (3600000 * 7)); // WIB is UTC+7
+                    
+                    const dbDateStr = s.startDate || s.date;
+                    const schedStart = new Date(`${dbDateStr}T${s.startTime}`);
+                    
+                    return schedStart > currentWIB;
                 })
                 .sort((a,b) => {
                     const timeA = `${a.startDate || a.date}T${a.startTime}`;
                     const timeB = `${b.startDate || b.date}T${b.startTime}`;
-                    return timeA.localeCompare(timeB);
+                    return timeB.localeCompare(timeA); // SORTING UPDATE: Newest/Furthest -> Oldest/Nearest
                 })
                 .slice(0, 5);
             
@@ -581,7 +720,7 @@
         const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule, isAdmin, lang, t }) => {
             const [showHistory, setShowHistory] = React.useState(false);
             const [filterMine, setFilterMine] = React.useState(false);
-            const [sortOrder, setSortOrder] = React.useState('asc');
+            const [sortOrder, setSortOrder] = React.useState('desc'); // Default to newest first
             
             const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
@@ -765,11 +904,45 @@
             const getAmount = (item) => { const baseVal = parseFloat(item.paymentUSD) || 0; return lang === 'id' ? baseVal * USD_TO_IDR : baseVal; }
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
             const totalPending = pendingSheets.reduce((sum, t) => sum + getAmount(t), 0);
+            
             const paidSheets = timesheets.filter(t => t.status === 'paid');
-            const totalPaid = paidSheets.reduce((sum, t) => sum + getAmount(t), 0);
+            const totalAllTimePaid = paidSheets.reduce((sum, t) => sum + getAmount(t), 0);
+            
             const paidHistory = {};
-            paidSheets.forEach(t => { const d = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown'; if(!paidHistory[d]) paidHistory[d] = []; paidHistory[d].push(t); });
+            const weeklyStats = {}; // Global weekly stats
+            const userTotalPaid = {}; // Total per user
+            const userWeeklyPaid = {}; // Weekly per user
+
+            paidSheets.forEach(t => { 
+                const amount = getAmount(t);
+                const d = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown'; 
+                if(!paidHistory[d]) paidHistory[d] = []; 
+                paidHistory[d].push(t);
+                
+                // Weekly Logic
+                const paidDateObj = new Date(d);
+                const firstDayOfYear = new Date(paidDateObj.getFullYear(), 0, 1);
+                const pastDaysOfYear = (paidDateObj - firstDayOfYear) / 86400000;
+                const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+                const weekKey = `${paidDateObj.getFullYear()}-W${weekNum}`;
+                
+                // Global Weekly
+                if (!weeklyStats[weekKey]) weeklyStats[weekKey] = 0;
+                weeklyStats[weekKey] += amount;
+
+                // Per User Total
+                if (!userTotalPaid[t.userId]) userTotalPaid[t.userId] = 0;
+                userTotalPaid[t.userId] += amount;
+
+                // Per User Weekly
+                if (!userWeeklyPaid[weekKey]) userWeeklyPaid[weekKey] = {};
+                if (!userWeeklyPaid[weekKey][t.userId]) userWeeklyPaid[weekKey][t.userId] = 0;
+                userWeeklyPaid[weekKey][t.userId] += amount;
+            });
+            
             const sortedHistory = Object.keys(paidHistory).sort((a,b) => new Date(b) - new Date(a));
+            const sortedWeeks = Object.keys(weeklyStats).sort().reverse(); // Newest week first
+
             const handleMarkPaid = async (sheetIds) => { onConfirmAction(t.timesheet.confirmPaid, async () => { setLoading(true); try { const batch = window.fs.writeBatch(window.db); sheetIds.forEach(id => { const docRef = window.fs.doc(window.db, "timesheets", id); batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() }); }); await batch.commit(); showNotify("Marked as Paid!"); } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); } }); };
             
             return (
@@ -779,8 +952,105 @@
                         <button onClick={() => setViewMode('history')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 ${viewMode === 'history' ? 'bg-green-600 text-white' : 'text-slate-500'}`}>{t.admin.payHistory}</button>
                         <button onClick={() => setViewMode('users')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 ${viewMode === 'users' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>{t.admin.manageUsers}</button>
                     </div>
-                    {viewMode === 'pending' && ( <div className="space-y-4"><div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg"><h2 className="text-xl font-bold mb-1">{t.admin.pendingBill}</h2><p className="text-3xl font-bold">{formatCurrency(totalPending)}</p></div><div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">{pendingSheets.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">No pending bills.</p> : (<div className="space-y-4">{Object.values(pendingSheets.reduce((acc, curr) => { if(!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, sheets: [] }; acc[curr.userId].total += getAmount(curr); acc[curr.userId].sheets.push(curr.id); return acc; }, {})).map(grp => { const u = users.find(u => String(u.id) === String(grp.userId)); return (<div key={grp.userId} className="border border-slate-100 rounded-xl p-4"><div className="flex justify-between mb-2"><div><p className="font-bold">{u?.name}</p><p className="text-xs text-slate-500">{u?.bankName} - {u?.accountNumber}</p></div><p className="font-bold text-green-600">{formatCurrency(grp.total)}</p></div><button onClick={() => handleMarkPaid(grp.sheets)} className="w-full bg-green-600 text-white text-sm font-medium py-2 rounded-lg">{t.admin.markPaid}</button></div>); })}</div>)}</div></div> )}
-                    {viewMode === 'history' && ( <div className="space-y-4"><div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg"><h2 className="text-xl font-bold mb-1">{t.admin.payHistory}</h2><p className="text-3xl font-bold">{formatCurrency(totalPaid)}</p></div><div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-6">{sortedHistory.map(d => (<div key={d}><h4 className="text-xs font-bold text-slate-500 uppercase border-b pb-1 mb-2">{d}</h4>{paidHistory[d].map(item => { const u = users.find(u => String(u.id) === String(item.userId)); return <div key={item.id} className="flex justify-between text-sm py-1"><span>{u?.name}</span><span className="font-mono">{formatCurrency(getAmount(item))}</span></div> })}</div>))}</div></div> )}
+                    
+                    {viewMode === 'pending' && ( 
+                        <div className="space-y-4">
+                            <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
+                                <h2 className="text-xl font-bold mb-1">{t.admin.pendingBill}</h2>
+                                <p className="text-3xl font-bold">{formatCurrency(totalPending)}</p>
+                            </div>
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                {pendingSheets.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">No pending bills.</p> : (
+                                    <div className="space-y-4">
+                                        {Object.values(pendingSheets.reduce((acc, curr) => { 
+                                            if(!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, sheets: [] }; 
+                                            acc[curr.userId].total += getAmount(curr); 
+                                            acc[curr.userId].sheets.push(curr.id); 
+                                            return acc; 
+                                        }, {})).map(grp => { 
+                                            const u = users.find(u => String(u.id) === String(grp.userId)); 
+                                            return (
+                                                <div key={grp.userId} className="border border-slate-100 rounded-xl p-4">
+                                                    <div className="flex justify-between mb-2">
+                                                        <div><p className="font-bold">{u?.name}</p><p className="text-xs text-slate-500">{u?.bankName} - {u?.accountNumber}</p></div>
+                                                        <p className="font-bold text-green-600">{formatCurrency(grp.total)}</p>
+                                                    </div>
+                                                    <button onClick={() => handleMarkPaid(grp.sheets)} className="w-full bg-green-600 text-white text-sm font-medium py-2 rounded-lg">{t.admin.markPaid}</button>
+                                                </div>
+                                            ); 
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div> 
+                    )}
+
+                    {viewMode === 'history' && ( 
+                        <div className="space-y-4">
+                            <div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+                                <h2 className="text-xl font-bold mb-1">Total Terbayar</h2>
+                                <p className="text-3xl font-bold">{formatCurrency(totalAllTimePaid)}</p>
+                            </div>
+                            
+                            {/* Total Per User Breakdown */}
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                <h3 className="font-bold text-slate-700 text-sm mb-3">Total per User (All Time)</h3>
+                                <div className="space-y-2">
+                                    {Object.keys(userTotalPaid).map(uid => {
+                                        const u = users.find(user => String(user.id) === String(uid));
+                                        return (
+                                            <div key={uid} className="flex justify-between text-sm pb-2 border-b border-slate-50 last:border-0 last:pb-0">
+                                                <span>{u?.name || 'Unknown'}</span>
+                                                <span className="font-bold text-green-600">{formatCurrency(userTotalPaid[uid])}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Weekly Breakdown Global & User */}
+                            <div className="space-y-3">
+                                {sortedWeeks.slice(0, 4).map(week => (
+                                    <div key={week} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                                            <p className="text-xs uppercase text-slate-500 font-bold">{week}</p>
+                                            <p className="text-sm font-bold text-slate-800">{formatCurrency(weeklyStats[week])}</p>
+                                        </div>
+                                        {/* User breakdown for this week */}
+                                        <div className="space-y-1">
+                                            {userWeeklyPaid[week] && Object.keys(userWeeklyPaid[week]).map(uid => {
+                                                const u = users.find(user => String(user.id) === String(uid));
+                                                return (
+                                                    <div key={uid} className="flex justify-between text-xs text-slate-500">
+                                                        <span>- {u?.name}</span>
+                                                        <span>{formatCurrency(userWeeklyPaid[week][uid])}</span>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-6">
+                                {sortedHistory.map(d => (
+                                    <div key={d}>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase border-b pb-1 mb-2">{d}</h4>
+                                        {paidHistory[d].map(item => { 
+                                            const u = users.find(u => String(u.id) === String(item.userId)); 
+                                            return (
+                                                <div key={item.id} className="flex justify-between text-sm py-1">
+                                                    <span>{u?.name}</span>
+                                                    <span className="font-mono">{formatCurrency(getAmount(item))}</span>
+                                                </div> 
+                                            )
+                                        })}
+                                    </div>
+                                ))}
+                            </div>
+                        </div> 
+                    )}
+                    
                     {viewMode === 'users' && ( <div className="space-y-4"><div className="flex justify-between items-center"><h3 className="font-bold text-slate-700">{t.admin.userList}</h3><button onClick={onAddUser} className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg">{t.admin.addUser}</button></div><div className="bg-white rounded-xl border border-slate-200 divide-y">{users.map(u => (<div key={u.id} className={`p-3 flex items-center justify-between ${u.hidden ? 'opacity-60 bg-slate-50' : ''}`}><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold" style={{backgroundColor: u.color}}>{u.name.substring(0,2)}</div><div><p className="font-bold text-sm text-slate-700 flex items-center gap-2">{u.name}{u.hidden && <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider">{t.admin.inactive}</span>}</p><p className="text-xs text-slate-400">{u.bankName || '-'}</p></div></div><div className="flex gap-2"><button onClick={() => onEditUser(u)} className="text-blue-500 text-xs"><i className="fas fa-pen"></i></button><button onClick={() => onDeleteUser(u.id)} className="text-red-500 text-xs"><i className="fas fa-trash"></i></button></div></div>))}</div></div> )}
                 </div>
             );
@@ -835,6 +1105,14 @@
 
             const saveSchedule = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
+                
+                // VALIDATION UPDATE (Requirement 1)
+                const startStr = `${scheduleForm.startDate}T${scheduleForm.startTime}`;
+                const endStr = `${scheduleForm.endDate}T${scheduleForm.endTime}`;
+                if (endStr <= startStr) {
+                    return showNotify(lang === 'id' ? "Waktu selesai harus lebih akhir dari mulai!" : "End time must be after start time!", "error");
+                }
+
                 const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, lang);
                 const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, lang);
                 setLoading(true);
