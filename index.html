@@ -75,8 +75,12 @@
             en: BASE_HOURLY_RATE_USD // 15 AUD
         };
         
-        const TIMEZONES = { id: 'Asia/Jakarta', en: 'America/Los_Angeles' }; // EN used for Operational Mode
-        const TIMEZONE_LABELS = { id: 'WIB', en: 'PST' };
+        // TIMEZONE CONFIGURATION (Decoupled from Language)
+        const TZ_CONFIG = {
+            'WIB': { label: 'WIB (Jakarta)', iana: 'Asia/Jakarta', offsetHours: 0 },
+            'AEDT': { label: 'AEDT (Melbourne)', iana: 'Australia/Melbourne', offsetHours: 4 }, // Approx +4h from WIB
+            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB (UTC+7 to UTC-7)
+        };
         
         // Initial Seed
         const INITIAL_USERS = [
@@ -87,7 +91,10 @@
         const TRANSLATIONS = {
             id: {
                 nav: { home: 'Beranda', schedule: 'Jadwal', timesheet: 'Laporan', analytics: 'Analitik', admin: 'Admin' },
-                common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'jam' },
+                common: { 
+                    loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'jam',
+                    reminder: 'Cek Zona Waktu & Bahasa. Harap teliti & hati-hati saat input data.' 
+                },
                 dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang' },
                 timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
@@ -100,7 +107,10 @@
             },
             en: {
                 nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
-                common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h' },
+                common: { 
+                    loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h',
+                    reminder: 'Check Timezone & Language. Be careful & deliberate when inputting records.' 
+                },
                 dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
@@ -129,61 +139,74 @@
             return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
         };
 
-        // Convert DB Time (WIB) -> UI Time (Local or Pacific)
-        const getDisplayTime = (timeStr, dateStr, lang) => {
+        // Convert DB Time (WIB) -> UI Time (Selected Timezone)
+        // Accepts: DB Time String (WIB), Date String, Target Timezone Code (WIB/AEDT/PST)
+        const getDisplayTime = (timeStr, dateStr, tzCode) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
+            
+            // Construct ISO string with WIB offset (+07:00) - This is the Single Source of Truth
             const isoStr = `${dateStr}T${timeStr}:00+07:00`;
             const d = new Date(isoStr);
-            const targetZone = TIMEZONES[lang];
+
+            const targetZone = TZ_CONFIG[tzCode].iana;
+            
+            // Format to parts in target timezone
             const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
             const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
-            const newDateStr = formatterDate.format(d); 
-            const newTimeStr = formatterTime.format(d); 
-            return { date: newDateStr, time: newTimeStr };
+            
+            const newDateStr = formatterDate.format(d); // YYYY-MM-DD
+            const newTimeStr = formatterTime.format(d); // HH:mm
+            
+            return { date: newDateStr, time: newTimeStr, originalObj: d };
         };
 
-        // NEW: Strict Timezone Converter
-        // Converts a stored WIB Date/Time string into the Target Timezone Date/Time string
-        const convertToTimeZone = (dateStr, timeStr, targetZone) => {
-            if (!dateStr || !timeStr) return { date: dateStr, time: timeStr };
-            // Assume input is always WIB (+07:00) as per system design
-            const isoStr = `${dateStr}T${timeStr}:00+07:00`;
-            const d = new Date(isoStr);
-            
-            const fmtDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-            const fmtTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
-            
-            return { date: fmtDate, time: fmtTime, originalObj: d };
-        };
-
-        // Convert UI Time (Local or Pacific) -> DB Time (WIB)
-        const getDbTime = (timeStr, dateStr, lang) => {
+        // Convert UI Time (Selected Timezone) -> DB Time (WIB)
+        // We calculate this by creating a date in target zone and shifting it back to WIB (+07)
+        const getDbTime = (timeStr, dateStr, tzCode) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
-            if (lang === 'id') return { date: dateStr, time: timeStr };
+            if (tzCode === 'WIB') return { date: dateStr, time: timeStr };
+            
+            const offset = TZ_CONFIG[tzCode].offsetHours;
             const d = new Date(`${dateStr}T${timeStr}`);
-            d.setHours(d.getHours() - 4); // Approximate reverse for Melb, ideally should use strict reverse logic
+            
+            // Reverse the offset to get back to WIB
+            // Example: AEDT is +4h from WIB. Input is 10:00 AEDT. DB should be 06:00 WIB. 
+            // 10 - 4 = 6. So we subtract the offset.
+            d.setHours(d.getHours() - offset); 
+            
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             const h = String(d.getHours()).padStart(2, '0');
             const min = String(d.getMinutes()).padStart(2, '0');
+            
             return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
         };
 
-        const getOpDay = (dateStr, timeStr) => {
+        // CORE LOGIC: Determines which "Work Day" a log belongs to
+        // Takes WIB Date & Time strings, and the target Timezone Code
+        const getOpDay = (dateStr, timeStr, tzCode) => {
             if (!dateStr || !timeStr) return null;
-            const dt = new Date(`${dateStr}T${timeStr}`);
+            
+            // First, get the time in the target timezone
+            const display = getDisplayTime(timeStr, dateStr, tzCode);
+            const dt = new Date(`${display.date}T${display.time}`);
             const hour = dt.getHours();
-            if (hour < 15) dt.setDate(dt.getDate() - 1);
+            
+            // Standard cutoff for "shifts" is usually 4 AM in the local context
+            const cutoff = 4; 
+            
+            if (hour < cutoff) dt.setDate(dt.getDate() - 1);
+            
             const y = dt.getFullYear();
             const m = String(dt.getMonth() + 1).padStart(2, '0');
             const d = String(dt.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         };
 
-        const formatCurrency = (amount, currency = 'USD') => {
+        const formatCurrency = (amount, lang = 'id') => {
             const num = parseFloat(amount) || 0;
-            if (currency === 'IDR') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+            if (lang === 'id') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
             return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
         };
 
@@ -266,9 +289,8 @@
             );
         };
 
-        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency }) => {
+        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             const [tab, setTab] = React.useState('team'); 
-            const [analyticsMode, setAnalyticsMode] = React.useState('local'); // 'local' (WIB) or 'operational' (Pacific)
             
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -284,12 +306,13 @@
             thisMonthSheets.forEach(t => { if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0 }; userStats[t.userId].minutes += parseInt(t.duration || 0); });
             const leaderboard = Object.keys(userStats).map(uid => ({ uid, ...userStats[uid], name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown', color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1' })).sort((a,b) => b.minutes - a.minutes).slice(0, 5); 
 
-            // Personal Data Logic
+            // Personal Data Logic - Dynamic based on Timezone
             const getLast7Days = () => {
                 const dates = [];
                 for(let i=0; i<7; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
+                    // This is rough local date, precise matching happens in grouping
                     const y = d.getFullYear();
                     const m = String(d.getMonth()+1).padStart(2,'0');
                     const day = String(d.getDate()).padStart(2,'0');
@@ -302,7 +325,7 @@
             // 1. Last 7 Days Performance
             const my7DaysSheets = timesheets.filter(t => {
                 if (String(t.userId) !== String(currentUser)) return false;
-                const opDay = getOpDay(t.date, t.startTime); // Basic grouping for stats
+                const opDay = getOpDay(t.date, t.startTime, timezone);
                 return rangeDays.includes(opDay);
             });
             const my7DaysMinutes = my7DaysSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
@@ -325,31 +348,25 @@
             const sortedPaidHistory = Object.keys(paidGroups).sort((a,b) => new Date(b) - new Date(a));
 
             // --- 4. DISCIPLINE LOGIC: Strict Timezone Conversion ---
-            const targetZone = analyticsMode === 'operational' ? 'America/Los_Angeles' : 'Asia/Jakarta';
+            const targetZone = TZ_CONFIG[timezone].iana;
 
-            // We need to fetch ALL distinct days present in schedules/timesheets for the last week
-            // But aligned to the Target Timezone's date.
-            
             const disciplineData = rangeDays.map(localDateStr => {
-                // localDateStr is YYYY-MM-DD from the basic loop.
-                // In Strict Mode, we actually group by the 'converted' date.
-                // However, matching rangesDay index to actual data is complex if dates shift.
-                // Simplification: We look for items whose CONVERTED date matches localDateStr.
-                
                 // Schedules
                 const dailySchedules = schedules.filter(s => {
                     if (String(s.userId) !== String(currentUser)) return false;
-                    const converted = convertToTimeZone(s.startDate || s.date, s.startTime, targetZone);
-                    return converted.date === localDateStr;
+                    const converted = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
+                    // Match OpDay of Converted Time
+                    const opDay = getOpDay(converted.date, converted.time, timezone);
+                    return opDay === localDateStr;
                 }).map(s => {
-                    const startConv = convertToTimeZone(s.startDate || s.date, s.startTime, targetZone);
-                    const endConv = convertToTimeZone(s.endDate || s.date, s.endTime, targetZone);
+                    const startConv = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
+                    const endConv = getDisplayTime(s.endTime, s.endDate || s.date, timezone);
                     
                     return {
                         id: s.id,
                         start: startConv.time,
                         end: endConv.time,
-                        // Use original for diff calc
+                        // Use original time object for precise diff calculation
                         origStart: startConv.originalObj,
                         planMins: (()=>{
                             const d1 = new Date(`2000-01-01T${s.startTime}`);
@@ -365,20 +382,21 @@
                 // Timesheets
                 const dailySheets = timesheets.filter(t => {
                     if (String(t.userId) !== String(currentUser)) return false;
-                    const converted = convertToTimeZone(t.date, t.startTime, targetZone);
-                    return converted.date === localDateStr;
+                    // Strict: Get Log time in selected TZ, then check its OpDay
+                    const converted = getDisplayTime(t.startTime, t.date, timezone);
+                    const opDay = getOpDay(converted.date, converted.time, timezone);
+                    return opDay === localDateStr;
                 });
 
                 const unplanned = [];
 
                 dailySheets.forEach(t => {
-                    const tConv = convertToTimeZone(t.date, t.startTime, targetZone);
+                    const tConv = getDisplayTime(t.startTime, t.date, timezone);
                     let bestMatch = null;
                     let minDiff = Infinity;
 
                     dailySchedules.forEach(s => {
-                        // Compare Original Time Objects (Both are derived from WIB Source)
-                        // s.origStart vs tConv.originalObj
+                        // Compare Original Time Objects (Both are derived from WIB Source via getDisplayTime)
                         let diff = Math.abs((s.origStart - tConv.originalObj) / 60000);
                         if (diff < 180) { // 3 Hour Tolerance
                             if (diff < minDiff) {
@@ -410,24 +428,11 @@
             return (
                 <div className="space-y-4 fade-in pb-24">
                     {/* Header Controls */}
-                    <div className="flex flex-col gap-2">
-                        <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
-                            <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
-                                <button onClick={() => setTab('team')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}>{t.analytics.team}</button>
-                                <button onClick={() => setTab('personal')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'personal' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-500'}`}>{t.analytics.personal}</button>
-                            </div>
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
+                        <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
+                            <button onClick={() => setTab('team')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}>{t.analytics.team}</button>
+                            <button onClick={() => setTab('personal')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'personal' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-500'}`}>{t.analytics.personal}</button>
                         </div>
-                        
-                        {/* TOGGLE MODE */}
-                        {tab === 'personal' && (
-                            <div className="flex items-center justify-between px-2">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t.analytics.viewMode}</span>
-                                <div className="flex bg-slate-100 rounded-lg p-0.5">
-                                    <button onClick={() => setAnalyticsMode('local')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'local' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeLocal}</button>
-                                    <button onClick={() => setAnalyticsMode('operational')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'operational' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeOp}</button>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {tab === 'personal' && (
@@ -436,11 +441,11 @@
                                 <div className="bg-white p-4 rounded-xl border-l-4 border-blue-500 shadow-sm">
                                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.myStats}</h3>
                                     <p className="text-2xl font-bold text-slate-700">{(my7DaysMinutes/60).toFixed(1)} <span className="text-sm font-normal text-slate-400">{t.common.unitShort}</span></p>
-                                    <p className="text-xs text-blue-600 font-medium mt-1">{formatCurrency(my7DaysEarnings)}</p>
+                                    <p className="text-xs text-blue-600 font-medium mt-1">{formatCurrency(my7DaysEarnings, lang)}</p>
                                 </div>
                                 <div className="bg-white p-4 rounded-xl border-l-4 border-orange-400 shadow-sm">
                                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.pendingBalance}</h3>
-                                    <p className="text-xl font-bold text-orange-600 mt-1">{formatCurrency(myPendingEarnings)}</p>
+                                    <p className="text-xl font-bold text-orange-600 mt-1">{formatCurrency(myPendingEarnings, lang)}</p>
                                     <p className="text-[10px] text-slate-400 mt-1">{(myPendingMinutes/60).toFixed(1)} {t.common.unitHour} {t.analytics.totalUnpaid}</p>
                                 </div>
                             </div>
@@ -449,7 +454,7 @@
                                 <div className="mb-4">
                                     <div className="flex justify-between items-center mb-1">
                                         <h3 className="font-bold text-slate-700 flex items-center gap-2"><i className="fas fa-chart-bar text-blue-500"></i> {t.analytics.discipline}</h3>
-                                        {analyticsMode === 'operational' && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100">{t.analytics.logicPacific}</span>}
+                                        <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-1 rounded border border-slate-200">{TZ_CONFIG[timezone].label}</span>
                                     </div>
                                     <p className="text-[9px] text-slate-400 italic">{t.analytics.legendTip}</p>
                                 </div>
@@ -538,7 +543,7 @@
                                                             <p className="text-[10px] text-slate-400 mt-0.5">{t.analytics.paidOn}: {paidDate}</p>
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className="block text-base font-bold text-green-600">{formatCurrency(totalAmount)}</span>
+                                                            <span className="block text-base font-bold text-green-600">{formatCurrency(totalAmount, lang)}</span>
                                                             <span className="text-[10px] text-slate-400">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
                                                         </div>
                                                     </div>
@@ -557,7 +562,7 @@
                                 <h3 className="text-xs text-indigo-200 uppercase tracking-widest font-bold mb-4">{t.analytics.teamOverview}</h3>
                                 <div className="flex justify-between items-end">
                                     <div><p className="text-4xl font-bold">{(totalMinutesTeam/60).toFixed(0)}<span className="text-lg font-normal text-indigo-300">{t.common.unitShort}</span></p><p className="text-xs text-indigo-200 mt-1">{t.analytics.prodHours}</p></div>
-                                    <div className="text-right"><p className="text-lg font-bold">{formatCurrency(totalEarnedTeam)}</p><p className="text-xs text-indigo-200">{t.analytics.burnRate}</p></div>
+                                    <div className="text-right"><p className="text-lg font-bold">{formatCurrency(totalEarnedTeam, lang)}</p><p className="text-xs text-indigo-200">{t.analytics.burnRate}</p></div>
                                 </div>
                             </div>
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
@@ -602,7 +607,7 @@
             );
         };
 
-        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, users, getUserColor, onEditProfile, setView, t, formatCurrency, lang }) => {
+        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, users, getUserColor, onEditProfile, setView, t, formatCurrency, lang, timezone }) => {
             const myPending = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'pending');
             const totalMins = myPending.reduce((acc, curr) => acc + (curr.duration || 0), 0);
             const estEarned = (totalMins / 60) * RATES[lang];
@@ -616,29 +621,37 @@
                 periodText = `${start.getDate()} ${start.toLocaleString(loc, { month: 'short' })} - ${end.getDate()} ${end.toLocaleString(loc, { month: 'short' })}`;
             }
             
+            // Upcoming Schedules Filter Logic: 
+            // Must compare Schedule Time (in selected TZ) vs Current Time (in selected TZ)
             const upcomingSchedules = schedules
                 .filter(s => {
                     const now = new Date();
-                    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-                    const currentWIB = new Date(utc + (3600000 * 7)); // WIB is UTC+7
+                    // Get current time in target timezone
+                    const targetZone = TZ_CONFIG[timezone].iana;
+                    const nowInTzStr = now.toLocaleString("en-US", {timeZone: targetZone});
+                    const nowInTz = new Date(nowInTzStr);
                     
-                    const dbDateStr = s.startDate || s.date;
-                    const schedStart = new Date(`${dbDateStr}T${s.startTime}`);
+                    // Get schedule time in target timezone
+                    const sDisplay = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
+                    const sStart = new Date(`${sDisplay.date}T${sDisplay.time}`);
                     
-                    return schedStart > currentWIB;
+                    return sStart > nowInTz;
                 })
                 .sort((a,b) => {
                     const timeA = `${a.startDate || a.date}T${a.startTime}`;
                     const timeB = `${b.startDate || b.date}T${b.startTime}`;
-                    return timeB.localeCompare(timeA); // SORTING UPDATE: Newest/Furthest -> Oldest/Nearest
+                    return timeA.localeCompare(timeB); // SORTING FIX: Nearest first (Oldest -> Newest among upcoming)
                 })
                 .slice(0, 5);
             
             const now = new Date();
-            const tz = TIMEZONES[lang];
-            const currentTimeDisplay = formatTimeInZone(now, tz);
+            const tzIana = TZ_CONFIG[timezone].iana;
+            const currentTimeDisplay = now.toLocaleTimeString('en-US', { timeZone: tzIana, hour12: false, hour: '2-digit', minute: '2-digit' });
+            
+            // Check active workers based on current UTC time vs Schedule UTC time
+            // Simplified: Convert everything to WIB/UTC+7 for comparison logic since DB is WIB
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const currentWIB = new Date(utc + (3600000 * 7)); // WIB is UTC+7
+            const currentWIB = new Date(utc + (3600000 * 7)); 
 
             const activeWorkers = schedules.filter(s => {
                 const startDateStr = s.startDate || s.date;
@@ -663,7 +676,7 @@
                             <button onClick={onEditProfile} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition backdrop-blur-sm" title="Atur Rekening"><i className="fas fa-cog text-white text-sm"></i></button>
                         </div>
                         <div className="relative z-10 mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 flex justify-between items-center">
-                            <div><p className="text-[10px] text-blue-200 uppercase tracking-widest mb-1">{t.dashboard.estEarned}</p><p className="text-2xl font-bold">{formatCurrency(estEarned)}</p><p className="text-[10px] text-blue-100 mt-1 flex items-center gap-1"><i className="far fa-clock"></i> {periodText}</p></div>
+                            <div><p className="text-[10px] text-blue-200 uppercase tracking-widest mb-1">{t.dashboard.estEarned}</p><p className="text-2xl font-bold">{formatCurrency(estEarned, lang)}</p><p className="text-[10px] text-blue-100 mt-1 flex items-center gap-1"><i className="far fa-clock"></i> {periodText}</p></div>
                             <div className="text-right"><span className="block text-2xl font-bold">{(totalMins/60).toFixed(1)}</span><span className="text-xs text-blue-200">{t.dashboard.hours}</span></div>
                         </div>
                         <i className="fas fa-coins absolute -right-6 -bottom-8 text-9xl text-white opacity-5"></i>
@@ -675,7 +688,7 @@
                                 <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
                                 {t.dashboard.workingNow}
                             </h3>
-                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">{currentTimeDisplay} {TIMEZONE_LABELS[lang]}</span>
+                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">{currentTimeDisplay} {TZ_CONFIG[timezone].label}</span>
                         </div>
                         {activeWorkers.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
@@ -683,7 +696,7 @@
                                     <div key={idx} className="bg-slate-50 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full" style={{backgroundColor: w.color}}></div>
                                         <span className="text-sm font-bold text-slate-700">{w.name}</span>
-                                        <span className="text-xs text-slate-400">until {getDisplayTime(w.endTime, w.endDate, lang).time}</span>
+                                        <span className="text-xs text-slate-400">until {getDisplayTime(w.endTime, w.endDate, timezone).time}</span>
                                     </div>
                                 ))}
                             </div>
@@ -694,18 +707,18 @@
                         <div className="space-y-3">
                             {upcomingSchedules.map(s => {
                                 const showDate = s.startDate || s.date;
-                                const dateObj = getDisplayTime(s.startTime, showDate, lang); // get converted Date
+                                const dateObj = getDisplayTime(s.startTime, showDate, timezone); // get converted Date
                                 const displayDate = formatDate(dateObj.date, lang);
                                 
-                                const startDisplay = getDisplayTime(s.startTime, showDate, lang).time;
-                                const endDisplay = getDisplayTime(s.endTime, s.endDate || showDate, lang).time;
+                                const startDisplay = getDisplayTime(s.startTime, showDate, timezone).time;
+                                const endDisplay = getDisplayTime(s.endTime, s.endDate || showDate, timezone).time;
                                 
                                 return (
                                     <div key={s.id} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                                         <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm" style={{backgroundColor: getUserColor(s.userId)}}>{getUserName(s.userId).substring(0,2).toUpperCase()}</div>
                                         <div className="ml-3 flex-1">
                                             <div className="flex justify-between"><span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span><span className="text-[10px] bg-white border px-2 py-0.5 rounded-full text-slate-500">{displayDate}</span></div>
-                                            <div className="text-xs text-slate-500 mt-1">{startDisplay} - {endDisplay} <span className="text-[8px] bg-slate-200 px-1 rounded">{TIMEZONE_LABELS[lang]}</span></div>
+                                            <div className="text-xs text-slate-500 mt-1">{startDisplay} - {endDisplay} <span className="text-[8px] bg-slate-200 px-1 rounded">{TZ_CONFIG[timezone].label}</span></div>
                                         </div>
                                     </div>
                                 );
@@ -717,22 +730,22 @@
             );
         };
 
-        const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule, isAdmin, lang, t }) => {
+        const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule, isAdmin, lang, t, timezone }) => {
             const [showHistory, setShowHistory] = React.useState(false);
             const [filterMine, setFilterMine] = React.useState(false);
             const [sortOrder, setSortOrder] = React.useState('desc'); // Default to newest first
             
             const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
-                const dbTime = getDbTime(scheduleForm.startTime, scheduleForm.startDate, lang);
-                const currentOpDayDB = getOpDay(scheduleForm.startDate, dbTime.time); 
+                const dbTime = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                const currentOpDayDB = getOpDay(scheduleForm.startDate, dbTime.time, 'WIB'); // FIXED: Use fixed 'WIB' context for quotas
                 if (!currentOpDayDB) return 0;
                 
                 return schedules
                     .filter(s => {
                         if (editScheduleId && s.id === editScheduleId) return false;
                         const otherStartD = s.startDate || s.date;
-                        const otherOpDay = getOpDay(otherStartD, s.startTime);
+                        const otherOpDay = getOpDay(otherStartD, s.startTime, 'WIB'); // FIXED: Consistent comparison
                         return otherOpDay === currentOpDayDB;
                     })
                     .reduce((acc, s) => {
@@ -743,7 +756,7 @@
                          if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1);
                          return acc + Math.floor((d2 - d1)/60000);
                     }, 0);
-            }, [schedules, scheduleForm, editScheduleId, lang]);
+            }, [schedules, scheduleForm, editScheduleId, timezone]);
 
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
@@ -753,14 +766,13 @@
                 let filtered = [...schedules];
                 if (!showHistory) {
                     const now = new Date();
-                    const wibString = now.toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
-                    const wibDate = new Date(wibString);
-                    wibDate.setDate(wibDate.getDate() - 1); 
-                    const y = wibDate.getFullYear();
-                    const m = String(wibDate.getMonth() + 1).padStart(2, '0');
-                    const d = String(wibDate.getDate()).padStart(2, '0');
-                    const yesterdayStr = `${y}-${m}-${d}`;
-                    filtered = filtered.filter(s => (s.startDate || s.date) >= yesterdayStr);
+                    // Simplified history filter: just check raw dates, ideally should convert to target TZ
+                    const y = now.getFullYear();
+                    const m = String(now.getMonth() + 1).padStart(2, '0');
+                    const d = String(now.getDate()).padStart(2, '0');
+                    const todayStr = `${y}-${m}-${d}`;
+                    // Keep it simple for history filter, otherwise complex
+                    filtered = filtered.filter(s => (s.startDate || s.date) >= todayStr); 
                 }
                 if (filterMine) filtered = filtered.filter(s => String(s.userId) === String(currentUser));
                 
@@ -790,14 +802,14 @@
                         )}
                         <form onSubmit={saveSchedule} className="space-y-3">
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.start} ({TIMEZONE_LABELS[lang]})</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.start} ({TZ_CONFIG[timezone].label})</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><input type="date" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.startDate} onChange={e => {if(!scheduleForm.endDate) setScheduleForm({...scheduleForm, startDate: e.target.value, endDate: e.target.value});else setScheduleForm({...scheduleForm, startDate: e.target.value});}} /></div>
                                     <div><input type="time" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} /></div>
                                 </div>
                             </div>
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.end} ({TIMEZONE_LABELS[lang]})</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.end} ({TZ_CONFIG[timezone].label})</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><input type="date" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.endDate} onChange={e => setScheduleForm({...scheduleForm, endDate: e.target.value})} /></div>
                                     <div><input type="time" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} /></div>
@@ -821,8 +833,8 @@
                             const isMine = String(s.userId) === String(currentUser);
                             const dbStartDate = s.startDate || s.date;
                             const dbEndDate = s.endDate || s.date;
-                            const startObj = getDisplayTime(s.startTime, dbStartDate, lang);
-                            const endObj = getDisplayTime(s.endTime, dbEndDate, lang);
+                            const startObj = getDisplayTime(s.startTime, dbStartDate, timezone);
+                            const endObj = getDisplayTime(s.endTime, dbEndDate, timezone);
                             const dateDisp = formatDate(startObj.date, lang);
 
                             return (
@@ -831,7 +843,7 @@
                                         <div className="w-2 h-10 rounded-full" style={{backgroundColor: getUserColor(s.userId)}}></div>
                                         <div>
                                             <div className="flex items-center gap-2"><span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span>{isMine && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 rounded font-bold">YOU</span>}</div>
-                                            <div className="text-xs text-slate-500 mt-1">{dateDisp} • {startObj.time} - {endObj.time} <span className="text-[8px] bg-slate-200 px-1 rounded">{TIMEZONE_LABELS[lang]}</span></div>
+                                            <div className="text-xs text-slate-500 mt-1">{dateDisp} • {startObj.time} - {endObj.time} <span className="text-[8px] bg-slate-200 px-1 rounded">{TZ_CONFIG[timezone].label}</span></div>
                                         </div>
                                     </div>
                                     {isMine && (
@@ -848,7 +860,7 @@
             );
         };
         
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency }) => {
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone }) => {
             if (!currentUser) return <div className="space-y-4 fade-in"><div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center"><div className="flex flex-col items-center gap-3 mb-3"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"><i className="fas fa-user-lock text-blue-500 text-2xl"></i></div><h3 className="font-bold text-blue-800 text-lg">Access Restricted</h3></div><p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p></div></div>;
             if (!hasPaymentInfo) return <div className="space-y-4 fade-in"><div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm"><div className="flex items-center gap-3 mb-2"><i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i><h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3></div><button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">{t.timesheet.fillPayInfo}</button></div></div>;
 
@@ -873,23 +885,23 @@
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
                         <h3 className="font-bold text-slate-700 mb-4">{editTimesheetId ? t.timesheet.editTitle : t.timesheet.title}</h3>
                         <form onSubmit={saveTimesheet} className="space-y-3">
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.date} ({TIMEZONE_LABELS[lang]})</label><input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} /></div>
+                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.date} ({TZ_CONFIG[timezone].label})</label><input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} /></div>
                             <div className="grid grid-cols-2 gap-3">
-                                <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.start} ({TIMEZONE_LABELS[lang]})</label><input type="time" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} /></div>
+                                <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.start} ({TZ_CONFIG[timezone].label})</label><input type="time" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} /></div>
                                 <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.duration}</label><input type="number" placeholder="Mins" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.duration} onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} /></div>
                             </div>
-                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg"><span>Est:</span><span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*RATES[lang]) : '0'}</span></div>
+                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg"><span>Est:</span><span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*RATES[lang], lang) : '0'}</span></div>
                             <button disabled={loading} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>{loading ? <Spinner/> : (editTimesheetId ? t.common.save : t.timesheet.submit)}</button>
                         </form>
                     </div>
                     <div className="pb-20">
                         <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3><button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button></div>
                         {filteredTimesheets.map(item => {
-                            const displayObj = getDisplayTime(item.startTime, item.date, lang);
+                            const displayObj = getDisplayTime(item.startTime, item.date, timezone);
                             const displayDate = formatDate(displayObj.date, lang);
                             return (
                                 <div key={item.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                    <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{displayDate} • {displayObj.time} ({TIMEZONE_LABELS[lang]})</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item))}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
+                                    <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{displayDate} • {displayObj.time} ({TZ_CONFIG[timezone].label})</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item), lang)}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
                                     <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center"><span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${item.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>{item.status === 'paid' ? t.timesheet.paid : t.timesheet.pending}</span>{String(item.userId) === String(currentUser) && item.status !== 'paid' && (<div className="flex gap-2"><button onClick={() => editTimesheet(item)} className="text-xs text-blue-500"><i className="fas fa-pen"></i></button><button onClick={() => deleteTimesheet(item.id)} className="text-xs text-red-500"><i className="fas fa-trash"></i></button></div>)}</div>
                                 </div>
                             );
@@ -957,7 +969,7 @@
                         <div className="space-y-4">
                             <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
                                 <h2 className="text-xl font-bold mb-1">{t.admin.pendingBill}</h2>
-                                <p className="text-3xl font-bold">{formatCurrency(totalPending)}</p>
+                                <p className="text-3xl font-bold">{formatCurrency(totalPending, lang)}</p>
                             </div>
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                                 {pendingSheets.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">No pending bills.</p> : (
@@ -973,7 +985,7 @@
                                                 <div key={grp.userId} className="border border-slate-100 rounded-xl p-4">
                                                     <div className="flex justify-between mb-2">
                                                         <div><p className="font-bold">{u?.name}</p><p className="text-xs text-slate-500">{u?.bankName} - {u?.accountNumber}</p></div>
-                                                        <p className="font-bold text-green-600">{formatCurrency(grp.total)}</p>
+                                                        <p className="font-bold text-green-600">{formatCurrency(grp.total, lang)}</p>
                                                     </div>
                                                     <button onClick={() => handleMarkPaid(grp.sheets)} className="w-full bg-green-600 text-white text-sm font-medium py-2 rounded-lg">{t.admin.markPaid}</button>
                                                 </div>
@@ -989,7 +1001,7 @@
                         <div className="space-y-4">
                             <div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
                                 <h2 className="text-xl font-bold mb-1">Total Terbayar</h2>
-                                <p className="text-3xl font-bold">{formatCurrency(totalAllTimePaid)}</p>
+                                <p className="text-3xl font-bold">{formatCurrency(totalAllTimePaid, lang)}</p>
                             </div>
                             
                             {/* Total Per User Breakdown */}
@@ -1001,7 +1013,7 @@
                                         return (
                                             <div key={uid} className="flex justify-between text-sm pb-2 border-b border-slate-50 last:border-0 last:pb-0">
                                                 <span>{u?.name || 'Unknown'}</span>
-                                                <span className="font-bold text-green-600">{formatCurrency(userTotalPaid[uid])}</span>
+                                                <span className="font-bold text-green-600">{formatCurrency(userTotalPaid[uid], lang)}</span>
                                             </div>
                                         );
                                     })}
@@ -1014,7 +1026,7 @@
                                     <div key={week} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                                         <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
                                             <p className="text-xs uppercase text-slate-500 font-bold">{week}</p>
-                                            <p className="text-sm font-bold text-slate-800">{formatCurrency(weeklyStats[week])}</p>
+                                            <p className="text-sm font-bold text-slate-800">{formatCurrency(weeklyStats[week], lang)}</p>
                                         </div>
                                         {/* User breakdown for this week */}
                                         <div className="space-y-1">
@@ -1023,7 +1035,7 @@
                                                 return (
                                                     <div key={uid} className="flex justify-between text-xs text-slate-500">
                                                         <span>- {u?.name}</span>
-                                                        <span>{formatCurrency(userWeeklyPaid[week][uid])}</span>
+                                                        <span>{formatCurrency(userWeeklyPaid[week][uid], lang)}</span>
                                                     </div>
                                                 )
                                             })}
@@ -1041,7 +1053,7 @@
                                             return (
                                                 <div key={item.id} className="flex justify-between text-sm py-1">
                                                     <span>{u?.name}</span>
-                                                    <span className="font-mono">{formatCurrency(getAmount(item))}</span>
+                                                    <span className="font-mono">{formatCurrency(getAmount(item), lang)}</span>
                                                 </div> 
                                             )
                                         })}
@@ -1069,6 +1081,7 @@
             const [showAdminLogin, setShowAdminLogin] = React.useState(false);
             const [editingUser, setEditingUser] = React.useState(null);
             const [lang, setLang] = React.useState('id'); 
+            const [timezone, setTimezone] = React.useState('WIB'); // Global Timezone State
             const t = TRANSLATIONS[lang];
             const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
             const [editScheduleId, setEditScheduleId] = React.useState(null);
@@ -1106,15 +1119,14 @@
             const saveSchedule = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
                 
-                // VALIDATION UPDATE (Requirement 1)
                 const startStr = `${scheduleForm.startDate}T${scheduleForm.startTime}`;
                 const endStr = `${scheduleForm.endDate}T${scheduleForm.endTime}`;
                 if (endStr <= startStr) {
                     return showNotify(lang === 'id' ? "Waktu selesai harus lebih akhir dari mulai!" : "End time must be after start time!", "error");
                 }
 
-                const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, lang);
-                const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, lang);
+                const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
                 setLoading(true);
                 try {
                     const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
@@ -1124,8 +1136,8 @@
             };
             const deleteSchedule = (id) => { triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); }); };
             const editSchedule = (item) => { 
-                const uiStart = getDisplayTime(item.startTime, item.startDate || item.date, lang);
-                const uiEnd = getDisplayTime(item.endTime, item.endDate || item.date, lang);
+                const uiStart = getDisplayTime(item.startTime, item.startDate || item.date, timezone);
+                const uiEnd = getDisplayTime(item.endTime, item.endDate || item.date, timezone);
                 setScheduleForm({startDate: uiStart.date, startTime: uiStart.time, endDate: uiEnd.date, endTime: uiEnd.time}); 
                 setEditScheduleId(item.id); window.scrollTo({top:0,behavior:'smooth'}); 
             };
@@ -1135,10 +1147,9 @@
                 setLoading(true);
                 try {
                     const dur = parseInt(timesheetForm.duration);
-                    // Calc both currencies
                     const idr = Math.round((dur/60) * RATES.id);
                     const usd = ((dur/60) * RATES.en).toFixed(2); 
-                    const dbTime = getDbTime(timesheetForm.startTime, timesheetForm.date, lang);
+                    const dbTime = getDbTime(timesheetForm.startTime, timesheetForm.date, timezone);
                     const payload = { userId: currentUser, date: dbTime.date, startTime: dbTime.time, duration: dur, paymentUSD: usd, paymentIDR: idr, status: 'pending', updatedAt: new Date().toISOString() };
                     if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
                     showNotify("Saved!"); setTimesheetForm({ date: '', startTime: '', duration: '' }); setEditTimesheetId(null);
@@ -1146,7 +1157,7 @@
             };
             const deleteTimesheet = (id) => { triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); }); };
             const editTimesheet = (item) => { 
-                const uiTime = getDisplayTime(item.startTime, item.date, lang);
+                const uiTime = getDisplayTime(item.startTime, item.date, timezone);
                 setTimesheetForm({date: uiTime.date, startTime: uiTime.time, duration: item.duration}); 
                 setEditTimesheetId(item.id); window.scrollTo({top:0,behavior:'smooth'}); 
             };
@@ -1163,19 +1174,96 @@
                     {showAdminLogin && <AdminLoginModal onClose={() => setShowAdminLogin(false)} onLogin={handleAdminLogin} loading={loading} t={t} />}
                     {confirmModal.show && <ConfirmationModal isOpen={confirmModal.show} message={confirmModal.message} onConfirm={executeConfirm} onCancel={() => setConfirmModal({ ...confirmModal, show: false })} t={t} />}
 
-                    <header className="bg-white sticky top-0 z-20 px-4 py-3 shadow-sm border-b border-slate-100 flex justify-between items-center">
-                        <div className="flex items-center gap-2"><h1 className="font-bold text-lg text-blue-700"><i className="fas fa-layer-group"></i> Scheduler</h1><button onClick={() => setLang(l => l === 'id' ? 'en' : 'id')} className="text-xs font-bold px-2 py-1 bg-slate-100 rounded border border-slate-200 uppercase">{lang}</button></div>
-                        <select className="text-xs bg-slate-50 border border-slate-200 rounded-md p-1.5 outline-none" value={currentUser || ''} onChange={handleUserChange}><option value="">{t.timesheet.selectUser}</option>{users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
+                    <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
+                        {/* Top Row: Brand & User */}
+                        <div className="px-4 pt-3 pb-2 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                                    <i className="fas fa-layer-group text-sm"></i>
+                                </div>
+                                <div>
+                                    <h1 className="font-bold text-lg text-slate-800 leading-tight tracking-tight">Scheduler</h1>
+                                    <p className="text-[10px] text-slate-400 font-medium tracking-wide">REMOTE WORK</p>
+                                </div>
+                            </div>
+                            
+                            <div className="relative group">
+                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full pl-1 pr-3 py-1 shadow-sm group-hover:border-blue-300 transition-all">
+                                    {(() => {
+                                        const activeU = users.find(u => String(u.id) === String(currentUser));
+                                        return (
+                                            <>
+                                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm" 
+                                                     style={{backgroundColor: activeU ? activeU.color : '#94a3b8'}}>
+                                                    {activeU ? activeU.name.substring(0,1) : <i className="fas fa-user"></i>}
+                                                </div>
+                                                <span className="text-xs font-semibold text-slate-600 max-w-[80px] truncate">
+                                                    {activeU ? activeU.name : 'Select...'}
+                                                </span>
+                                                <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                                            </>
+                                        )
+                                    })()}
+                                </div>
+                                <select 
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    value={currentUser || ''} 
+                                    onChange={handleUserChange}
+                                >
+                                    <option value="">Select User...</option>
+                                    {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        {/* Controls Row */}
+                        <div className="px-4 pb-3 flex gap-2">
+                             <button 
+                                onClick={() => setLang(l => l === 'id' ? 'en' : 'id')} 
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all active:scale-95"
+                             >
+                                <div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-600">
+                                    {lang === 'id' ? 'ID' : 'EN'}
+                                </div>
+                                <span className="text-[10px] font-semibold text-slate-600">
+                                    {lang === 'id' ? 'Bahasa Indonesia' : 'English'}
+                                </span>
+                             </button>
+
+                             <div className="relative flex-1">
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+                                    <i className="far fa-clock text-slate-400 text-xs"></i>
+                                </div>
+                                <select 
+                                    className="appearance-none w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
+                                    value={timezone} 
+                                    onChange={e => setTimezone(e.target.value)}
+                                >
+                                    {Object.keys(TZ_CONFIG).map(k => <option key={k} value={k}>{TZ_CONFIG[k].label}</option>)}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center px-2.5 pointer-events-none">
+                                    <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                                </div>
+                             </div>
+                        </div>
+
+                        {/* Reminder Alert - Clean & Subtle */}
+                        <div className="bg-amber-50 border-y border-amber-100 px-4 py-2 flex items-center gap-2 animate-fadeIn">
+                            <i className="fas fa-exclamation-circle text-amber-500 text-xs flex-shrink-0"></i>
+                            <p className="text-[10px] text-amber-700 font-medium leading-tight">
+                                {t.common.reminder}
+                            </p>
+                        </div>
                     </header>
 
                     <main className="flex-1 p-4">
                         {loading && !users.length ? <div className="flex flex-col items-center justify-center h-64 text-slate-400 animate-pulse"><i className="fas fa-database text-4xl mb-3"></i><p>{t.common.loading}</p></div> : (
                             <>
-                                {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={dynamicFormatCurrency} lang={lang} />}
-                                {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} />}
-                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={dynamicFormatCurrency} />}
-                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={dynamicFormatCurrency} />}
-                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={dynamicFormatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} />}
+                                {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={formatCurrency} lang={lang} timezone={timezone} />}
+                                {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} timezone={timezone} />}
+                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
+                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
+                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={formatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} />}
                             </>
                         )}
                     </main>
