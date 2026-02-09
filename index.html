@@ -100,7 +100,7 @@
                 timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
-                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan'
+                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif' },
                 profile: { title: 'Info Pembayaran', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' }
@@ -116,7 +116,7 @@
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
-                    statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc'
+                    statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive' },
                 profile: { title: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' }
@@ -184,7 +184,8 @@
         };
 
         // CORE LOGIC: Determines which "Work Day" a log belongs to
-        // Takes WIB Date & Time strings, and the target Timezone Code
+        // If tzCode is PST, we use a 15:00 WIB cutoff (which is midnight PST approx)
+        // Otherwise use 04:00 AM cutoff for standard shifts
         const getOpDay = (dateStr, timeStr, tzCode) => {
             if (!dateStr || !timeStr) return null;
             
@@ -291,6 +292,7 @@
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             const [tab, setTab] = React.useState('team'); 
+            const [analyticsMode, setAnalyticsMode] = React.useState('local'); // 'local' (04:00 cutoff) or 'operational' (15:00 cutoff)
             
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -338,6 +340,10 @@
 
             // 3. Paid History
             const myPaidSheets = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'paid');
+            
+            // New Feature: Total Paid Amount
+            const grandTotalPaid = myPaidSheets.reduce((acc, t) => acc + (parseInt(t.duration || 0)/60) * RATES[lang], 0);
+
             const paidGroups = {};
             myPaidSheets.forEach(t => {
                 const dateKey = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown';
@@ -449,6 +455,15 @@
                                     <p className="text-[10px] text-slate-400 mt-1">{(myPendingMinutes/60).toFixed(1)} {t.common.unitHour} {t.analytics.totalUnpaid}</p>
                                 </div>
                             </div>
+                            
+                            {/* Toggle Mode Control */}
+                            <div className="flex items-center justify-between px-2">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t.analytics.viewMode}</span>
+                                <div className="flex bg-slate-100 rounded-lg p-0.5">
+                                    <button onClick={() => setAnalyticsMode('local')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'local' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeLocal}</button>
+                                    <button onClick={() => setAnalyticsMode('operational')} className={`px-3 py-1 text-[10px] rounded-md transition font-medium ${analyticsMode === 'operational' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400'}`}>{t.analytics.modeOp}</button>
+                                </div>
+                            </div>
 
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                                 <div className="mb-4">
@@ -522,8 +537,24 @@
                                 </div>
                             </div>
 
+                            {/* UPDATED PAYMENT HISTORY CARD */}
                             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-history text-green-600"></i> {t.analytics.paymentHistory}</h3>
+                                <div className="flex justify-between items-end mb-6">
+                                    <div>
+                                        <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-1">
+                                            <i className="fas fa-history text-green-500"></i> {t.analytics.paymentHistory}
+                                        </h3>
+                                        <p className="text-[10px] text-slate-400"></p>
+                                    </div>
+                                    {myPaidSheets.length > 0 && (
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t.analytics.totalPaid}</p>
+                                            <div className="bg-green-50 text-green-700 px-3 py-1 rounded-lg border border-green-100 font-bold text-lg shadow-sm">
+                                                {formatCurrency(grandTotalPaid, lang)}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-4">No payment history.</p> : (
                                     <div className="space-y-4">
                                         {sortedPaidHistory.map(dateKey => {
