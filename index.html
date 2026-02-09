@@ -40,14 +40,28 @@
             theme: {
                 extend: {
                     colors: { primary: '#2563eb', secondary: '#475569', success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(15px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
                 }
             }
         }
     </script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -75,11 +89,11 @@
             en: BASE_HOURLY_RATE_USD // 15 AUD
         };
         
-        // TIMEZONE CONFIGURATION (Decoupled from Language)
+        // TIMEZONE CONFIGURATION
         const TZ_CONFIG = {
             'WIB': { label: 'WIB (Jakarta)', iana: 'Asia/Jakarta', offsetHours: 0 },
             'AEDT': { label: 'AEDT (Melbourne)', iana: 'Australia/Melbourne', offsetHours: 4 }, // Approx +4h from WIB
-            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB (UTC+7 to UTC-7)
+            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB
         };
         
         // Initial Seed
@@ -140,28 +154,24 @@
         };
 
         // Convert DB Time (WIB) -> UI Time (Selected Timezone)
-        // Accepts: DB Time String (WIB), Date String, Target Timezone Code (WIB/AEDT/PST)
         const getDisplayTime = (timeStr, dateStr, tzCode) => {
-            if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
-            
-            // Construct ISO string with WIB offset (+07:00) - This is the Single Source of Truth
+            if (!timeStr || !dateStr) return { date: dateStr, time: timeStr, originalObj: new Date() };
+            // Construct ISO string with WIB offset (+07:00)
             const isoStr = `${dateStr}T${timeStr}:00+07:00`;
             const d = new Date(isoStr);
 
             const targetZone = TZ_CONFIG[tzCode].iana;
             
-            // Format to parts in target timezone
             const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
             const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
             
-            const newDateStr = formatterDate.format(d); // YYYY-MM-DD
-            const newTimeStr = formatterTime.format(d); // HH:mm
+            const newDateStr = formatterDate.format(d); 
+            const newTimeStr = formatterTime.format(d);
             
             return { date: newDateStr, time: newTimeStr, originalObj: d };
         };
 
-        // Convert UI Time (Selected Timezone) -> DB Time (WIB)
-        // We calculate this by creating a date in target zone and shifting it back to WIB (+07)
+        // Convert UI Time -> DB Time (WIB)
         const getDbTime = (timeStr, dateStr, tzCode) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
             if (tzCode === 'WIB') return { date: dateStr, time: timeStr };
@@ -169,9 +179,6 @@
             const offset = TZ_CONFIG[tzCode].offsetHours;
             const d = new Date(`${dateStr}T${timeStr}`);
             
-            // Reverse the offset to get back to WIB
-            // Example: AEDT is +4h from WIB. Input is 10:00 AEDT. DB should be 06:00 WIB. 
-            // 10 - 4 = 6. So we subtract the offset.
             d.setHours(d.getHours() - offset); 
             
             const y = d.getFullYear();
@@ -183,19 +190,14 @@
             return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
         };
 
-        // CORE LOGIC: Determines which "Work Day" a log belongs to
-        // If tzCode is PST, we use a 15:00 WIB cutoff (which is midnight PST approx)
-        // Otherwise use 04:00 AM cutoff for standard shifts
         const getOpDay = (dateStr, timeStr, tzCode) => {
             if (!dateStr || !timeStr) return null;
             
-            // First, get the time in the target timezone
             const display = getDisplayTime(timeStr, dateStr, tzCode);
             const dt = new Date(`${display.date}T${display.time}`);
             const hour = dt.getHours();
             
-            // Standard cutoff for "shifts" is usually 4 AM in the local context
-            const cutoff = 4; 
+            const cutoff = 4; // Shift cutoff
             
             if (hour < cutoff) dt.setDate(dt.getDate() - 1);
             
@@ -215,7 +217,7 @@
         const Spinner = () => <i className="fas fa-circle-notch fa-spin text-white"></i>;
 
         const Notification = ({ msg, type, onClose }) => (
-            <div className={`fixed top-4 right-4 left-4 md:left-auto z-50 p-4 rounded-lg shadow-xl text-white flex justify-between items-center fade-in ${type === 'error' ? 'bg-red-500' : 'bg-green-600'}`}>
+            <div className={`fixed top-4 right-4 left-4 md:left-auto z-50 p-4 rounded-lg shadow-xl text-white flex justify-between items-center animate-slide-up ${type === 'error' ? 'bg-red-500' : 'bg-green-600'}`}>
                 <span className="text-sm font-medium">{msg}</span>
                 <button onClick={onClose}><i className="fas fa-times opacity-70 hover:opacity-100"></i></button>
             </div>
@@ -224,8 +226,8 @@
         const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel, t }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform transition-all scale-100">
                         <h3 className="text-lg font-bold text-slate-800 mb-2">{t.common.confirmTitle}</h3>
                         <p className="text-slate-600 mb-6">{message}</p>
                         <div className="flex gap-2">
@@ -244,7 +246,7 @@
             const [accNumber, setAccNumber] = React.useState(user?.accountNumber || '');
             const handleSubmit = (e) => { e.preventDefault(); onSave({ bankName, accountNumber: accNumber }); };
             return (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
                         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i className="fas fa-wallet text-blue-600"></i> {t.profile.title}</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -260,7 +262,7 @@
         const UserModal = ({ user, onClose, onSave, loading, t }) => {
             const [form, setForm] = React.useState(user || { name: '', color: '#3b82f6', hidden: false });
             return (
-                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in">
+                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
                         <h3 className="text-lg font-bold text-slate-800 mb-4">{user ? 'Edit User' : t.admin.addUser}</h3>
                         <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-4">
@@ -278,7 +280,7 @@
             const [pwd, setPwd] = React.useState('');
             const handleSubmit = (e) => { e.preventDefault(); onLogin(pwd); };
             return (
-                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 fade-in">
+                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
                         <h3 className="text-lg font-bold text-slate-800 mb-4">Admin Login</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -292,8 +294,6 @@
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             const [tab, setTab] = React.useState('team'); 
-            const [analyticsMode, setAnalyticsMode] = React.useState('local'); // 'local' (04:00 cutoff) or 'operational' (15:00 cutoff)
-            
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
@@ -311,10 +311,13 @@
             // Personal Data Logic - Dynamic based on Timezone
             const getLast7Days = () => {
                 const dates = [];
+                const targetZone = TZ_CONFIG[timezone].iana;
+                const nowStr = new Date().toLocaleString("en-US", {timeZone: targetZone});
+                const nowTz = new Date(nowStr);
+
                 for(let i=0; i<7; i++) {
-                    const d = new Date();
+                    const d = new Date(nowTz);
                     d.setDate(d.getDate() - i);
-                    // This is rough local date, precise matching happens in grouping
                     const y = d.getFullYear();
                     const m = String(d.getMonth()+1).padStart(2,'0');
                     const day = String(d.getDate()).padStart(2,'0');
@@ -353,7 +356,7 @@
             });
             const sortedPaidHistory = Object.keys(paidGroups).sort((a,b) => new Date(b) - new Date(a));
 
-            // --- 4. DISCIPLINE LOGIC: Strict Timezone Conversion ---
+            // --- 4. DISCIPLINE LOGIC ---
             const targetZone = TZ_CONFIG[timezone].iana;
 
             const disciplineData = rangeDays.map(localDateStr => {
@@ -361,7 +364,6 @@
                 const dailySchedules = schedules.filter(s => {
                     if (String(s.userId) !== String(currentUser)) return false;
                     const converted = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
-                    // Match OpDay of Converted Time
                     const opDay = getOpDay(converted.date, converted.time, timezone);
                     return opDay === localDateStr;
                 }).map(s => {
@@ -372,7 +374,6 @@
                         id: s.id,
                         start: startConv.time,
                         end: endConv.time,
-                        // Use original time object for precise diff calculation
                         origStart: startConv.originalObj,
                         planMins: (()=>{
                             const d1 = new Date(`2000-01-01T${s.startTime}`);
@@ -388,7 +389,6 @@
                 // Timesheets
                 const dailySheets = timesheets.filter(t => {
                     if (String(t.userId) !== String(currentUser)) return false;
-                    // Strict: Get Log time in selected TZ, then check its OpDay
                     const converted = getDisplayTime(t.startTime, t.date, timezone);
                     const opDay = getOpDay(converted.date, converted.time, timezone);
                     return opDay === localDateStr;
@@ -402,9 +402,8 @@
                     let minDiff = Infinity;
 
                     dailySchedules.forEach(s => {
-                        // Compare Original Time Objects (Both are derived from WIB Source via getDisplayTime)
                         let diff = Math.abs((s.origStart - tConv.originalObj) / 60000);
-                        if (diff < 180) { // 3 Hour Tolerance
+                        if (diff < 180) { 
                             if (diff < minDiff) {
                                 minDiff = diff;
                                 bestMatch = s;
@@ -425,14 +424,20 @@
 
             // Team Activity Logic
             const dailyActivityTeam = rangeDays.map(dateStr => {
-                const mins = timesheets.filter(t => t.date === dateStr).reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+                const mins = timesheets.reduce((acc, t) => {
+                    const opDay = getOpDay(t.date, t.startTime, timezone);
+                    if (opDay === dateStr) {
+                        return acc + parseInt(t.duration || 0);
+                    }
+                    return acc;
+                }, 0);
                 return { date: dateStr, minutes: mins };
             });
             const maxDailyMins = Math.max(...dailyActivityTeam.map(d => d.minutes), 60);
             const totalActivityHours = dailyActivityTeam.reduce((acc, d) => acc + d.minutes, 0) / 60;
 
             return (
-                <div className="space-y-4 fade-in pb-24">
+                <div className="space-y-4 animate-slide-up pb-24">
                     {/* Header Controls */}
                     <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
                         <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
@@ -444,21 +449,19 @@
                     {tab === 'personal' && (
                         <div className="space-y-4 animate-fadeIn">
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-white p-4 rounded-xl border-l-4 border-blue-500 shadow-sm">
+                                <div className="bg-white p-4 rounded-xl border-l-4 border-blue-500 shadow-sm hover:scale-[1.02] transition-transform">
                                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.myStats}</h3>
                                     <p className="text-2xl font-bold text-slate-700">{(my7DaysMinutes/60).toFixed(1)} <span className="text-sm font-normal text-slate-400">{t.common.unitShort}</span></p>
                                     <p className="text-xs text-blue-600 font-medium mt-1">{formatCurrency(my7DaysEarnings, lang)}</p>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border-l-4 border-orange-400 shadow-sm">
+                                <div className="bg-white p-4 rounded-xl border-l-4 border-orange-400 shadow-sm hover:scale-[1.02] transition-transform">
                                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.pendingBalance}</h3>
                                     <p className="text-xl font-bold text-orange-600 mt-1">{formatCurrency(myPendingEarnings, lang)}</p>
                                     <p className="text-[10px] text-slate-400 mt-1">{(myPendingMinutes/60).toFixed(1)} {t.common.unitHour} {t.analytics.totalUnpaid}</p>
                                 </div>
                             </div>
                             
-                            {/* Toggle Mode Control - REMOVED as requested */}
-                            
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                                 <div className="mb-4">
                                     <div className="flex justify-between items-center mb-1">
                                         <h3 className="font-bold text-slate-700 flex items-center gap-2"><i className="fas fa-chart-bar text-blue-500"></i> {t.analytics.discipline}</h3>
@@ -471,7 +474,7 @@
                                         if (d.schedules.length === 0 && d.unplanned.length === 0) return null; 
                                         const dateLabel = formatDate(d.date, lang);
                                         return (
-                                            <div key={idx} className="border-l-2 border-slate-200 pl-3">
+                                            <div key={idx} className="border-l-2 border-slate-200 pl-3 animate-slide-up" style={{animationDelay: `${idx * 0.1}s`}}>
                                                 <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">{dateLabel}</p>
                                                 
                                                 {/* Scheduled Slots */}
@@ -479,8 +482,6 @@
                                                     {d.schedules.map(s => {
                                                         const sStart = s.start;
                                                         const sEnd = s.end;
-                                                        
-                                                        // Status Logic
                                                         let status = t.analytics.statusOnTrack;
                                                         let statusColor = "bg-green-100 text-green-700";
                                                         let barColor = "bg-green-500";
@@ -493,10 +494,10 @@
                                                         const percent = Math.min(100, (s.actualMins / s.planMins) * 100) || 0;
 
                                                         return (
-                                                            <div key={s.id} className="relative">
+                                                            <div key={s.id} className="relative group">
                                                                 <div className="flex justify-between items-center text-xs mb-1">
                                                                     <span className="font-medium text-slate-700">{sStart} - {sEnd} <span className="text-[10px] text-slate-400">({(s.planMins/60).toFixed(1)}h)</span></span>
-                                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${statusColor}`}>{status}</span>
+                                                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${statusColor} transition-transform group-hover:scale-110`}>{status}</span>
                                                                 </div>
                                                                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden w-full relative">
                                                                     <div className={`h-full rounded-full ${barColor}`} style={{ width: `${percent}%` }}></div>
@@ -513,14 +514,12 @@
                                                                 <span className="font-medium text-indigo-600 italic">{t.analytics.statusUnplanned}</span>
                                                                 <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-indigo-100 text-indigo-700">{t.analytics.tagAdhoc}</span>
                                                             </div>
-                                                            {d.unplanned.map((u, i) => {
-                                                                return (
-                                                                    <div key={i} className="flex justify-between text-[10px] text-slate-500 pl-2 border-l-2 border-indigo-200 mb-1">
-                                                                        <span>{u.displayTime}</span>
-                                                                        <span>{u.duration}m</span>
-                                                                    </div>
-                                                                )
-                                                            })}
+                                                            {d.unplanned.map((u, i) => (
+                                                                <div key={i} className="flex justify-between text-[10px] text-slate-500 pl-2 border-l-2 border-indigo-200 mb-1">
+                                                                    <span>{u.displayTime}</span>
+                                                                    <span>{u.duration}m</span>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     )}
                                                 </div>
@@ -530,68 +529,69 @@
                                 </div>
                             </div>
 
-                            {/* UPDATED PAYMENT HISTORY CARD - New Premium Look */}
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
-                                {/* Hero Total Section */}
-                                <div className="relative z-10 text-center mb-8">
-                                    <div className="inline-flex items-center justify-center p-3 bg-green-50 rounded-full mb-3 shadow-inner">
-                                        <i className="fas fa-wallet text-green-600 text-xl"></i>
+                            {/* UPDATED PAYMENT HISTORY CARD - Enticing UI */}
+                            <div className="bg-white p-0 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden hover:shadow-lg transition-shadow">
+                                {/* Hero Section */}
+                                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white text-center">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full opacity-10 blur-2xl -mr-10 -mt-10"></div>
+                                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full opacity-10 blur-xl -ml-10 -mb-10"></div>
+                                    
+                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-100 mb-1">{t.analytics.totalPaid}</p>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <i className="fas fa-wallet text-emerald-200 text-2xl"></i>
+                                        <p className="text-4xl font-extrabold tracking-tight">
+                                            {formatCurrency(grandTotalPaid, lang)}
+                                        </p>
                                     </div>
-                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.analytics.totalPaid}</h3>
-                                    <p className="text-3xl font-extrabold text-slate-800 tracking-tight">
-                                        {formatCurrency(grandTotalPaid, lang)}
-                                    </p>
-                                </div>
-                                
-                                {/* Decoration */}
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>
-                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -ml-12 -mb-12 opacity-50"></div>
-
-                                {/* List Header */}
-                                <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-50 relative z-10">
-                                    <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                        <i className="fas fa-history text-slate-400 text-xs"></i> {t.analytics.paymentHistory}
-                                    </h3>
+                                    <p className="text-[10px] text-emerald-100 mt-2 opacity-80">Lifetime Earnings</p>
                                 </div>
 
-                                {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-6 italic bg-slate-50 rounded-lg">No payment history available.</p> : (
-                                    <div className="space-y-4 relative z-10">
-                                        {sortedPaidHistory.map(dateKey => {
-                                            const group = paidGroups[dateKey];
-                                            const totalAmount = (group.totalMinutes/60) * RATES[lang];
-                                            group.dates.sort();
-                                            const startDate = formatFullDate(group.dates[0], lang);
-                                            const endDate = formatFullDate(group.dates[group.dates.length - 1], lang);
-                                            const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
-                                            const paidDate = formatFullDate(dateKey, lang);
-
-                                            return (
-                                                <div key={dateKey} className="group flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-sm group-hover:bg-white group-hover:shadow-md transition-all">
-                                                            <i className="fas fa-check text-xs"></i>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-slate-700">{dateRange}</p>
-                                                            <p className="text-[10px] text-slate-400 mt-0.5">{t.analytics.paidOn}: {paidDate}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <span className="block text-sm font-bold text-slate-800">{formatCurrency(totalAmount, lang)}</span>
-                                                        <span className="text-[9px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                <div className="p-5 relative z-10 bg-white rounded-t-2xl -mt-4">
+                                    <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-50">
+                                        <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                            <i className="fas fa-history text-slate-400 text-xs"></i> {t.analytics.paymentHistory}
+                                        </h3>
                                     </div>
-                                )}
+
+                                    {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-6 italic bg-slate-50 rounded-lg">No payment history available.</p> : (
+                                        <div className="space-y-3">
+                                            {sortedPaidHistory.map((dateKey, index) => {
+                                                const group = paidGroups[dateKey];
+                                                const totalAmount = (group.totalMinutes/60) * RATES[lang];
+                                                group.dates.sort();
+                                                const startDate = formatFullDate(group.dates[0], lang);
+                                                const endDate = formatFullDate(group.dates[group.dates.length - 1], lang);
+                                                const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
+                                                const paidDate = formatFullDate(dateKey, lang);
+
+                                                return (
+                                                    <div key={dateKey} className="group flex justify-between items-center p-3 bg-slate-50 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-emerald-600 shadow-sm group-hover:scale-110 transition-transform">
+                                                                <i className="fas fa-check text-xs"></i>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">{dateRange}</p>
+                                                                <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.paidOn}: {paidDate}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="block text-sm font-bold text-slate-800 group-hover:text-emerald-700">{formatCurrency(totalAmount, lang)}</span>
+                                                            <span className="text-[9px] font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded shadow-sm">{(group.totalMinutes/60).toFixed(1)} {t.common.unitHour}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {tab === 'team' && (
                         <div className="space-y-4 animate-fadeIn">
-                            <div className="bg-gradient-to-br from-indigo-700 to-purple-800 rounded-2xl p-5 text-white shadow-lg">
+                             <div className="bg-gradient-to-br from-indigo-700 to-purple-800 rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-shadow">
                                 <h3 className="text-xs text-indigo-200 uppercase tracking-widest font-bold mb-4">{t.analytics.teamOverview}</h3>
                                 <div className="flex justify-between items-end">
                                     <div><p className="text-4xl font-bold">{(totalMinutesTeam/60).toFixed(0)}<span className="text-lg font-normal text-indigo-300">{t.common.unitShort}</span></p><p className="text-xs text-indigo-200 mt-1">{t.analytics.prodHours}</p></div>
@@ -627,7 +627,7 @@
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-trophy text-yellow-500"></i> {t.analytics.topContrib}</h3>
                                 <div className="space-y-3">
                                     {leaderboard.map((u, idx) => (
-                                        <div key={u.uid} className="flex items-center justify-between border-b border-slate-50 last:border-0 pb-2 last:pb-0">
+                                        <div key={u.uid} className="flex items-center justify-between border-b border-slate-50 last:border-0 pb-2 last:pb-0 hover:bg-slate-50 p-2 rounded-lg transition-colors">
                                             <div className="flex items-center gap-3"><div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${idx === 0 ? 'ring-2 ring-yellow-400' : ''}`} style={{backgroundColor: u.color}}>{idx + 1}</div><span className="text-sm font-medium text-slate-700">{u.name}</span></div>
                                             <div className="text-right"><span className="text-sm font-bold text-indigo-600">{(u.minutes/60).toFixed(1)}h</span></div>
                                         </div>
@@ -699,8 +699,8 @@
             }).filter(u => !u.hidden);
 
             return (
-                <div className="space-y-4 fade-in">
-                    <div className="bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <div className="space-y-4 animate-slide-up">
+                    <div className="bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden hover:shadow-xl transition-all">
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
                                 <h2 className="text-xl font-bold flex items-center gap-2">{t.dashboard.hello}, {currentUser ? getUserName(currentUser) : 'Tim'}!</h2>
@@ -712,10 +712,10 @@
                             <div><p className="text-[10px] text-blue-200 uppercase tracking-widest mb-1">{t.dashboard.estEarned}</p><p className="text-2xl font-bold">{formatCurrency(estEarned, lang)}</p><p className="text-[10px] text-blue-100 mt-1 flex items-center gap-1"><i className="far fa-clock"></i> {periodText}</p></div>
                             <div className="text-right"><span className="block text-2xl font-bold">{(totalMins/60).toFixed(1)}</span><span className="text-xs text-blue-200">{t.dashboard.hours}</span></div>
                         </div>
-                        <i className="fas fa-coins absolute -right-6 -bottom-8 text-9xl text-white opacity-5"></i>
+                        <i className="fas fa-coins absolute -right-6 -bottom-8 text-9xl text-white opacity-5 animate-pulse-slow"></i>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
                             <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
                                 <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
@@ -726,7 +726,7 @@
                         {activeWorkers.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
                                 {activeWorkers.map((w, idx) => (
-                                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-2">
+                                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-full px-3 py-1 flex items-center gap-2 animate-fade-in">
                                         <div className="w-2 h-2 rounded-full" style={{backgroundColor: w.color}}></div>
                                         <span className="text-sm font-bold text-slate-700">{w.name}</span>
                                         <span className="text-xs text-slate-400">until {getDisplayTime(w.endTime, w.endDate, timezone).time}</span>
@@ -735,10 +735,10 @@
                             </div>
                         ) : ( <p className="text-sm text-slate-400 italic">{t.dashboard.noActive}</p> )}
                     </div>
-                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center text-sm uppercase tracking-wide"><i className="fas fa-calendar-alt text-blue-500 mr-2"></i> {t.dashboard.upcoming}</h3>
                         <div className="space-y-3">
-                            {upcomingSchedules.map(s => {
+                            {upcomingSchedules.map((s, idx) => {
                                 const showDate = s.startDate || s.date;
                                 const dateObj = getDisplayTime(s.startTime, showDate, timezone); // get converted Date
                                 const displayDate = formatDate(dateObj.date, lang);
@@ -747,7 +747,7 @@
                                 const endDisplay = getDisplayTime(s.endTime, s.endDate || showDate, timezone).time;
                                 
                                 return (
-                                    <div key={s.id} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div key={s.id} className="flex items-center p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100 transition-colors animate-slide-up" style={{animationDelay: `${idx * 0.1}s`}}>
                                         <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm" style={{backgroundColor: getUserColor(s.userId)}}>{getUserName(s.userId).substring(0,2).toUpperCase()}</div>
                                         <div className="ml-3 flex-1">
                                             <div className="flex justify-between"><span className="font-bold text-slate-700 text-sm">{getUserName(s.userId)}</span><span className="text-[10px] bg-white border px-2 py-0.5 rounded-full text-slate-500">{displayDate}</span></div>
@@ -818,7 +818,7 @@
             }, [schedules, showHistory, filterMine, sortOrder, currentUser]);
 
             return (
-                <div className="space-y-4 fade-in">
+                <div className="space-y-4 animate-slide-up">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editScheduleId ? 'border-orange-500' : 'border-blue-500'}`}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-700">{editScheduleId ? t.schedule.edit : t.schedule.booking}</h3>
@@ -871,7 +871,7 @@
                             const dateDisp = formatDate(startObj.date, lang);
 
                             return (
-                                <div key={s.id} className={`p-4 rounded-xl border flex justify-between items-center ${isMine ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'}`}>
+                                <div key={s.id} className={`p-4 rounded-xl border flex justify-between items-center ${isMine ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100'} hover:shadow-md transition-shadow`}>
                                     <div className="flex items-center gap-3">
                                         <div className="w-2 h-10 rounded-full" style={{backgroundColor: getUserColor(s.userId)}}></div>
                                         <div>
