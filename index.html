@@ -190,14 +190,15 @@
             return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
         };
 
-        const getOpDay = (dateStr, timeStr, tzCode) => {
+        // UPDATED LOGIC: Determines which "Work Day" a log belongs to
+        // Supports custom cutoff. For quota, we need cutoff = 0 (Midnight in Target Zone)
+        const getOpDay = (dateStr, timeStr, tzCode, cutoff = 4) => {
             if (!dateStr || !timeStr) return null;
             
+            // First, get the time in the target timezone
             const display = getDisplayTime(timeStr, dateStr, tzCode);
             const dt = new Date(`${display.date}T${display.time}`);
             const hour = dt.getHours();
-            
-            const cutoff = 4; // Shift cutoff
             
             if (hour < cutoff) dt.setDate(dt.getDate() - 1);
             
@@ -294,6 +295,8 @@
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             const [tab, setTab] = React.useState('team'); 
+            const [analyticsMode, setAnalyticsMode] = React.useState('local');
+            
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
@@ -771,14 +774,16 @@
             const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
                 const dbTime = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
-                const currentOpDayDB = getOpDay(scheduleForm.startDate, dbTime.time, 'WIB'); // FIXED: Use fixed 'WIB' context for quotas
+                // FIXED: Force use PST with 0 cutoff for the 10 hour quota check, as per requirement
+                const currentOpDayDB = getOpDay(scheduleForm.startDate, dbTime.time, 'PST', 0); 
                 if (!currentOpDayDB) return 0;
                 
                 return schedules
                     .filter(s => {
                         if (editScheduleId && s.id === editScheduleId) return false;
                         const otherStartD = s.startDate || s.date;
-                        const otherOpDay = getOpDay(otherStartD, s.startTime, 'WIB'); // FIXED: Consistent comparison
+                        // FIXED: Consistent comparison using PST day
+                        const otherOpDay = getOpDay(otherStartD, s.startTime, 'PST', 0); 
                         return otherOpDay === currentOpDayDB;
                     })
                     .reduce((acc, s) => {
