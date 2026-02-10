@@ -89,11 +89,11 @@
             en: BASE_HOURLY_RATE_USD // 15 AUD
         };
         
-        // TIMEZONE CONFIGURATION
+        // TIMEZONE CONFIGURATION (Decoupled from Language)
         const TZ_CONFIG = {
             'WIB': { label: 'WIB (Jakarta)', iana: 'Asia/Jakarta', offsetHours: 0 },
             'AEDT': { label: 'AEDT (Melbourne)', iana: 'Australia/Melbourne', offsetHours: 4 }, // Approx +4h from WIB
-            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB
+            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB (UTC+7 to UTC-7)
         };
         
         // Initial Seed
@@ -110,11 +110,17 @@
                     reminder: 'Cek Zona Waktu & Bahasa. Harap teliti & hati-hati saat input data.' 
                 },
                 dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
-                schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang' },
-                timesheet: { title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun' },
+                schedule: { 
+                    booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
+                    confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?'
+                },
+                timesheet: { 
+                    title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
+                    confirmSubmit: 'Apakah data laporan kerja sudah akurat?'
+                },
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
-                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima'
+                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan Saat Ini'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif' },
                 profile: { title: 'Info Pembayaran', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' }
@@ -126,11 +132,17 @@
                     reminder: 'Check Timezone & Language. Be careful & deliberate when inputting records.' 
                 },
                 dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
-                schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only' },
-                timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account' },
+                schedule: { 
+                    booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
+                    confirmBooking: 'Is the schedule data (Timezone & Time) correct?'
+                },
+                timesheet: { 
+                    title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
+                    confirmSubmit: 'Is the work report data accurate?'
+                },
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
-                    statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received'
+                    statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive' },
                 profile: { title: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' }
@@ -295,7 +307,7 @@
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             const [tab, setTab] = React.useState('team'); 
-            const [analyticsMode, setAnalyticsMode] = React.useState('local');
+            const [analyticsMode, setAnalyticsMode] = React.useState('local'); // 'local' (04:00 cutoff) or 'operational' (15:00 cutoff)
             
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -321,6 +333,7 @@
                 for(let i=0; i<7; i++) {
                     const d = new Date(nowTz);
                     d.setDate(d.getDate() - i);
+                    // This is rough local date, precise matching happens in grouping
                     const y = d.getFullYear();
                     const m = String(d.getMonth()+1).padStart(2,'0');
                     const day = String(d.getDate()).padStart(2,'0');
@@ -377,6 +390,7 @@
                         id: s.id,
                         start: startConv.time,
                         end: endConv.time,
+                        // Use original time object for precise diff calculation
                         origStart: startConv.originalObj,
                         planMins: (()=>{
                             const d1 = new Date(`2000-01-01T${s.startTime}`);
@@ -546,7 +560,7 @@
                                             {formatCurrency(grandTotalPaid, lang)}
                                         </p>
                                     </div>
-                                    <p className="text-[10px] text-emerald-100 mt-2 opacity-80">Lifetime Earnings</p>
+                                    <p className="text-[10px] text-emerald-100 mt-2 opacity-80">{t.analytics.lifetime}</p>
                                 </div>
 
                                 <div className="p-5 relative z-10 bg-white rounded-t-2xl -mt-4">
@@ -1163,14 +1177,17 @@
                     return showNotify(lang === 'id' ? "Waktu selesai harus lebih akhir dari mulai!" : "End time must be after start time!", "error");
                 }
 
-                const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
-                const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
-                setLoading(true);
-                try {
-                    const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
-                    if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
-                    showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' }); setEditScheduleId(null);
-                } catch(err) { showNotify(err.message, "error"); } finally { setLoading(false); }
+                // Add confirmation popup before saving
+                triggerConfirm(t.schedule.confirmBooking, async () => {
+                    const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                    const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
+                    setLoading(true);
+                    try {
+                        const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
+                        if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
+                        showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' }); setEditScheduleId(null);
+                    } catch(err) { showNotify(err.message, "error"); } finally { setLoading(false); }
+                });
             };
             const deleteSchedule = (id) => { triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); }); };
             const editSchedule = (item) => { 
@@ -1182,16 +1199,20 @@
 
             const saveTimesheet = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify("Select User", "error");
-                setLoading(true);
-                try {
-                    const dur = parseInt(timesheetForm.duration);
-                    const idr = Math.round((dur/60) * RATES.id);
-                    const usd = ((dur/60) * RATES.en).toFixed(2); 
-                    const dbTime = getDbTime(timesheetForm.startTime, timesheetForm.date, timezone);
-                    const payload = { userId: currentUser, date: dbTime.date, startTime: dbTime.time, duration: dur, paymentUSD: usd, paymentIDR: idr, status: 'pending', updatedAt: new Date().toISOString() };
-                    if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
-                    showNotify("Saved!"); setTimesheetForm({ date: '', startTime: '', duration: '' }); setEditTimesheetId(null);
-                } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
+                
+                // Add confirmation popup before submitting report
+                triggerConfirm(t.timesheet.confirmSubmit, async () => {
+                    setLoading(true);
+                    try {
+                        const dur = parseInt(timesheetForm.duration);
+                        const idr = Math.round((dur/60) * RATES.id);
+                        const usd = ((dur/60) * RATES.en).toFixed(2); 
+                        const dbTime = getDbTime(timesheetForm.startTime, timesheetForm.date, timezone);
+                        const payload = { userId: currentUser, date: dbTime.date, startTime: dbTime.time, duration: dur, paymentUSD: usd, paymentIDR: idr, status: 'pending', updatedAt: new Date().toISOString() };
+                        if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
+                        showNotify("Saved!"); setTimesheetForm({ date: '', startTime: '', duration: '' }); setEditTimesheetId(null);
+                    } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
+                });
             };
             const deleteTimesheet = (id) => { triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); }); };
             const editTimesheet = (item) => { 
