@@ -110,7 +110,7 @@
                 },
                 dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { 
-                    booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
+                    booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok waktu dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
                     confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?'
                 },
                 timesheet: { 
@@ -142,7 +142,7 @@
                 },
                 dashboard: { hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { 
-                    booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
+                    booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Time Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
                     confirmBooking: 'Is the schedule data (Timezone & Time) correct?'
                 },
                 timesheet: { 
@@ -1301,9 +1301,35 @@
                 const endStr = `${scheduleForm.endDate}T${scheduleForm.endTime}`;
                 if (endStr <= startStr) { return showNotify(lang === 'id' ? "Waktu selesai harus lebih akhir dari mulai!" : "End time must be after start time!", "error"); }
 
+                const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
+                
+                // Pengecekan Bentrok (Overlap Detection)
+                const newStartEpoch = getEpochFromWIB(dbStart.date, dbStart.time);
+                const newEndEpoch = getEpochFromWIB(dbEnd.date, dbEnd.time);
+
+                let conflictUser = null;
+                const isConflict = schedules.some(s => {
+                    // Abaikan jadwal yang sedang diedit saat ini
+                    if (editScheduleId && s.id === editScheduleId) return false;
+                    
+                    const existStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                    let existEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                    if (!s.endDate && existEndEpoch <= existStartEpoch) existEndEpoch += 86400000;
+                    
+                    // Logika Irisan: Mulai Baru < Selesai Lama DAN Selesai Baru > Mulai Lama
+                    if (newStartEpoch < existEndEpoch && newEndEpoch > existStartEpoch) {
+                        conflictUser = getUserName(s.userId);
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (isConflict) {
+                    return showNotify(`${t.schedule.conflict} ${conflictUser}!`, "error");
+                }
+
                 triggerConfirm(t.schedule.confirmBooking, async () => {
-                    const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
-                    const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
                     setLoading(true);
                     try {
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
