@@ -41,7 +41,7 @@
                 extend: {
                     colors: { primary: '#2563eb', secondary: '#475569', success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' },
                     animation: {
-                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.5s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'bounce-slow': 'bounce 2s infinite',
@@ -116,23 +116,23 @@
                 },
                 timesheet: { 
                     title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
-                    confirmSubmit: 'Data laporan sudah akurat?'
+                    confirmSubmit: 'Apakah data laporan kerja sudah akurat?'
                 },
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
                     statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan Hingga Saat Ini',
-                    changePass: 'Ubah Password', passTitle: 'Keamanan Akun'
+                    changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat pembayaran tersedia.'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif',
-                         passHeader: 'Password Akses', passPlaceholder: 'Belum ada password'
+                         passHeader: 'Password Akses', passPlaceholder: 'Belum ada password', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User (Semua Waktu)', noPendingBills: 'Tidak ada tagihan tertunda.', adminView: 'Tampilan Admin', updatePassHint: 'Ubah password user langsung di sini.'
                 },
-                profile: { title: 'Pengaturan Akun', bankTitle: 'Info Rekening', bankLabel: 'Nama Bank / E-Wallet (Contoh: BCA, BRI, Gopay, dll)', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' },
+                profile: { title: 'Pengaturan Akun', bankTitle: 'Info Rekening', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' },
                 auth: {
                     createTitle: 'Buat Password Baru', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'Password Baru', 
                     createBtn: 'Buat & Masuk', loginBtn: 'Masuk', 
-                    successCreate: 'Password dibuat! Ubah di Beranda > Pengaturan (ikon gerigi)',
-                    successChange: 'Password berhasil diubah!', errorPass: 'Password salah!', errorSame: 'Password baru harus berbeda!',
-                    changeTitle: 'Ubah Password', changeBtn: 'Simpan Password Baru', confirmChange: 'Yakin ubah password?'
+                    successCreate: 'Password dibuat! Anda bisa mengubahnya nanti di menu Pengaturan (ikon gerigi) di Beranda.',
+                    successChange: 'Password berhasil diubah!', errorPass: 'Password salah!', errorSame: 'Password baru tidak boleh sama dengan yang lama!',
+                    changeTitle: 'Ubah Password', changeBtn: 'Simpan Password Baru', confirmChange: 'Yakin ingin mengubah password?'
                 }
             },
             en: {
@@ -148,23 +148,23 @@
                 },
                 timesheet: { 
                     title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
-                    confirmSubmit: 'Is the timesheet data accurate?'
+                    confirmSubmit: 'Is the work report data accurate?'
                 },
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
                     statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings',
-                    changePass: 'Change Password', passTitle: 'Account Security'
+                    changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history available.'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive',
-                         passHeader: 'Access Password', passPlaceholder: 'No password set'
+                         passHeader: 'Access Password', passPlaceholder: 'No password set', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Directly update user password here.'
                 },
                 profile: { title: 'Account Settings', bankTitle: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' },
                 auth: {
                     createTitle: 'Create New Password', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'New Password', 
                     createBtn: 'Create & Login', loginBtn: 'Login', 
-                    successCreate: 'Password created! Change it in Home tab > Settings (cog icon)',
-                    successChange: 'Password updated successfully!', errorPass: 'Wrong password!', errorSame: 'New password must be different!',
-                    changeTitle: 'Change Password', changeBtn: 'Save New Password', confirmChange: 'Are you sure?'
+                    successCreate: 'Password created! You can change it later in Settings (cog icon) on Dashboard.',
+                    successChange: 'Password updated successfully!', errorPass: 'Wrong password!', errorSame: 'New password cannot be the same as old one!',
+                    changeTitle: 'Change Password', changeBtn: 'Save New Password', confirmChange: 'Are you sure you want to change password?'
                 }
             }
         };
@@ -185,41 +185,66 @@
             return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
         };
 
+        // Convert DB Time (WIB) -> UI Time (Selected Timezone)
         const getDisplayTime = (timeStr, dateStr, tzCode) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr, originalObj: new Date() };
+            // Construct ISO string with WIB offset (+07:00)
             const isoStr = `${dateStr}T${timeStr}:00+07:00`;
             const d = new Date(isoStr);
+
             const targetZone = TZ_CONFIG[tzCode].iana;
+            
             const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
             const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
+            
             const newDateStr = formatterDate.format(d); 
             const newTimeStr = formatterTime.format(d);
+            
             return { date: newDateStr, time: newTimeStr, originalObj: d };
         };
 
+        // Convert UI Time -> DB Time (WIB) - OS TIMEZONE SAFE
         const getDbTime = (timeStr, dateStr, tzCode) => {
             if (!timeStr || !dateStr) return { date: dateStr, time: timeStr };
             if (tzCode === 'WIB') return { date: dateStr, time: timeStr };
+            
             const offset = TZ_CONFIG[tzCode].offsetHours;
-            const d = new Date(`${dateStr}T${timeStr}`);
-            d.setHours(d.getHours() - offset); 
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const h = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
+            // Parse as pure UTC to avoid any OS local timezone interference
+            const d = new Date(`${dateStr}T${timeStr}:00Z`);
+            
+            d.setUTCHours(d.getUTCHours() - offset); 
+            
+            const y = d.getUTCFullYear();
+            const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(d.getUTCDate()).padStart(2, '0');
+            const h = String(d.getUTCHours()).padStart(2, '0');
+            const min = String(d.getUTCMinutes()).padStart(2, '0');
+            
             return { date: `${y}-${m}-${day}`, time: `${h}:${min}` };
         };
 
+        const getEpochFromWIB = (dateStr, timeStr) => {
+            if (!dateStr || !timeStr) return 0;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const [hr, min] = timeStr.split(':').map(Number);
+            // WIB adalah UTC+7, jadi kurangi 7 jam untuk mendapatkan titik waktu UTC absolut
+            return Date.UTC(y, m - 1, d, hr - 7, min, 0); 
+        };
+
+        // CORE LOGIC: Determines which "Work Day" a log belongs to - OS TIMEZONE SAFE
         const getOpDay = (dateStr, timeStr, tzCode, cutoff = 4) => {
             if (!dateStr || !timeStr) return null;
+            
             const display = getDisplayTime(timeStr, dateStr, tzCode);
-            const dt = new Date(`${display.date}T${display.time}`);
-            const hour = dt.getHours();
-            if (hour < cutoff) dt.setDate(dt.getDate() - 1);
-            const y = dt.getFullYear();
-            const m = String(dt.getMonth() + 1).padStart(2, '0');
-            const d = String(dt.getDate()).padStart(2, '0');
+            // Parse as UTC to prevent OS time shifts!
+            const dt = new Date(`${display.date}T${display.time}:00Z`);
+            const hour = dt.getUTCHours();
+            
+            if (hour < cutoff) dt.setUTCDate(dt.getUTCDate() - 1);
+            
+            const y = dt.getUTCFullYear();
+            const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+            const d = String(dt.getUTCDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         };
 
@@ -239,7 +264,6 @@
             </div>
         );
 
-        // FIXED: Increased z-index to 70 to be above PasswordModal (60)
         const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel, t }) => {
             if (!isOpen) return null;
             return (
@@ -340,11 +364,10 @@
                         <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-4">
                             <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.name}</label><input type="text" required className="w-full p-2 border rounded-lg" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                             
-                            {/* UPDATED: Clear Password Field for Admin */}
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between">
                                     {t.admin.passHeader}
-                                    <span className="text-[10px] text-blue-500 font-normal"><i className="fas fa-eye"></i> Admin View</span>
+                                    <span className="text-[10px] text-blue-500 font-normal"><i className="fas fa-eye"></i> {t.admin.adminView}</span>
                                 </label>
                                 <input 
                                     type="text" 
@@ -353,7 +376,7 @@
                                     onChange={e => setForm({...form, password: e.target.value})} 
                                     placeholder={t.admin.passPlaceholder} 
                                 />
-                                <p className="text-[10px] text-slate-400 mt-1 italic">Directly update user password here.</p>
+                                <p className="text-[10px] text-slate-400 mt-1 italic">{t.admin.updatePassHint}</p>
                             </div>
 
                             <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.color}</label><input type="color" className="w-full h-10 p-1 border rounded-lg" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
@@ -365,24 +388,10 @@
             );
         };
 
-        const AdminLoginModal = ({ onClose, onLogin, loading, t }) => {
-            const [pwd, setPwd] = React.useState('');
-            const handleSubmit = (e) => { e.preventDefault(); onLogin(pwd); };
-            return (
-                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">Admin Login</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Password</label><input type="password" required className="w-full p-2 border rounded-lg" value={pwd} onChange={e => setPwd(e.target.value)} autoFocus /></div>
-                            <div className="flex gap-2 mt-6"><button type="button" onClick={onClose} className="flex-1 py-2 text-slate-500 font-medium text-sm hover:bg-slate-100 rounded-lg">{t.common.cancel}</button><button type="submit" disabled={loading} className="flex-1 py-2 bg-blue-600 text-white font-medium text-sm rounded-lg hover:bg-blue-700">Login</button></div>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone, onChangePassword }) => {
             const [tab, setTab] = React.useState('team'); 
+            const [analyticsMode, setAnalyticsMode] = React.useState('local');
+            
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
@@ -428,6 +437,7 @@
 
             const myPaidSheets = timesheets.filter(t => String(t.userId) === String(currentUser) && t.status === 'paid');
             const grandTotalPaid = myPaidSheets.reduce((acc, t) => acc + (parseInt(t.duration || 0)/60) * RATES[lang], 0);
+            const grandTotalMins = myPaidSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
 
             const paidGroups = {};
             myPaidSheets.forEach(t => {
@@ -453,9 +463,9 @@
                         end: endConv.time,
                         origStart: startConv.originalObj,
                         planMins: (()=>{
-                            const d1 = new Date(`2000-01-01T${s.startTime}`);
-                            let d2 = new Date(`2000-01-01T${s.endTime}`);
-                            if(d2 < d1) d2.setDate(d2.getDate() + 1);
+                            const d1 = new Date(`2000-01-01T${s.startTime}:00Z`);
+                            let d2 = new Date(`2000-01-01T${s.endTime}:00Z`);
+                            if(d2 < d1) d2.setUTCDate(d2.getUTCDate() + 1);
                             return (d2 - d1) / 60000;
                         })(),
                         actualMins: 0,
@@ -588,25 +598,31 @@
                             </div>
 
                             <div className="bg-white p-0 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden hover:shadow-lg transition-shadow">
-                                <div className="relative bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white text-center">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full opacity-10 blur-2xl -mr-10 -mt-10"></div>
-                                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full opacity-10 blur-xl -ml-10 -mb-10"></div>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-100 mb-1">{t.analytics.totalPaid}</p>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <i className="fas fa-wallet text-emerald-200 text-2xl"></i>
-                                        <p className="text-4xl font-extrabold tracking-tight">
+                                <div className="relative bg-gradient-to-br from-emerald-500 to-teal-700 p-8 text-white text-center shadow-inner">
+                                    <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full opacity-10 blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                                    <div className="absolute bottom-0 left-0 w-28 h-28 bg-black rounded-full opacity-10 blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
+                                    
+                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2 relative z-10">{t.analytics.totalPaid}</p>
+                                    <div className="flex flex-col items-center justify-center relative z-10">
+                                        <p className="text-5xl font-black tracking-tighter mb-4 drop-shadow-md">
                                             {formatCurrency(grandTotalPaid, lang)}
                                         </p>
+                                        <div className="inline-flex items-center justify-center gap-2 bg-black/15 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full shadow-sm">
+                                            <i className="far fa-clock text-emerald-100 text-sm"></i>
+                                            <span className="text-xs font-bold text-white tracking-wide">
+                                                {(grandTotalMins / 60).toFixed(1)} {t.common.unitHour}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-[10px] text-emerald-100 mt-2 opacity-80">{t.analytics.lifetime}</p>
+                                    <p className="text-[10px] text-emerald-100 mt-5 opacity-90 uppercase tracking-widest relative z-10">{t.analytics.lifetime}</p>
                                 </div>
-                                <div className="p-5 relative z-10 bg-white rounded-t-2xl -mt-4">
+                                <div className="p-5 relative z-20 bg-white rounded-t-2xl -mt-4 border-t border-slate-50">
                                     <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-50">
                                         <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
                                             <i className="fas fa-history text-slate-400 text-xs"></i> {t.analytics.paymentHistory}
                                         </h3>
                                     </div>
-                                    {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-6 italic bg-slate-50 rounded-lg">No payment history available.</p> : (
+                                    {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-6 italic bg-slate-50 rounded-lg">{t.analytics.noPayHistory}</p> : (
                                         <div className="space-y-3">
                                             {sortedPaidHistory.map((dateKey, index) => {
                                                 const group = paidGroups[dateKey];
@@ -706,45 +722,34 @@
                 periodText = `${start.getDate()} ${start.toLocaleString(loc, { month: 'short' })} - ${end.getDate()} ${end.toLocaleString(loc, { month: 'short' })}`;
             }
             
-            // Upcoming Schedules Filter Logic: 
-            // Must compare Schedule Time (in selected TZ) vs Current Time (in selected TZ)
+            const currentEpoch = Date.now();
+
             const upcomingSchedules = schedules
                 .filter(s => {
-                    const now = new Date();
-                    // Get current time in target timezone
-                    const targetZone = TZ_CONFIG[timezone].iana;
-                    const nowInTzStr = now.toLocaleString("en-US", {timeZone: targetZone});
-                    const nowInTz = new Date(nowInTzStr);
-                    
-                    // Get schedule time in target timezone
-                    const sDisplay = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
-                    const sStart = new Date(`${sDisplay.date}T${sDisplay.time}`);
-                    
-                    return sStart > nowInTz;
+                    const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                    return sStartEpoch > currentEpoch;
                 })
                 .sort((a,b) => {
-                    const timeA = `${a.startDate || a.date}T${a.startTime}`;
-                    const timeB = `${b.startDate || b.date}T${b.startTime}`;
-                    return timeA.localeCompare(timeB); // SORTING FIX: Nearest first (Oldest -> Newest among upcoming)
+                    const epochA = getEpochFromWIB(a.startDate || a.date, a.startTime);
+                    const epochB = getEpochFromWIB(b.startDate || b.date, b.startTime);
+                    return epochA - epochB; // Ascending order (terdekat/paling cepat di atas)
                 })
                 .slice(0, 5);
             
             const now = new Date();
             const tzIana = TZ_CONFIG[timezone].iana;
             const currentTimeDisplay = now.toLocaleTimeString('en-US', { timeZone: tzIana, hour12: false, hour: '2-digit', minute: '2-digit' });
-            
-            // Check active workers based on current UTC time vs Schedule UTC time
-            // Simplified: Convert everything to WIB/UTC+7 for comparison logic since DB is WIB
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const currentWIB = new Date(utc + (3600000 * 7)); 
 
             const activeWorkers = schedules.filter(s => {
-                const startDateStr = s.startDate || s.date;
-                const endDateStr = s.endDate || s.date;
-                const sStart = new Date(`${startDateStr}T${s.startTime}`); 
-                let sEnd = new Date(`${endDateStr}T${s.endTime}`);
-                if (!s.endDate && sEnd < sStart) sEnd.setDate(sEnd.getDate() + 1); // Legacy
-                return currentWIB >= sStart && currentWIB <= sEnd;
+                const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                let sEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                
+                // Menangani shift beda hari yang diinput tanpa endDate spesifik (data lama)
+                if (!s.endDate && sEndEpoch <= sStartEpoch) {
+                    sEndEpoch += 86400000; // Tambah 24 Jam
+                }
+                
+                return currentEpoch >= sStartEpoch && currentEpoch <= sEndEpoch;
             }).map(s => {
                 const u = users.find(u => String(u.id) === String(s.userId));
                 return { name: u?.name || 'Unknown', endTime: s.endTime, endDate: s.endDate || s.date, color: u?.color, hidden: u?.hidden };
@@ -792,7 +797,7 @@
                         <div className="space-y-3">
                             {upcomingSchedules.map((s, idx) => {
                                 const showDate = s.startDate || s.date;
-                                const dateObj = getDisplayTime(s.startTime, showDate, timezone); // get converted Date
+                                const dateObj = getDisplayTime(s.startTime, showDate, timezone); 
                                 const displayDate = formatDate(dateObj.date, lang);
                                 
                                 const startDisplay = getDisplayTime(s.startTime, showDate, timezone).time;
@@ -818,32 +823,31 @@
         const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule, isAdmin, lang, t, timezone }) => {
             const [showHistory, setShowHistory] = React.useState(false);
             const [filterMine, setFilterMine] = React.useState(false);
-            const [sortOrder, setSortOrder] = React.useState('desc'); // Default to newest first
+            const [sortOrder, setSortOrder] = React.useState('desc'); 
             
             const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
+                if (!scheduleForm.startDate || !scheduleForm.startTime) return 0;
                 const dbTime = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
-                // FIXED: Force use PST with 0 cutoff for the 10 hour quota check, as per requirement
-                const currentOpDayDB = getOpDay(scheduleForm.startDate, dbTime.time, 'PST', 0); 
+                const currentOpDayDB = getOpDay(dbTime.date, dbTime.time, 'PST', 0); 
                 if (!currentOpDayDB) return 0;
                 
                 return schedules
                     .filter(s => {
                         if (editScheduleId && s.id === editScheduleId) return false;
                         const otherStartD = s.startDate || s.date;
-                        // FIXED: Consistent comparison using PST day
                         const otherOpDay = getOpDay(otherStartD, s.startTime, 'PST', 0); 
                         return otherOpDay === currentOpDayDB;
                     })
                     .reduce((acc, s) => {
                          const startD = s.startDate || s.date;
                          const endD = s.endDate || s.date; 
-                         const d1 = new Date(`${startD}T${s.startTime}`);
-                         let d2 = new Date(`${endD}T${s.endTime}`);
-                         if (!s.endDate && d2 < d1) d2.setDate(d2.getDate() + 1);
+                         const d1 = new Date(`${startD}T${s.startTime}:00Z`);
+                         let d2 = new Date(`${endD}T${s.endTime}:00Z`);
+                         if (!s.endDate && d2 < d1) d2.setUTCDate(d2.getUTCDate() + 1);
                          return acc + Math.floor((d2 - d1)/60000);
                     }, 0);
-            }, [schedules, scheduleForm, editScheduleId, timezone]);
+            }, [schedules, scheduleForm.startDate, scheduleForm.startTime, editScheduleId, timezone]);
 
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
@@ -853,12 +857,10 @@
                 let filtered = [...schedules];
                 if (!showHistory) {
                     const now = new Date();
-                    // Simplified history filter: just check raw dates, ideally should convert to target TZ
                     const y = now.getFullYear();
                     const m = String(now.getMonth() + 1).padStart(2, '0');
                     const d = String(now.getDate()).padStart(2, '0');
                     const todayStr = `${y}-${m}-${d}`;
-                    // Keep it simple for history filter, otherwise complex
                     filtered = filtered.filter(s => (s.startDate || s.date) >= todayStr); 
                 }
                 if (filterMine) filtered = filtered.filter(s => String(s.userId) === String(currentUser));
@@ -952,13 +954,12 @@
             if (!hasPaymentInfo) return <div className="space-y-4 fade-in"><div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm"><div className="flex items-center gap-3 mb-2"><i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i><h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3></div><button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">{t.timesheet.fillPayInfo}</button></div></div>;
 
             const [showHistory, setShowHistory] = React.useState(false); 
-            // SORTING FIX: Strict string comparison on "Date+Time"
             const filteredTimesheets = timesheets
                 .filter(t => showHistory ? t.status === 'paid' : t.status === 'pending')
                 .sort((a,b) => {
                     const timeA = `${a.date}T${a.startTime}`;
                     const timeB = `${b.date}T${b.startTime}`;
-                    return timeB.localeCompare(timeA); // Newest First
+                    return timeB.localeCompare(timeA); 
                 });
 
             const getDisplayAmount = (item) => {
@@ -1003,44 +1004,61 @@
             const getAmount = (item) => { const baseVal = parseFloat(item.paymentUSD) || 0; return lang === 'id' ? baseVal * USD_TO_IDR : baseVal; }
             const pendingSheets = timesheets.filter(t => t.status === 'pending');
             const totalPending = pendingSheets.reduce((sum, t) => sum + getAmount(t), 0);
+            const totalPendingMins = pendingSheets.reduce((sum, t) => sum + parseInt(t.duration || 0), 0);
             
             const paidSheets = timesheets.filter(t => t.status === 'paid');
             const totalAllTimePaid = paidSheets.reduce((sum, t) => sum + getAmount(t), 0);
+            const totalAllTimePaidMins = paidSheets.reduce((sum, t) => sum + parseInt(t.duration || 0), 0);
             
             const paidHistory = {};
-            const weeklyStats = {}; // Global weekly stats
-            const userTotalPaid = {}; // Total per user
-            const userWeeklyPaid = {}; // Weekly per user
+            const weeklyStats = {}; 
+            const weeklyMins = {}; 
+            const userTotalPaid = {}; 
+            const userTotalMins = {}; 
+            const userWeeklyPaid = {}; 
+            const userWeeklyMins = {}; 
 
             paidSheets.forEach(t => { 
                 const amount = getAmount(t);
+                const duration = parseInt(t.duration || 0);
                 const d = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown'; 
                 if(!paidHistory[d]) paidHistory[d] = []; 
                 paidHistory[d].push(t);
                 
-                // Weekly Logic
                 const paidDateObj = new Date(d);
                 const firstDayOfYear = new Date(paidDateObj.getFullYear(), 0, 1);
                 const pastDaysOfYear = (paidDateObj - firstDayOfYear) / 86400000;
                 const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
                 const weekKey = `${paidDateObj.getFullYear()}-W${weekNum}`;
                 
-                // Global Weekly
-                if (!weeklyStats[weekKey]) weeklyStats[weekKey] = 0;
+                if (!weeklyStats[weekKey]) {
+                    weeklyStats[weekKey] = 0;
+                    weeklyMins[weekKey] = 0;
+                }
                 weeklyStats[weekKey] += amount;
+                weeklyMins[weekKey] += duration;
 
-                // Per User Total
-                if (!userTotalPaid[t.userId]) userTotalPaid[t.userId] = 0;
+                if (!userTotalPaid[t.userId]) {
+                    userTotalPaid[t.userId] = 0;
+                    userTotalMins[t.userId] = 0;
+                }
                 userTotalPaid[t.userId] += amount;
+                userTotalMins[t.userId] += duration;
 
-                // Per User Weekly
-                if (!userWeeklyPaid[weekKey]) userWeeklyPaid[weekKey] = {};
-                if (!userWeeklyPaid[weekKey][t.userId]) userWeeklyPaid[weekKey][t.userId] = 0;
+                if (!userWeeklyPaid[weekKey]) {
+                    userWeeklyPaid[weekKey] = {};
+                    userWeeklyMins[weekKey] = {};
+                }
+                if (!userWeeklyPaid[weekKey][t.userId]) {
+                    userWeeklyPaid[weekKey][t.userId] = 0;
+                    userWeeklyMins[weekKey][t.userId] = 0;
+                }
                 userWeeklyPaid[weekKey][t.userId] += amount;
+                userWeeklyMins[weekKey][t.userId] += duration;
             });
             
             const sortedHistory = Object.keys(paidHistory).sort((a,b) => new Date(b) - new Date(a));
-            const sortedWeeks = Object.keys(weeklyStats).sort().reverse(); // Newest week first
+            const sortedWeeks = Object.keys(weeklyStats).sort().reverse(); 
 
             const handleMarkPaid = async (sheetIds) => { onConfirmAction(t.timesheet.confirmPaid, async () => { setLoading(true); try { const batch = window.fs.writeBatch(window.db); sheetIds.forEach(id => { const docRef = window.fs.doc(window.db, "timesheets", id); batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() }); }); await batch.commit(); showNotify("Marked as Paid!"); } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); } }); };
             
@@ -1056,25 +1074,32 @@
                         <div className="space-y-4">
                             <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
                                 <h2 className="text-xl font-bold mb-1">{t.admin.pendingBill}</h2>
-                                <p className="text-3xl font-bold">{formatCurrency(totalPending, lang)}</p>
+                                <div className="flex items-end gap-2">
+                                    <p className="text-3xl font-bold">{formatCurrency(totalPending, lang)}</p>
+                                    <p className="text-sm text-purple-200 mb-1 font-medium">({(totalPendingMins/60).toFixed(1)}{t.common.unitShort})</p>
+                                </div>
                             </div>
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                                {pendingSheets.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">No pending bills.</p> : (
+                                {pendingSheets.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">{t.admin.noPendingBills}</p> : (
                                     <div className="space-y-4">
                                         {Object.values(pendingSheets.reduce((acc, curr) => { 
-                                            if(!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, sheets: [] }; 
+                                            if(!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, totalMins: 0, sheets: [] }; 
                                             acc[curr.userId].total += getAmount(curr); 
+                                            acc[curr.userId].totalMins += parseInt(curr.duration || 0);
                                             acc[curr.userId].sheets.push(curr.id); 
                                             return acc; 
                                         }, {})).map(grp => { 
                                             const u = users.find(u => String(u.id) === String(grp.userId)); 
                                             return (
                                                 <div key={grp.userId} className="border border-slate-100 rounded-xl p-4">
-                                                    <div className="flex justify-between mb-2">
-                                                        <div><p className="font-bold">{u?.name}</p><p className="text-xs text-slate-500">{u?.bankName} - {u?.accountNumber}</p></div>
-                                                        <p className="font-bold text-green-600">{formatCurrency(grp.total, lang)}</p>
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <div><p className="font-bold text-slate-800">{u?.name}</p><p className="text-xs text-slate-500">{u?.bankName} - {u?.accountNumber}</p></div>
+                                                        <div className="text-right">
+                                                            <p className="font-bold text-green-600 text-lg">{formatCurrency(grp.total, lang)}</p>
+                                                            <p className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded inline-block mt-0.5">{(grp.totalMins/60).toFixed(1)} {t.common.unitHour}</p>
+                                                        </div>
                                                     </div>
-                                                    <button onClick={() => handleMarkPaid(grp.sheets)} className="w-full bg-green-600 text-white text-sm font-medium py-2 rounded-lg">{t.admin.markPaid}</button>
+                                                    <button onClick={() => handleMarkPaid(grp.sheets)} className="w-full bg-green-600 hover:bg-green-700 transition-colors text-white text-sm font-bold py-2.5 rounded-lg">{t.admin.markPaid}</button>
                                                 </div>
                                             ); 
                                         })}
@@ -1087,42 +1112,51 @@
                     {viewMode === 'history' && ( 
                         <div className="space-y-4">
                             <div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
-                                <h2 className="text-xl font-bold mb-1">Total Terbayar</h2>
-                                <p className="text-3xl font-bold">{formatCurrency(totalAllTimePaid, lang)}</p>
+                                <h2 className="text-xl font-bold mb-1">{t.admin.totalPaidTitle}</h2>
+                                <div className="flex items-end gap-2">
+                                    <p className="text-3xl font-bold">{formatCurrency(totalAllTimePaid, lang)}</p>
+                                    <p className="text-sm text-green-200 mb-1 font-medium">({(totalAllTimePaidMins/60).toFixed(1)}{t.common.unitShort})</p>
+                                </div>
                             </div>
                             
-                            {/* Total Per User Breakdown */}
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                                <h3 className="font-bold text-slate-700 text-sm mb-3">Total per User (All Time)</h3>
+                                <h3 className="font-bold text-slate-700 text-sm mb-3">{t.admin.totalPerUserAllTime}</h3>
                                 <div className="space-y-2">
                                     {Object.keys(userTotalPaid).map(uid => {
                                         const u = users.find(user => String(user.id) === String(uid));
                                         return (
-                                            <div key={uid} className="flex justify-between text-sm pb-2 border-b border-slate-50 last:border-0 last:pb-0">
-                                                <span>{u?.name || 'Unknown'}</span>
-                                                <span className="font-bold text-green-600">{formatCurrency(userTotalPaid[uid], lang)}</span>
+                                            <div key={uid} className="flex justify-between items-center text-sm pb-2 border-b border-slate-50 last:border-0 last:pb-0">
+                                                <span className="font-medium text-slate-700">{u?.name || 'Unknown'}</span>
+                                                <div className="text-right">
+                                                    <span className="block font-bold text-green-600">{formatCurrency(userTotalPaid[uid], lang)}</span>
+                                                    <span className="text-[10px] text-slate-400">{(userTotalMins[uid]/60).toFixed(1)} {t.common.unitHour}</span>
+                                                </div>
                                             </div>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            {/* Weekly Breakdown Global & User */}
                             <div className="space-y-3">
                                 {sortedWeeks.slice(0, 4).map(week => (
-                                    <div key={week} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                                        <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                                    <div key={week} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-3">
                                             <p className="text-xs uppercase text-slate-500 font-bold">{week}</p>
-                                            <p className="text-sm font-bold text-slate-800">{formatCurrency(weeklyStats[week], lang)}</p>
+                                            <div className="text-right">
+                                                <p className="text-sm font-bold text-slate-800">{formatCurrency(weeklyStats[week], lang)}</p>
+                                                <p className="text-[10px] text-slate-400">{(weeklyMins[week]/60).toFixed(1)} {t.common.unitHour}</p>
+                                            </div>
                                         </div>
-                                        {/* User breakdown for this week */}
-                                        <div className="space-y-1">
+                                        <div className="space-y-2 pt-1">
                                             {userWeeklyPaid[week] && Object.keys(userWeeklyPaid[week]).map(uid => {
                                                 const u = users.find(user => String(user.id) === String(uid));
                                                 return (
-                                                    <div key={uid} className="flex justify-between text-xs text-slate-500">
+                                                    <div key={uid} className="flex justify-between items-center text-xs text-slate-500">
                                                         <span>- {u?.name}</span>
-                                                        <span>{formatCurrency(userWeeklyPaid[week][uid], lang)}</span>
+                                                        <div className="text-right flex items-center gap-2">
+                                                            <span className="text-[9px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{(userWeeklyMins[week][uid]/60).toFixed(1)} {t.common.unitShort}</span>
+                                                            <span className="font-semibold text-slate-600 min-w-[70px]">{formatCurrency(userWeeklyPaid[week][uid], lang)}</span>
+                                                        </div>
                                                     </div>
                                                 )
                                             })}
@@ -1138,9 +1172,12 @@
                                         {paidHistory[d].map(item => { 
                                             const u = users.find(u => String(u.id) === String(item.userId)); 
                                             return (
-                                                <div key={item.id} className="flex justify-between text-sm py-1">
-                                                    <span>{u?.name}</span>
-                                                    <span className="font-mono">{formatCurrency(getAmount(item), lang)}</span>
+                                                <div key={item.id} className="flex justify-between items-center text-sm py-1.5">
+                                                    <span className="font-medium text-slate-700">{u?.name}</span>
+                                                    <div className="text-right">
+                                                        <span className="font-mono font-medium block">{formatCurrency(getAmount(item), lang)}</span>
+                                                        <span className="text-[9px] text-slate-400">{(item.duration/60).toFixed(1)}h</span>
+                                                    </div>
                                                 </div> 
                                             )
                                         })}
@@ -1165,7 +1202,6 @@
             const [notify, setNotify] = React.useState(null);
             const [showProfileModal, setShowProfileModal] = React.useState(false);
             const [showUserModal, setShowUserModal] = React.useState(false);
-            // Password Modal State
             const [passwordModal, setPasswordModal] = React.useState({ show: false, mode: 'login', userId: null });
             
             const [editingUser, setEditingUser] = React.useState(null);
@@ -1187,11 +1223,6 @@
                     });
                     window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'schedules')), (snapshot) => { setSchedules(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}))); });
                     window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'timesheets')), (snapshot) => { setTimesheets(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}))); });
-                    
-                    // Don't auto-login from local storage anymore for security, or validate token?
-                    // For simplicity, we removed auto-login to force password entry on refresh as per 'security' implication
-                    // Or we can keep it but re-verify. Let's keep it simple: no auto login or just basic
-                    // const savedId = localStorage.getItem('remote_user_id'); if (savedId) setCurrentUser(savedId);
                 };
                 setTimeout(initData, 500);
             }, []);
@@ -1211,18 +1242,15 @@
             const handleSaveUser = async (userData) => { setLoading(true); try { if (editingUser) { await window.fs.updateDoc(window.fs.doc(window.db, 'users', editingUser.id), userData); showNotify("User Updated"); } else { const newId = Date.now().toString(); await window.fs.setDoc(window.fs.doc(window.db, 'users', newId), { ...userData, id: newId }); showNotify("User Added"); } setShowUserModal(false); setEditingUser(null); } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); } };
             const handleDeleteUser = (uid) => { triggerConfirm("Delete user?", async () => { try { await window.fs.deleteDoc(window.fs.doc(window.db, 'users', uid)); showNotify("User Deleted"); } catch(e) { showNotify("Error", "error"); } }); };
             
-            // NEW: Handle User Selection with Password Logic
             const handleUserChange = (e) => { 
                 const selectedId = e.target.value; 
                 if (!selectedId) { 
                     setCurrentUser(null); 
                     return; 
                 } 
-                
                 const selectedUser = users.find(u => String(u.id) === String(selectedId));
                 if (!selectedUser) return;
 
-                // Check if user has password
                 if (!selectedUser.password) {
                     setPasswordModal({ show: true, mode: 'create', userId: selectedId });
                 } else {
@@ -1235,59 +1263,40 @@
                 const user = users.find(u => String(u.id) === String(userId));
                 
                 if (mode === 'create') {
-                    // Create Password
                     setLoading(true);
                     try {
                         await window.fs.updateDoc(window.fs.doc(window.db, 'users', userId), { password: password });
                         setCurrentUser(userId);
                         setPasswordModal({ show: false, mode: 'login', userId: null });
-                        showNotify(t.auth.successCreate, 'success', 10000);
-                    } catch(e) {
-                        showNotify("Error saving password", "error");
-                    } finally {
-                        setLoading(false);
-                    }
+                        showNotify(t.auth.successCreate, 'success', 15000); // 15 seconds duration
+                    } catch(e) { showNotify("Error saving password", "error"); } finally { setLoading(false); }
                 } else if (mode === 'login') {
-                    // Verify Password
                     if (user && user.password === password) {
                         setCurrentUser(userId);
                         setPasswordModal({ show: false, mode: 'login', userId: null });
                         showNotify(t.auth.loginTitle + " Success");
-                    } else {
-                        showNotify(t.auth.errorPass, "error");
-                    }
+                    } else { showNotify(t.auth.errorPass, "error"); }
                 } else if (mode === 'change') {
-                     // Change Password (from Settings)
-                     if (user.password === password) {
-                         showNotify(t.auth.errorSame, "error");
-                         return;
-                     }
+                     if (user.password === password) { showNotify(t.auth.errorSame, "error"); return; }
                      
-                     // Close password modal first to prevent overlap with confirm modal
+                     // Close modal first before confirming
                      setPasswordModal(prev => ({ ...prev, show: false }));
                      
                      triggerConfirm(t.auth.confirmChange, async () => {
                         setLoading(true);
                         try {
                             await window.fs.updateDoc(window.fs.doc(window.db, 'users', currentUser), { password: password });
-                            showNotify(t.auth.successChange, 'success', 10000);
-                        } catch(e) {
-                            showNotify("Error updating password", "error");
-                        } finally {
-                            setLoading(false);
-                        }
+                            showNotify(t.auth.successChange, 'success', 15000); // 15 seconds duration
+                        } catch(e) { showNotify("Error updating password", "error"); } finally { setLoading(false); }
                      });
                 }
             };
 
             const saveSchedule = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
-                
                 const startStr = `${scheduleForm.startDate}T${scheduleForm.startTime}`;
                 const endStr = `${scheduleForm.endDate}T${scheduleForm.endTime}`;
-                if (endStr <= startStr) {
-                    return showNotify(lang === 'id' ? "Waktu selesai harus lebih akhir dari mulai!" : "End time must be after start time!", "error");
-                }
+                if (endStr <= startStr) { return showNotify(lang === 'id' ? "Waktu selesai harus lebih akhir dari mulai!" : "End time must be after start time!", "error"); }
 
                 triggerConfirm(t.schedule.confirmBooking, async () => {
                     const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
@@ -1310,7 +1319,6 @@
 
             const saveTimesheet = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify("Select User", "error");
-                
                 triggerConfirm(t.timesheet.confirmSubmit, async () => {
                     setLoading(true);
                     try {
@@ -1340,14 +1348,10 @@
                     {notify && <Notification msg={notify.msg} type={notify.type} onClose={() => setNotify(null)} />}
                     {showProfileModal && <ProfileModal user={users.find(u => String(u.id) === String(currentUser))} onClose={() => setShowProfileModal(false)} onSave={saveUserProfile} loading={loading} lang={lang} t={t} onChangePassword={() => { setShowProfileModal(false); setPasswordModal({show: true, mode: 'change', userId: currentUser}); }} />}
                     {showUserModal && <UserModal user={editingUser} onClose={() => {setShowUserModal(false); setEditingUser(null);}} onSave={handleSaveUser} loading={loading} t={t} />}
-                    
-                    {/* Replaced AdminLoginModal with Generic PasswordModal */}
                     {passwordModal.show && <PasswordModal mode={passwordModal.mode} onSubmit={handlePasswordSubmit} onClose={() => setPasswordModal({ ...passwordModal, show: false })} loading={loading} t={t} />}
-                    
                     {confirmModal.show && <ConfirmationModal isOpen={confirmModal.show} message={confirmModal.message} onConfirm={executeConfirm} onCancel={() => setConfirmModal({ ...confirmModal, show: false })} t={t} />}
 
                     <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
-                        {/* Top Row: Brand & User */}
                         <div className="px-4 pt-3 pb-2 flex justify-between items-center">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
@@ -1370,7 +1374,7 @@
                                                     {activeU ? activeU.name.substring(0,1) : <i className="fas fa-user"></i>}
                                                 </div>
                                                 <span className="text-xs font-semibold text-slate-600 max-w-[80px] truncate">
-                                                    {activeU ? activeU.name : 'Select...'}
+                                                    {activeU ? activeU.name : t.timesheet.selectUser}
                                                 </span>
                                                 <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
                                             </>
@@ -1382,13 +1386,12 @@
                                     value={currentUser || ''} 
                                     onChange={handleUserChange}
                                 >
-                                    <option value="">Select User...</option>
+                                    <option value="">{t.timesheet.selectUser}</option>
                                     {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
                             </div>
                         </div>
                         
-                        {/* Controls Row */}
                         <div className="px-4 pb-3 flex gap-2">
                              <button 
                                 onClick={() => setLang(l => l === 'id' ? 'en' : 'id')} 
@@ -1419,7 +1422,6 @@
                              </div>
                         </div>
 
-                        {/* Reminder Alert - Clean & Subtle */}
                         <div className="bg-amber-50 border-y border-amber-100 px-4 py-2 flex items-center gap-2 animate-fadeIn">
                             <i className="fas fa-exclamation-circle text-amber-500 text-xs flex-shrink-0"></i>
                             <p className="text-[10px] text-amber-700 font-medium leading-tight">
@@ -1434,7 +1436,7 @@
                                 {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={formatCurrency} lang={lang} timezone={timezone} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} timezone={timezone} />}
                                 {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
-                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} onChangePassword={() => setPasswordModal({show: true, mode: 'change', userId: currentUser}) } />}
+                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
                                 {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={formatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} />}
                             </>
                         )}
@@ -1458,5 +1460,3 @@
     </script>
 </body>
 </html>
-
-
