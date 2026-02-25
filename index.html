@@ -115,16 +115,17 @@
                 schedule: { 
                     booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok waktu dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
                     confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?',
-                    pastError: 'Tidak bisa membuat jadwal di masa lalu!'
+                    pastError: 'Tidak bisa membuat jadwal di masa lalu!',
+                    deleteLinkedError: 'Tidak bisa menghapus Jadwal karena sudah ada Laporan terkait. Hapus laporan terlebih dahulu!'
                 },
                 timesheet: { 
                     title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
                     confirmSubmit: 'Apakah data laporan kerja sudah akurat?', accessRestricted: 'Akses Terbatas',
-                    selectSchedule: 'Pilih Jadwal', adhoc: 'Ad-Hoc (Tanpa Jadwal)', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan untuk jadwal ini sudah dibuat!'
+                    selectSchedule: 'Pilih Jadwal', adhoc: 'Ad-Hoc (Tanpa Jadwal)', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan untuk jadwal ini sudah dibuat!', requireSchedule: 'Pilih Jadwal terlebih dahulu!', earlySubmitError: 'Belum bisa lapor! Jadwal pekerjaan ini belum selesai.'
                 },
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam (Semua Waktu)', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
-                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan',
+                    statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan',
                     changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat pembayaran tersedia.'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif',
@@ -149,16 +150,17 @@
                 schedule: { 
                     booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
                     confirmBooking: 'Is the schedule data (Timezone & Time) correct?',
-                    pastError: 'Cannot book schedules in the past!'
+                    pastError: 'Cannot book schedules in the past!',
+                    deleteLinkedError: 'Cannot delete schedule with linked timesheet. Delete the timesheet first!'
                 },
                 timesheet: { 
                     title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
                     confirmSubmit: 'Is the work report data accurate?', accessRestricted: 'Access Restricted',
-                    selectSchedule: 'Select Schedule', adhoc: 'Ad-Hoc (Unscheduled)', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet for this schedule already exists!'
+                    selectSchedule: 'Select Schedule', adhoc: 'Ad-Hoc (Unscheduled)', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet for this schedule already exists!', requireSchedule: 'Please select a schedule first!', earlySubmitError: 'Cannot report yet! Scheduled work is not finished.'
                 },
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours (All-Time)', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
-                    statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings',
+                    statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings',
                     changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history available.'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive',
@@ -1017,7 +1019,7 @@
                                         value={timesheetForm.scheduleId || ''}
                                         onChange={e => {
                                             const sid = e.target.value;
-                                            if (!sid) { setTimesheetForm({...timesheetForm, scheduleId: ''}); return; }
+                                            if (!sid) { setTimesheetForm({...timesheetForm, scheduleId: '', date: '', startTime: '', endDate: '', endTime: ''}); return; }
                                             const s = schedules.find(x => x.id === sid);
                                             if (s) {
                                                 const uiStart = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
@@ -1025,9 +1027,32 @@
                                                 setTimesheetForm({...timesheetForm, scheduleId: sid, date: uiStart.date, startTime: uiStart.time, endDate: uiEnd.date, endTime: uiEnd.time});
                                             }
                                         }}
+                                        required
                                     >
-                                        <option value="">-- {t.timesheet.adhoc} --</option>
-                                        {schedules.filter(s => String(s.userId) === String(currentUser)).sort((a,b) => getEpochFromWIB(b.startDate || b.date, b.startTime) - getEpochFromWIB(a.startDate || a.date, a.startTime)).slice(0, 15).map(s => {
+                                        <option value="" disabled>-- {t.timesheet.selectSchedule} --</option>
+                                        {schedules.filter(s => {
+                                            if (String(s.userId) !== String(currentUser)) return false;
+                                            
+                                            // 1. Cek dari relasi ID jadwal langsung (Untuk data/fitur baru)
+                                            let usedTs = timesheets.find(ts => String(ts.userId) === String(currentUser) && ts.scheduleId && String(ts.scheduleId) === String(s.id));
+                                            
+                                            // 2. Fallback untuk data lama (Cari yang waktunya berdekatan/bentrok)
+                                            if (!usedTs) {
+                                                const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                                                usedTs = timesheets.find(ts => {
+                                                    if (String(ts.userId) !== String(currentUser)) return false;
+                                                    const tsStartEpoch = getEpochFromWIB(ts.date, ts.startTime);
+                                                    // Jika selisih waktu mulai kurang dari 2 jam, anggap ini jadwal yang sudah dilaporkan
+                                                    return Math.abs(tsStartEpoch - sStartEpoch) < 7200000; 
+                                                });
+                                            }
+                                            
+                                            // Jika sudah ada laporan, hanya tampilkan jika laporan tersebut sedang diedit saat ini
+                                            if (usedTs) {
+                                                return editTimesheetId === usedTs.id;
+                                            }
+                                            return true;
+                                        }).sort((a,b) => getEpochFromWIB(b.startDate || b.date, b.startTime) - getEpochFromWIB(a.startDate || a.date, a.startTime)).slice(0, 15).map(s => {
                                             const sTime = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
                                             const eTime = getDisplayTime(s.endTime, s.endDate || s.date, timezone);
                                             return <option key={s.id} value={s.id}>{formatDate(sTime.date, lang)} • {sTime.time} - {eTime.time}</option>;
@@ -1418,7 +1443,15 @@
                     } catch(err) { showNotify(err.message, "error"); } finally { setLoading(false); }
                 });
             };
-            const deleteSchedule = (id) => { triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); }); };
+
+            const deleteSchedule = (id) => { 
+                const hasLinkedTimesheet = timesheets.some(ts => ts.scheduleId === id);
+                if (hasLinkedTimesheet) {
+                    return showNotify(t.schedule.deleteLinkedError, "error", 5000);
+                }
+                triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); }); 
+            };
+
             const editSchedule = (item) => { 
                 const uiStart = getDisplayTime(item.startTime, item.startDate || item.date, timezone);
                 const uiEnd = getDisplayTime(item.endTime, item.endDate || item.date, timezone);
@@ -1430,6 +1463,11 @@
                 e.preventDefault(); 
                 if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
                 
+                // Cegah pembuatan Laporan tanpa Jadwal (Anti Ad-Hoc)
+                if (!timesheetForm.scheduleId) {
+                    return showNotify(t.timesheet.requireSchedule, "error");
+                }
+
                 const startStr = `${timesheetForm.date}T${timesheetForm.startTime}`;
                 const endStr = `${timesheetForm.endDate || timesheetForm.date}T${timesheetForm.endTime}`;
                 if (endStr <= startStr) { 
@@ -1439,11 +1477,24 @@
                 if (timesheetForm.scheduleId) {
                     const isDuplicate = timesheets.some(ts => 
                         String(ts.userId) === String(currentUser) && 
-                        ts.scheduleId === timesheetForm.scheduleId && 
+                        ts.scheduleId && String(ts.scheduleId) === String(timesheetForm.scheduleId) && 
                         ts.id !== editTimesheetId 
                     );
                     if (isDuplicate) {
                         return showNotify(t.timesheet.duplicateError, "error");
+                    }
+
+                    // Validasi: Mencegah submit laporan jika waktu jadwal belum selesai
+                    const selectedSchedule = schedules.find(s => String(s.id) === String(timesheetForm.scheduleId));
+                    if (selectedSchedule) {
+                        const schedStartEpoch = getEpochFromWIB(selectedSchedule.startDate || selectedSchedule.date, selectedSchedule.startTime);
+                        let schedEndEpoch = getEpochFromWIB(selectedSchedule.endDate || selectedSchedule.date, selectedSchedule.endTime);
+                        if (schedEndEpoch <= schedStartEpoch) schedEndEpoch += 86400000; // Tambah 24 jam jika lintas hari
+                        
+                        // Beri toleransi 2 menit agar pengguna bisa melapor jika sudah selesai sangat mendekati akhir
+                        if (Date.now() < (schedEndEpoch - 120000)) {
+                            return showNotify(t.timesheet.earlySubmitError, "error");
+                        }
                     }
                 }
 
