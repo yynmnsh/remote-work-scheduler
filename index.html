@@ -78,7 +78,6 @@
     <script type="text/babel">
         // --- CONSTANTS & CONFIGURATION ---
         const ADMIN_ID = '9'; 
-        const ADMIN_PASSWORD = 'peiyi'; 
         
         // RATES CONFIGURATION
         const BASE_HOURLY_RATE_USD = 15; 
@@ -89,11 +88,11 @@
             en: BASE_HOURLY_RATE_USD // 15 AUD
         };
         
-        // TIMEZONE CONFIGURATION (Decoupled from Language)
+        // TIMEZONE CONFIGURATION
         const TZ_CONFIG = {
             'WIB': { label: 'WIB (Jakarta)', iana: 'Asia/Jakarta', offsetHours: 0 },
             'AEDT': { label: 'AEDT (Melbourne)', iana: 'Australia/Melbourne', offsetHours: 4 }, // Approx +4h from WIB
-            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB (UTC+7 to UTC-7)
+            'PST': { label: 'PST (Pacific)', iana: 'America/Los_Angeles', offsetHours: -14 } // Approx -14h from WIB
         };
         
         // Initial Seed
@@ -109,7 +108,7 @@
                     loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'jam',
                     reminder: 'Periksa zona waktu & bahasa. Isi data dengan teliti.' 
                 },
-                dashboard: { hello: 'Halo', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
+                dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { 
                     booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
                     confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?'
@@ -119,8 +118,8 @@
                     confirmSubmit: 'Apakah data laporan kerja sudah akurat?', accessRestricted: 'Akses Terbatas'
                 },
                 analytics: { 
-                    myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
-                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan Hingga Saat Ini',
+                    myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam (Semua Waktu)', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
+                    statusOnTrack: 'Tepat Waktu', statusUnder: 'Kurang', statusOver: 'Berlebih', statusMissed: 'Terlewat', statusUnplanned: 'Tak Terjadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan',
                     changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat pembayaran tersedia.'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif',
@@ -141,7 +140,7 @@
                     loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h',
                     reminder: 'Check timezone & language. Enter records carefully.' 
                 },
-                dashboard: { hello: 'Hello', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
+                dashboard: { hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { 
                     booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
                     confirmBooking: 'Is the schedule data (Timezone & Time) correct?'
@@ -151,7 +150,7 @@
                     confirmSubmit: 'Is the work report data accurate?', accessRestricted: 'Access Restricted'
                 },
                 analytics: { 
-                    myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
+                    myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours (All-Time)', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
                     statusOnTrack: 'On Track', statusUnder: 'Under', statusOver: 'Overburn', statusMissed: 'Missed', statusUnplanned: 'Unplanned', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings',
                     changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history available.'
                 },
@@ -388,23 +387,25 @@
             );
         };
 
-        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone, onChangePassword }) => {
+        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
+            if (!currentUser) return <div className="space-y-4 fade-in"><div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center"><div className="flex flex-col items-center gap-3 mb-3"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"><i className="fas fa-user-lock text-blue-500 text-2xl"></i></div><h3 className="font-bold text-blue-800 text-lg">{t.timesheet.accessRestricted}</h3></div><p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p></div></div>;
+
             const [tab, setTab] = React.useState('team'); 
-            const [analyticsMode, setAnalyticsMode] = React.useState('local');
             
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
 
-            const thisMonthSheets = timesheets.filter(t => { const d = new Date(t.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
-            const totalMinutesTeam = thisMonthSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
+            // All-time team calculations
+            const totalMinutesTeam = timesheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
             const rate = RATES[lang];
             const totalEarnedTeam = (totalMinutesTeam / 60) * rate;
 
             const userStats = {};
-            thisMonthSheets.forEach(t => { if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0 }; userStats[t.userId].minutes += parseInt(t.duration || 0); });
+            timesheets.forEach(t => { if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0 }; userStats[t.userId].minutes += parseInt(t.duration || 0); });
             const leaderboard = Object.keys(userStats).map(uid => ({ uid, ...userStats[uid], name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown', color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1' })).sort((a,b) => b.minutes - a.minutes).slice(0, 5); 
 
+            // Personal Data Logic - Dynamic based on Timezone
             const getLast7Days = () => {
                 const dates = [];
                 const targetZone = TZ_CONFIG[timezone].iana;
@@ -598,23 +599,25 @@
                             </div>
 
                             <div className="bg-white p-0 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden hover:shadow-lg transition-shadow">
-                                <div className="relative bg-gradient-to-br from-emerald-500 to-teal-700 p-8 text-white text-center shadow-inner">
+                                <div className="relative bg-gradient-to-br from-emerald-500 to-teal-700 p-6 text-white text-center shadow-inner">
                                     <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full opacity-10 blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                                     <div className="absolute bottom-0 left-0 w-28 h-28 bg-black rounded-full opacity-10 blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
                                     
-                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2 relative z-10">{t.analytics.totalPaid}</p>
-                                    <div className="flex flex-col items-center justify-center relative z-10">
-                                        <p className="text-5xl font-black tracking-tighter mb-4 drop-shadow-md">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-200 mb-1 relative z-10">{t.analytics.totalPaid}</p>
+                                    <div className="flex items-center justify-center gap-3 relative z-10">
+                                        <p className="text-4xl font-black tracking-tighter drop-shadow-md">
                                             {formatCurrency(grandTotalPaid, lang)}
                                         </p>
-                                        <div className="inline-flex items-center justify-center gap-2 bg-black/15 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full shadow-sm">
-                                            <i className="far fa-clock text-emerald-100 text-sm"></i>
-                                            <span className="text-xs font-bold text-white tracking-wide">
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-center gap-2 relative z-10">
+                                        <div className="inline-flex items-center justify-center gap-1 bg-black/15 backdrop-blur-md px-2 py-0.5 rounded text-emerald-100 border border-white/10">
+                                            <i className="far fa-clock text-[9px]"></i>
+                                            <span className="text-[10px] font-bold">
                                                 {(grandTotalMins / 60).toFixed(1)} {t.common.unitHour}
                                             </span>
                                         </div>
+                                        <span className="text-[10px] text-emerald-100/80 font-medium tracking-wide">&bull; {t.analytics.lifetime}</span>
                                     </div>
-                                    <p className="text-[10px] text-emerald-100 mt-5 opacity-90 uppercase tracking-widest relative z-10">{t.analytics.lifetime}</p>
                                 </div>
                                 <div className="p-5 relative z-20 bg-white rounded-t-2xl -mt-4 border-t border-slate-50">
                                     <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-50">
@@ -760,7 +763,7 @@
                     <div className="bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden hover:shadow-xl transition-all">
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
-                                <h2 className="text-xl font-bold flex items-center gap-2">{t.dashboard.hello}, {currentUser ? getUserName(currentUser) : 'Tim'}!</h2>
+                                <h2 className="text-xl font-bold flex items-center gap-2">{t.dashboard.hello}, {currentUser ? getUserName(currentUser) : t.dashboard.team}!</h2>
                                 <p className="text-blue-200 text-xs mt-0.5">Remote Work Scheduler</p>
                             </div>
                             <button onClick={onEditProfile} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition backdrop-blur-sm" title="Atur Rekening"><i className="fas fa-cog text-white text-sm"></i></button>
