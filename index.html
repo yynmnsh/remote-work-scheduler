@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RemoteWork Scheduler</title>
     
+    <!-- Favicon (Inline SVG) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%234f46e5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='120' fill='url(%23g)'/%3E%3Cpath fill='%23fff' transform='translate(112, 130) scale(0.5625)' d='M256 0L0 128l256 128 256-128L256 0z M256 320L32 208l-32 16 256 128 256-128-32-16-224 112z M256 448L32 336l-32 16 256 128 256-128-32-16-224 112z'/%3E%3C/svg%3E">
+    
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -1265,7 +1268,7 @@
                     {viewMode === 'users' && ( <div className="space-y-4"><div className="flex justify-between items-center"><h3 className="font-bold text-slate-700">{t.admin.userList}</h3><button onClick={onAddUser} className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg">{t.admin.addUser}</button></div><div className="bg-white rounded-xl border border-slate-200 divide-y">{users.map(u => (<div key={u.id} className={`p-3 flex items-center justify-between ${u.hidden ? 'opacity-60 bg-slate-50' : ''}`}><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold" style={{backgroundColor: u.color}}>{u.name.substring(0,2)}</div><div><p className="font-bold text-sm text-slate-700 flex items-center gap-2">{u.name}{u.hidden && <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider">{t.admin.inactive}</span>}</p><p className="text-xs text-slate-400">{u.bankName || '-'}</p></div></div><div className="flex gap-2"><button onClick={() => onEditUser(u)} className="text-blue-500 text-xs"><i className="fas fa-pen"></i></button><button onClick={() => onDeleteUser(u.id)} className="text-red-500 text-xs"><i className="fas fa-trash"></i></button></div></div>))}</div></div> )}
                 </div>
             );
-        };
+        }
 
         function App() {
             const [view, setView] = React.useState('dashboard');
@@ -1424,18 +1427,20 @@
             };
 
             const saveTimesheet = async (e) => {
-                e.preventDefault(); if (!currentUser) return showNotify("Select User", "error");
+                e.preventDefault(); 
+                if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
                 
                 const startStr = `${timesheetForm.date}T${timesheetForm.startTime}`;
                 const endStr = `${timesheetForm.endDate || timesheetForm.date}T${timesheetForm.endTime}`;
-                if (endStr <= startStr) { return showNotify(t.timesheet.timeError, "error"); }
+                if (endStr <= startStr) { 
+                    return showNotify(t.timesheet.timeError, "error"); 
+                }
 
-                // Validasi Mencegah Laporan Ganda untuk Jadwal yang sama
                 if (timesheetForm.scheduleId) {
                     const isDuplicate = timesheets.some(ts => 
                         String(ts.userId) === String(currentUser) && 
                         ts.scheduleId === timesheetForm.scheduleId && 
-                        ts.id !== editTimesheetId // Abaikan ID saat sedang dalam mode edit
+                        ts.id !== editTimesheetId 
                     );
                     if (isDuplicate) {
                         return showNotify(t.timesheet.duplicateError, "error");
@@ -1449,7 +1454,6 @@
                 let newEndEpoch = getEpochFromWIB(dbEnd.date, dbEnd.time);
                 if (newEndEpoch <= newStartEpoch) newEndEpoch += 86400000;
 
-                // Validasi Mencegah Laporan Bentrok secara Waktu (Overlap)
                 const isOverlap = timesheets.some(ts => {
                     if (String(ts.userId) !== String(currentUser)) return false;
                     if (editTimesheetId && ts.id === editTimesheetId) return false;
@@ -1466,7 +1470,6 @@
                         return false;
                     }
 
-                    // Logika Bentrok: Mulai Baru < Selesai Lama DAN Selesai Baru > Mulai Lama
                     return (newStartEpoch < existEndEpoch && newEndEpoch > existStartEpoch);
                 });
 
@@ -1503,9 +1506,20 @@
                             status: 'pending', 
                             updatedAt: new Date().toISOString() 
                         };
-                        if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
-                        showNotify("Saved!"); setTimesheetForm({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' }); setEditTimesheetId(null);
-                    } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
+                        if (editTimesheetId) { 
+                            await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); 
+                        } else { 
+                            payload.createdAt = new Date().toISOString(); 
+                            await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); 
+                        }
+                        showNotify("Saved!"); 
+                        setTimesheetForm({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' }); 
+                        setEditTimesheetId(null);
+                    } catch(e) { 
+                        showNotify("Error", "error"); 
+                    } finally { 
+                        setLoading(false); 
+                    }
                 });
             };
             
