@@ -111,11 +111,13 @@
                 dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { 
                     booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian (Maks 10 Jam)', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok waktu dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
-                    confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?'
+                    confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?',
+                    pastError: 'Tidak bisa membuat jadwal di masa lalu!'
                 },
                 timesheet: { 
                     title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
-                    confirmSubmit: 'Apakah data laporan kerja sudah akurat?', accessRestricted: 'Akses Terbatas'
+                    confirmSubmit: 'Apakah data laporan kerja sudah akurat?', accessRestricted: 'Akses Terbatas',
+                    selectSchedule: 'Pilih Jadwal', adhoc: 'Ad-Hoc (Tanpa Jadwal)', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan untuk jadwal ini sudah dibuat!'
                 },
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam (Semua Waktu)', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
@@ -142,12 +144,14 @@
                 },
                 dashboard: { hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { 
-                    booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Time Conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
-                    confirmBooking: 'Is the schedule data (Timezone & Time) correct?'
+                    booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota (Max 10h)', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
+                    confirmBooking: 'Is the schedule data (Timezone & Time) correct?',
+                    pastError: 'Cannot book schedules in the past!'
                 },
                 timesheet: { 
                     title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
-                    confirmSubmit: 'Is the work report data accurate?', accessRestricted: 'Access Restricted'
+                    confirmSubmit: 'Is the work report data accurate?', accessRestricted: 'Access Restricted',
+                    selectSchedule: 'Select Schedule', adhoc: 'Ad-Hoc (Unscheduled)', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet for this schedule already exists!'
                 },
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours (All-Time)', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
@@ -486,11 +490,21 @@
                 dailySheets.forEach(t => {
                     const tConv = getDisplayTime(t.startTime, t.date, timezone);
                     let bestMatch = null;
-                    let minDiff = Infinity;
-                    dailySchedules.forEach(s => {
-                        let diff = Math.abs((s.origStart - tConv.originalObj) / 60000);
-                        if (diff < 180) { if (diff < minDiff) { minDiff = diff; bestMatch = s; } }
-                    });
+
+                    // NEW LOGIC: Tautkan dengan ID Jadwal
+                    if (t.scheduleId) {
+                        bestMatch = dailySchedules.find(s => s.id === t.scheduleId);
+                    }
+
+                    // FALLBACK LOGIC: Data masa lalu yang belum ada ID Jadwal
+                    if (!bestMatch) {
+                        let minDiff = Infinity;
+                        dailySchedules.forEach(s => {
+                            let diff = Math.abs((s.origStart - tConv.originalObj) / 60000);
+                            if (diff < 180) { if (diff < minDiff) { minDiff = diff; bestMatch = s; } }
+                        });
+                    }
+
                     if (bestMatch) { bestMatch.actualMins += parseInt(t.duration || 0); bestMatch.matched.push(t); } else { unplanned.push({ ...t, displayTime: tConv.time }); }
                 });
 
@@ -730,12 +744,17 @@
             const upcomingSchedules = schedules
                 .filter(s => {
                     const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
-                    return sStartEpoch > currentEpoch;
+                    let sEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                    if (!s.endDate && sEndEpoch <= sStartEpoch) {
+                        sEndEpoch += 86400000; // Tambah 24 Jam untuk shift malam lama
+                    }
+                    // NEW LOGIC: Gunakan End Epoch agar jadwal berjalan tetap muncul
+                    return sEndEpoch > currentEpoch;
                 })
                 .sort((a,b) => {
                     const epochA = getEpochFromWIB(a.startDate || a.date, a.startTime);
                     const epochB = getEpochFromWIB(b.startDate || b.date, b.startTime);
-                    return epochA - epochB; // Ascending order (terdekat/paling cepat di atas)
+                    return epochA - epochB; 
                 })
                 .slice(0, 5);
             
@@ -747,9 +766,8 @@
                 const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
                 let sEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
                 
-                // Menangani shift beda hari yang diinput tanpa endDate spesifik (data lama)
                 if (!s.endDate && sEndEpoch <= sStartEpoch) {
-                    sEndEpoch += 86400000; // Tambah 24 Jam
+                    sEndEpoch += 86400000;
                 }
                 
                 return currentEpoch >= sStartEpoch && currentEpoch <= sEndEpoch;
@@ -826,7 +844,7 @@
         const ScheduleManager = ({ editScheduleId, setEditScheduleId, scheduleForm, setScheduleForm, saveSchedule, loading, schedules, currentUser, getUserColor, getUserName, deleteSchedule, editSchedule, isAdmin, lang, t, timezone }) => {
             const [showHistory, setShowHistory] = React.useState(false);
             const [filterMine, setFilterMine] = React.useState(false);
-            const [sortOrder, setSortOrder] = React.useState('desc'); 
+            const [sortOrder, setSortOrder] = React.useState('asc'); 
             
             const MAX_MINUTES = 600; 
             const dailyUsedMinutes = React.useMemo(() => {
@@ -859,19 +877,22 @@
             const filteredSchedules = React.useMemo(() => {
                 let filtered = [...schedules];
                 if (!showHistory) {
-                    const now = new Date();
-                    const y = now.getFullYear();
-                    const m = String(now.getMonth() + 1).padStart(2, '0');
-                    const d = String(now.getDate()).padStart(2, '0');
-                    const todayStr = `${y}-${m}-${d}`;
-                    filtered = filtered.filter(s => (s.startDate || s.date) >= todayStr); 
+                    const currentEpoch = Date.now();
+                    filtered = filtered.filter(s => {
+                        const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                        let sEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                        if (!s.endDate && sEndEpoch <= sStartEpoch) {
+                            sEndEpoch += 86400000; // Tambah 24 Jam
+                        }
+                        return sEndEpoch > currentEpoch;
+                    });
                 }
                 if (filterMine) filtered = filtered.filter(s => String(s.userId) === String(currentUser));
                 
                 filtered.sort((a,b) => {
-                    const timeA = `${a.startDate || a.date}T${a.startTime}`;
-                    const timeB = `${b.startDate || b.date}T${b.startTime}`;
-                    return sortOrder === 'asc' ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
+                    const epochA = getEpochFromWIB(a.startDate || a.date, a.startTime);
+                    const epochB = getEpochFromWIB(b.startDate || b.date, b.startTime);
+                    return sortOrder === 'asc' ? epochA - epochB : epochB - epochA;
                 });
                 return filtered;
             }, [schedules, showHistory, filterMine, sortOrder, currentUser]);
@@ -917,7 +938,7 @@
                                 <div className="flex gap-1"><button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')} className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition"><i className={`fas fa-sort-amount-${sortOrder === 'asc' ? 'down-alt' : 'up'} text-xs`}></i></button></div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setShowHistory(!showHistory)} className={`flex-1 text-[10px] py-1.5 rounded border transition font-medium ${showHistory ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{showHistory ? t.schedule.showUpcoming : t.schedule.showAll}</button>
+                                <button onClick={() => { setShowHistory(!showHistory); setSortOrder(!showHistory ? 'desc' : 'asc'); }} className={`flex-1 text-[10px] py-1.5 rounded border transition font-medium ${showHistory ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{showHistory ? t.schedule.showUpcoming : t.schedule.showAll}</button>
                                 <button onClick={() => setFilterMine(!filterMine)} className={`flex-1 text-[10px] py-1.5 rounded border transition font-medium ${filterMine ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{filterMine ? t.schedule.onlyMe : t.schedule.allUsers}</button>
                             </div>
                         </div>
@@ -952,7 +973,7 @@
             );
         };
         
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone }) => {
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone }) => {
             if (!currentUser) return <div className="space-y-4 fade-in"><div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center"><div className="flex flex-col items-center gap-3 mb-3"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"><i className="fas fa-user-lock text-blue-500 text-2xl"></i></div><h3 className="font-bold text-blue-800 text-lg">{t.timesheet.accessRestricted}</h3></div><p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p></div></div>;
             if (!hasPaymentInfo) return <div className="space-y-4 fade-in"><div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm"><div className="flex items-center gap-3 mb-2"><i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i><h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3></div><button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">{t.timesheet.fillPayInfo}</button></div></div>;
 
@@ -971,18 +992,69 @@
                 return baseVal;
             };
 
+            const calculateDurationMins = () => {
+                if (!timesheetForm.date || !timesheetForm.startTime || !timesheetForm.endTime) return 0;
+                const start = new Date(`${timesheetForm.date}T${timesheetForm.startTime}:00`);
+                let end = new Date(`${timesheetForm.endDate || timesheetForm.date}T${timesheetForm.endTime}:00`);
+                if (end < start) end.setDate(end.getDate() + 1);
+                return Math.max(0, Math.round((end - start) / 60000));
+            };
+            const currentDur = calculateDurationMins();
+
             return (
                 <div className="space-y-4 fade-in">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
                         <h3 className="font-bold text-slate-700 mb-4">{editTimesheetId ? t.timesheet.editTitle : t.timesheet.title}</h3>
                         <form onSubmit={saveTimesheet} className="space-y-3">
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.date} ({TZ_CONFIG[timezone].label})</label><input type="date" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, date: e.target.value})} /></div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.start} ({TZ_CONFIG[timezone].label})</label><input type="time" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} /></div>
-                                <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.common.duration}</label><input type="number" placeholder="Mins" required className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" value={timesheetForm.duration} onChange={e => setTimesheetForm({...timesheetForm, duration: e.target.value})} /></div>
+                            <div className="mb-3">
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-calendar-check text-blue-500 text-sm"></i> {t.timesheet.selectSchedule}</label>
+                                <div className="relative">
+                                    <select 
+                                        className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all appearance-none cursor-pointer shadow-sm"
+                                        value={timesheetForm.scheduleId || ''}
+                                        onChange={e => {
+                                            const sid = e.target.value;
+                                            if (!sid) { setTimesheetForm({...timesheetForm, scheduleId: ''}); return; }
+                                            const s = schedules.find(x => x.id === sid);
+                                            if (s) {
+                                                const uiStart = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
+                                                const uiEnd = getDisplayTime(s.endTime, s.endDate || s.date, timezone);
+                                                setTimesheetForm({...timesheetForm, scheduleId: sid, date: uiStart.date, startTime: uiStart.time, endDate: uiEnd.date, endTime: uiEnd.time});
+                                            }
+                                        }}
+                                    >
+                                        <option value="">-- {t.timesheet.adhoc} --</option>
+                                        {schedules.filter(s => String(s.userId) === String(currentUser)).sort((a,b) => getEpochFromWIB(b.startDate || b.date, b.startTime) - getEpochFromWIB(a.startDate || a.date, a.startTime)).slice(0, 15).map(s => {
+                                            const sTime = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
+                                            const eTime = getDisplayTime(s.endTime, s.endDate || s.date, timezone);
+                                            return <option key={s.id} value={s.id}>{formatDate(sTime.date, lang)} • {sTime.time} - {eTime.time}</option>;
+                                        })}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <i className="fas fa-chevron-down text-slate-400 text-xs"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg"><span>Est:</span><span className="font-bold">{timesheetForm.duration ? formatCurrency((timesheetForm.duration/60)*RATES[lang], lang) : '0'}</span></div>
-                            <button disabled={loading} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>{loading ? <Spinner/> : (editTimesheetId ? t.common.save : t.timesheet.submit)}</button>
+                            
+                            <div className="space-y-3 mb-4 mt-2">
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-play-circle text-green-500 text-sm"></i> {t.timesheet.actualStart}</label>
+                                    <div className="flex gap-2">
+                                        <input type="date" required className="w-3/5 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 transition-all text-slate-700" value={timesheetForm.date} onChange={e => {if(!timesheetForm.endDate) setTimesheetForm({...timesheetForm, date: e.target.value, endDate: e.target.value});else setTimesheetForm({...timesheetForm, date: e.target.value});}} />
+                                        <input type="time" required className="w-2/5 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-green-400 focus:ring-1 focus:ring-green-400 transition-all text-slate-700" value={timesheetForm.startTime} onChange={e => setTimesheetForm({...timesheetForm, startTime: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-stop-circle text-red-500 text-sm"></i> {t.timesheet.actualEnd}</label>
+                                    <div className="flex gap-2">
+                                        <input type="date" required className="w-3/5 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-all text-slate-700" value={timesheetForm.endDate || timesheetForm.date} onChange={e => setTimesheetForm({...timesheetForm, endDate: e.target.value})} />
+                                        <input type="time" required className="w-2/5 p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-medium outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-all text-slate-700" value={timesheetForm.endTime || ''} onChange={e => setTimesheetForm({...timesheetForm, endTime: e.target.value})} />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-xs bg-green-50 text-green-700 p-2 rounded-lg"><span>Est: {currentDur}m</span><span className="font-bold">{formatCurrency((currentDur/60)*RATES[lang], lang)}</span></div>
+                            <button disabled={loading || currentDur === 0} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>{loading ? <Spinner/> : (editTimesheetId ? t.common.save : t.timesheet.submit)}</button>
                         </form>
                     </div>
                     <div className="pb-20">
@@ -992,7 +1064,7 @@
                             const displayDate = formatDate(displayObj.date, lang);
                             return (
                                 <div key={item.id} className="relative mb-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                    <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{displayDate} • {displayObj.time} ({TZ_CONFIG[timezone].label})</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item), lang)}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
+                                    <div className="flex justify-between items-start"><div><p className="font-bold text-slate-700 text-sm">{getUserName(item.userId)}</p><p className="text-xs text-slate-400 mt-0.5">{displayDate} • {displayObj.time} - {item.endTime ? getDisplayTime(item.endTime, item.endDate || item.date, timezone).time : '...'} ({TZ_CONFIG[timezone].label})</p></div><div className="text-right"><p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item), lang)}</p><p className="text-xs text-slate-400">{item.duration}m</p></div></div>
                                     <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center"><span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide ${item.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>{item.status === 'paid' ? t.timesheet.paid : t.timesheet.pending}</span>{String(item.userId) === String(currentUser) && item.status !== 'paid' && (<div className="flex gap-2"><button onClick={() => editTimesheet(item)} className="text-xs text-blue-500"><i className="fas fa-pen"></i></button><button onClick={() => deleteTimesheet(item.id)} className="text-xs text-red-500"><i className="fas fa-trash"></i></button></div>)}</div>
                                 </div>
                             );
@@ -1213,7 +1285,7 @@
             const t = TRANSLATIONS[lang];
             const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
             const [editScheduleId, setEditScheduleId] = React.useState(null);
-            const [timesheetForm, setTimesheetForm] = React.useState({ date: '', startTime: '', duration: '' });
+            const [timesheetForm, setTimesheetForm] = React.useState({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' });
             const [editTimesheetId, setEditTimesheetId] = React.useState(null);
             const [confirmModal, setConfirmModal] = React.useState({ show: false, message: '', action: null });
 
@@ -1308,6 +1380,11 @@
                 const newStartEpoch = getEpochFromWIB(dbStart.date, dbStart.time);
                 const newEndEpoch = getEpochFromWIB(dbEnd.date, dbEnd.time);
 
+                // Validasi Mencegah Booking Masa Lalu (Toleransi 5 Menit)
+                if (!editScheduleId && newStartEpoch < Date.now() - 300000) {
+                    return showNotify(t.schedule.pastError, "error");
+                }
+
                 let conflictUser = null;
                 const isConflict = schedules.some(s => {
                     // Abaikan jadwal yang sedang diedit saat ini
@@ -1348,23 +1425,122 @@
 
             const saveTimesheet = async (e) => {
                 e.preventDefault(); if (!currentUser) return showNotify("Select User", "error");
+                
+                const startStr = `${timesheetForm.date}T${timesheetForm.startTime}`;
+                const endStr = `${timesheetForm.endDate || timesheetForm.date}T${timesheetForm.endTime}`;
+                if (endStr <= startStr) { return showNotify(t.timesheet.timeError, "error"); }
+
+                // Validasi Mencegah Laporan Ganda untuk Jadwal yang sama
+                if (timesheetForm.scheduleId) {
+                    const isDuplicate = timesheets.some(ts => 
+                        String(ts.userId) === String(currentUser) && 
+                        ts.scheduleId === timesheetForm.scheduleId && 
+                        ts.id !== editTimesheetId // Abaikan ID saat sedang dalam mode edit
+                    );
+                    if (isDuplicate) {
+                        return showNotify(t.timesheet.duplicateError, "error");
+                    }
+                }
+
+                const dbStart = getDbTime(timesheetForm.startTime, timesheetForm.date, timezone);
+                const dbEnd = getDbTime(timesheetForm.endTime, timesheetForm.endDate || timesheetForm.date, timezone);
+                
+                const newStartEpoch = getEpochFromWIB(dbStart.date, dbStart.time);
+                let newEndEpoch = getEpochFromWIB(dbEnd.date, dbEnd.time);
+                if (newEndEpoch <= newStartEpoch) newEndEpoch += 86400000;
+
+                // Validasi Mencegah Laporan Bentrok secara Waktu (Overlap)
+                const isOverlap = timesheets.some(ts => {
+                    if (String(ts.userId) !== String(currentUser)) return false;
+                    if (editTimesheetId && ts.id === editTimesheetId) return false;
+
+                    const existStartEpoch = getEpochFromWIB(ts.date, ts.startTime);
+                    let existEndEpoch;
+                    
+                    if (ts.endTime) {
+                        existEndEpoch = getEpochFromWIB(ts.endDate || ts.date, ts.endTime);
+                        if (existEndEpoch <= existStartEpoch) existEndEpoch += 86400000;
+                    } else if (ts.duration) {
+                        existEndEpoch = existStartEpoch + (ts.duration * 60000);
+                    } else {
+                        return false;
+                    }
+
+                    // Logika Bentrok: Mulai Baru < Selesai Lama DAN Selesai Baru > Mulai Lama
+                    return (newStartEpoch < existEndEpoch && newEndEpoch > existStartEpoch);
+                });
+
+                if (isOverlap) {
+                    return showNotify(t.timesheet.overlapError, "error");
+                }
+
                 triggerConfirm(t.timesheet.confirmSubmit, async () => {
                     setLoading(true);
                     try {
-                        const dur = parseInt(timesheetForm.duration);
+                        const d1 = new Date(`${dbStart.date}T${dbStart.time}:00Z`);
+                        let d2 = new Date(`${dbEnd.date}T${dbEnd.time}:00Z`);
+                        if (d2 < d1) d2.setUTCDate(d2.getUTCDate() + 1);
+
+                        const dur = Math.max(0, Math.round((d2 - d1) / 60000));
+                        if (dur <= 0) {
+                            setLoading(false);
+                            return showNotify(t.timesheet.timeError, "error");
+                        }
+
                         const idr = Math.round((dur/60) * RATES.id);
                         const usd = ((dur/60) * RATES.en).toFixed(2); 
-                        const dbTime = getDbTime(timesheetForm.startTime, timesheetForm.date, timezone);
-                        const payload = { userId: currentUser, date: dbTime.date, startTime: dbTime.time, duration: dur, paymentUSD: usd, paymentIDR: idr, status: 'pending', updatedAt: new Date().toISOString() };
+                        
+                        const payload = { 
+                            userId: currentUser, 
+                            scheduleId: timesheetForm.scheduleId || '',
+                            date: dbStart.date, 
+                            startTime: dbStart.time, 
+                            endDate: dbEnd.date,
+                            endTime: dbEnd.time,
+                            duration: dur, 
+                            paymentUSD: usd, 
+                            paymentIDR: idr, 
+                            status: 'pending', 
+                            updatedAt: new Date().toISOString() 
+                        };
                         if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
-                        showNotify("Saved!"); setTimesheetForm({ date: '', startTime: '', duration: '' }); setEditTimesheetId(null);
+                        showNotify("Saved!"); setTimesheetForm({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' }); setEditTimesheetId(null);
                     } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); }
                 });
             };
+            
             const deleteTimesheet = (id) => { triggerConfirm(t.common.delete + "?", async () => { await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); }); };
+            
             const editTimesheet = (item) => { 
-                const uiTime = getDisplayTime(item.startTime, item.date, timezone);
-                setTimesheetForm({date: uiTime.date, startTime: uiTime.time, duration: item.duration}); 
+                const uiStart = getDisplayTime(item.startTime, item.date, timezone);
+                let finalEndDate = item.endDate || item.date;
+                let finalEndTime = item.endTime;
+
+                // Handle legacy timesheets that only had duration, not endTime
+                if (!finalEndTime && item.duration) {
+                     const startEpoch = getEpochFromWIB(item.date, item.startTime);
+                     const endEpoch = startEpoch + (item.duration * 60000);
+                     const d = new Date(endEpoch);
+                     
+                     const targetZone = TZ_CONFIG[timezone].iana;
+                     const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+                     const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
+                     
+                     finalEndDate = formatterDate.format(d);
+                     finalEndTime = formatterTime.format(d);
+                } else if (finalEndTime) {
+                     const uiEnd = getDisplayTime(finalEndTime, finalEndDate, timezone);
+                     finalEndDate = uiEnd.date;
+                     finalEndTime = uiEnd.time;
+                }
+
+                setTimesheetForm({
+                    scheduleId: item.scheduleId || '', 
+                    date: uiStart.date, 
+                    startTime: uiStart.time, 
+                    endDate: finalEndDate, 
+                    endTime: finalEndTime || ''
+                }); 
                 setEditTimesheetId(item.id); window.scrollTo({top:0,behavior:'smooth'}); 
             };
 
@@ -1464,7 +1640,7 @@
                             <>
                                 {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={formatCurrency} lang={lang} timezone={timezone} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} timezone={timezone} />}
-                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
+                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} schedules={schedules} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
                                 {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
                                 {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={formatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} />}
                             </>
