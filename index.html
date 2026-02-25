@@ -116,7 +116,7 @@
                 },
                 timesheet: { 
                     title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
-                    confirmSubmit: 'Apakah data laporan kerja sudah akurat?'
+                    confirmSubmit: 'Apakah data laporan kerja sudah akurat?', accessRestricted: 'Akses Terbatas'
                 },
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Burn Rate', prodHours: 'Total Jam Produktif', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
@@ -148,7 +148,7 @@
                 },
                 timesheet: { 
                     title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
-                    confirmSubmit: 'Is the work report data accurate?'
+                    confirmSubmit: 'Is the work report data accurate?', accessRestricted: 'Access Restricted'
                 },
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Burn Rate', prodHours: 'Productive Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
@@ -950,7 +950,7 @@
         };
         
         const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone }) => {
-            if (!currentUser) return <div className="space-y-4 fade-in"><div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center"><div className="flex flex-col items-center gap-3 mb-3"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"><i className="fas fa-user-lock text-blue-500 text-2xl"></i></div><h3 className="font-bold text-blue-800 text-lg">Access Restricted</h3></div><p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p></div></div>;
+            if (!currentUser) return <div className="space-y-4 fade-in"><div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center"><div className="flex flex-col items-center gap-3 mb-3"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"><i className="fas fa-user-lock text-blue-500 text-2xl"></i></div><h3 className="font-bold text-blue-800 text-lg">{t.timesheet.accessRestricted}</h3></div><p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p></div></div>;
             if (!hasPaymentInfo) return <div className="space-y-4 fade-in"><div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm"><div className="flex items-center gap-3 mb-2"><i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i><h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3></div><button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">{t.timesheet.fillPayInfo}</button></div></div>;
 
             const [showHistory, setShowHistory] = React.useState(false); 
