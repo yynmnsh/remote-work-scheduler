@@ -116,7 +116,8 @@
                     booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian', used: 'Terpakai', remaining: 'Tersisa', bookedBy: 'Booked by', conflict: 'Bentrok waktu dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Tampilkan Semua', showUpcoming: 'Hanya Mendatang',
                     confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?',
                     pastError: 'Tidak bisa membuat jadwal di masa lalu!',
-                    deleteLinkedError: 'Tidak bisa menghapus Jadwal karena sudah ada Laporan terkait. Hapus laporan terlebih dahulu!'
+                    deleteLinkedError: 'Tidak bisa menghapus Jadwal karena sudah ada Laporan terkait. Hapus laporan terlebih dahulu!',
+                    visualTitle: 'Peta Jadwal Harian'
                 },
                 timesheet: { 
                     title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
@@ -152,7 +153,8 @@
                     booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota', used: 'Used', remaining: 'Remaining', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only',
                     confirmBooking: 'Is the schedule data (Timezone & Time) correct?',
                     pastError: 'Cannot book schedules in the past!',
-                    deleteLinkedError: 'Cannot delete schedule with linked timesheet. Delete the timesheet first!'
+                    deleteLinkedError: 'Cannot delete schedule with linked timesheet. Delete the timesheet first!',
+                    visualTitle: 'Daily Schedule Map'
                 },
                 timesheet: { 
                     title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
@@ -904,6 +906,64 @@
                 return filtered;
             }, [schedules, showHistory, filterMine, sortOrder, currentUser]);
 
+            // Hitung Tanggal Display untuk Visualisasi (Format YYYY-MM-DD dalam Timezone Saat Ini)
+            const targetZone = TZ_CONFIG[timezone].iana;
+            const nowTz = new Date().toLocaleString("en-US", {timeZone: targetZone});
+            const dNow = new Date(nowTz);
+            const y = dNow.getFullYear();
+            const m = String(dNow.getMonth() + 1).padStart(2, '0');
+            const d = String(dNow.getDate()).padStart(2, '0');
+            const defaultDate = `${y}-${m}-${d}`;
+            
+            const displayDate = scheduleForm.startDate || defaultDate;
+
+            // Generate Timeline Blocks untuk Visualisasi Harian
+            const timelineBlocks = [];
+            schedules.forEach(s => {
+                if (editScheduleId && s.id === editScheduleId) return; // Abaikan jadwal yang sedang diedit
+                
+                const uiStart = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
+                const uiEnd = getDisplayTime(s.endTime, s.endDate || s.date, timezone);
+                
+                const sDate = uiStart.date;
+                const eDate = uiEnd.date;
+                
+                const startMins = parseInt(uiStart.time.split(':')[0]) * 60 + parseInt(uiStart.time.split(':')[1]);
+                const endMins = parseInt(uiEnd.time.split(':')[0]) * 60 + parseInt(uiEnd.time.split(':')[1]);
+
+                if (sDate === displayDate && eDate === displayDate) {
+                    const dur = endMins - startMins;
+                    if(dur > 0) timelineBlocks.push({...s, startPct: startMins/1440*100, widthPct: dur/1440*100, uiStart, uiEnd});
+                } else if (sDate === displayDate && eDate > displayDate) {
+                    const dur = 1440 - startMins;
+                    timelineBlocks.push({...s, startPct: startMins/1440*100, widthPct: dur/1440*100, uiStart, uiEnd});
+                } else if (eDate === displayDate && sDate < displayDate) {
+                    timelineBlocks.push({...s, startPct: 0, widthPct: endMins/1440*100, uiStart, uiEnd});
+                } else if (sDate < displayDate && eDate > displayDate) {
+                    timelineBlocks.push({...s, startPct: 0, widthPct: 100, uiStart, uiEnd});
+                }
+            });
+
+            // Generate Preview Block (Jadwal yang sedang diketik)
+            let previewBlock = null;
+            if (scheduleForm.startDate === displayDate && scheduleForm.startTime && scheduleForm.endTime) {
+                 const sMins = parseInt(scheduleForm.startTime.split(':')[0]) * 60 + parseInt(scheduleForm.startTime.split(':')[1]);
+                 let eMins = parseInt(scheduleForm.endTime.split(':')[0]) * 60 + parseInt(scheduleForm.endTime.split(':')[1]);
+                 
+                 let pStart = sMins;
+                 let pEnd = eMins;
+                 
+                 if (scheduleForm.endDate > scheduleForm.startDate) {
+                     pEnd = 1440;
+                 } else if (eMins < sMins && !scheduleForm.endDate) {
+                     pEnd = 1440; 
+                 }
+
+                 if (pEnd > pStart) {
+                     previewBlock = { startPct: pStart/1440*100, widthPct: (pEnd-pStart)/1440*100 };
+                 }
+            }
+
             return (
                 <div className="space-y-4 animate-slide-up">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editScheduleId ? 'border-orange-500' : 'border-blue-500'}`}>
@@ -920,6 +980,83 @@
                                 <div className="w-full bg-white/50 rounded-full h-2.5 overflow-hidden border border-slate-100"><div className={`h-2.5 rounded-full transition-all duration-700 ease-out ${isCritical ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: `${usedPercentage}%` }}></div></div>
                             </div>
                         )}
+                        
+                        {/* Peta Visualisasi Jadwal Harian */}
+                        <div className="mt-4 mb-6">
+                            <div className="flex justify-between items-center mb-3">
+                                <h4 className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5"><i className="fas fa-chart-gantt text-indigo-500 text-sm"></i> {t.schedule.visualTitle} ({formatDate(displayDate, lang)})</h4>
+                            </div>
+                            
+                            {/* Base Container dengan Grid Pattern (Modern Timeline) */}
+                            <div className="relative w-full h-20 bg-white border border-slate-200 rounded-lg overflow-visible shadow-sm mt-2">
+                                {/* Skala/Penggaris Waktu */}
+                                <div className="absolute top-0 left-0 right-0 h-4 border-b border-slate-100 flex justify-between bg-slate-50 rounded-t-lg z-0">
+                                    {[0, 4, 8, 12, 16, 20, 24].map(h => (
+                                        <div key={h} className="h-full flex flex-col justify-center relative opacity-60 w-0">
+                                            <span className={`text-[7px] text-slate-500 font-bold absolute ${h === 0 ? 'left-1' : h === 24 ? 'right-1' : 'left-1/2 transform -translate-x-1/2'}`}>
+                                                {String(h).padStart(2, '0')}:00
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Garis pemisah vertikal */}
+                                <div className="absolute inset-y-4 left-0 right-0 flex justify-between pointer-events-none z-0">
+                                    {[0, 4, 8, 12, 16, 20, 24].map(h => (
+                                        <div key={h} className="h-full border-l border-slate-200 border-dashed w-0"></div>
+                                    ))}
+                                </div>
+                                
+                                {/* Area Blok Jadwal */}
+                                <div className="absolute top-4 bottom-0 left-0 right-0 z-10">
+                                    {/* Blok Jadwal Pengguna Lain */}
+                                    {timelineBlocks.map((b, i) => (
+                                        <div 
+                                            key={b.id} 
+                                            className="absolute h-full top-0 group cursor-pointer border-l-2 hover:z-30 transition-all duration-200 hover:-translate-y-1"
+                                            style={{ 
+                                                left: `${b.startPct}%`, 
+                                                width: `${b.widthPct}%`, 
+                                                borderColor: getUserColor(b.userId),
+                                                backgroundColor: `${getUserColor(b.userId)}15`, // Transparan 15%
+                                            }}
+                                        >
+                                            {/* Header blok kecil untuk mempertegas batas atas */}
+                                            <div className="w-full h-1" style={{backgroundColor: getUserColor(b.userId)}}></div>
+
+                                            {/* Tooltip */}
+                                            <div className={`
+                                                hidden group-hover:flex absolute 
+                                                ${b.startPct > 50 ? 'right-0' : 'left-0'} 
+                                                bottom-full mb-1 bg-slate-800 text-white text-[10px] p-2 rounded-lg whitespace-nowrap shadow-xl flex-col gap-1 z-50 border border-slate-700
+                                                animate-fade-in
+                                            `}>
+                                                <div className="flex items-center gap-1.5 border-b border-slate-600 pb-1 mb-0.5">
+                                                    <div className="w-2 h-2 rounded-full" style={{backgroundColor: getUserColor(b.userId)}}></div>
+                                                    <span className="font-bold">{getUserName(b.userId)}</span>
+                                                </div>
+                                                <span className="text-slate-300 font-mono"><i className="far fa-clock"></i> {b.uiStart.time} - {b.uiEnd.time}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Blok Jadwal Preview (Yang sedang diketik) */}
+                                    {previewBlock && (
+                                        <div 
+                                            className="absolute h-full top-0 border-x-2 border-indigo-600 border-dashed z-20 pointer-events-none transition-all duration-300 flex items-center justify-center overflow-hidden"
+                                            style={{ 
+                                                left: `${previewBlock.startPct}%`, 
+                                                width: `${previewBlock.widthPct}%`,
+                                                backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                                            }}
+                                        >
+                                            <div className="bg-indigo-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-80">NEW</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
                         <form onSubmit={saveSchedule} className="space-y-3">
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.start} ({TZ_CONFIG[timezone].label})</p>
