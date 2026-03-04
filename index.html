@@ -1032,7 +1032,7 @@
                         {scheduleForm.startDate && scheduleForm.startTime && (
                             <div className={`rounded-xl p-4 mb-5 border transition-all duration-300 ${isCritical && remainingMinutes < MAX_MINUTES ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
                                 <div className="flex justify-between items-end mb-2">
-                                    <div><p className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-600' : 'text-blue-600'}`}><i className="fas fa-users mr-1"></i> {t.schedule.teamQuota} {sysSettings?.dailyQuotaHours || 10} {t.common.unitHour})</p><p className="text-xs text-slate-600 mt-1">{t.schedule.used}: <span className="font-bold text-slate-800">{(dailyUsedMinutes/60).toFixed(1)}</span> h</p></div>
+                                    <div><p className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-600' : 'text-blue-600'}`}><i className="fas fa-users mr-1"></i> {t.schedule.teamQuota} </p><p className="text-xs text-slate-600 mt-1">{t.schedule.used}: <span className="font-bold text-slate-800">{(dailyUsedMinutes/60).toFixed(1)}</span> h</p></div>
                                     <div className="text-right"><span className={`text-2xl font-bold ${isCritical ? 'text-red-600' : 'text-blue-600'}`}>{(remainingMinutes/60).toFixed(1)}</span><span className="text-[10px] text-slate-500 ml-1 font-medium uppercase">{t.schedule.remaining}</span></div>
                                 </div>
                                 <div className="w-full bg-white/50 rounded-full h-2.5 overflow-hidden border border-slate-100"><div className={`h-2.5 rounded-full transition-all duration-700 ease-out ${isCritical ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: `${usedPercentage}%` }}></div></div>
@@ -2119,3 +2119,4 @@
     </script>
 </body>
 </html>
+
