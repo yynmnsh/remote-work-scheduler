@@ -484,15 +484,17 @@
             const grandTotalPaid = myPaidSheets.reduce((acc, t) => acc + (parseInt(t.duration || 0)/60) * RATES[lang], 0);
             const grandTotalMins = myPaidSheets.reduce((acc, t) => acc + parseInt(t.duration || 0), 0);
 
+            // LOGIKA PEMBAYARAN: Mengelompokkan berdasarkan Tanggal Pembayaran (paidAt) 
+            // Namun rincian di dalamnya menggunakan rentang OpDay (Tanggal Laporan aktual)
             const paidGroups = {};
             myPaidSheets.forEach(t => {
-                // Gunakan Operating Day untuk konsistensi pengelompokan harian
-                const opDay = getOpDay(t.date, t.startTime, timezone) || t.date;
-                const dateKey = opDay; 
-                
+                const dateKey = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown';
                 if(!paidGroups[dateKey]) paidGroups[dateKey] = { totalMinutes: 0, dates: [] };
                 paidGroups[dateKey].totalMinutes += parseInt(t.duration || 0);
-                paidGroups[dateKey].dates.push(t.date);
+                
+                // Gunakan Operating Day sesuai timezone untuk melabeli rentang laporan
+                const opDay = getOpDay(t.date, t.startTime, timezone) || t.date;
+                paidGroups[dateKey].dates.push(opDay);
             });
             const sortedPaidHistory = Object.keys(paidGroups).sort((a,b) => new Date(b) - new Date(a));
 
@@ -687,11 +689,18 @@
                                             {sortedPaidHistory.map((dateKey, index) => {
                                                 const group = paidGroups[dateKey];
                                                 const totalAmount = (group.totalMinutes/60) * RATES[lang];
-                                                group.dates.sort();
-                                                const startDate = formatFullDate(group.dates[0], lang);
-                                                const endDate = formatFullDate(group.dates[group.dates.length - 1], lang);
-                                                const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
-                                                const workDateStr = formatFullDate(dateKey, lang);
+                                                
+                                                // Hilangkan duplikat tanggal dan urutkan
+                                                const uniqueDates = [...new Set(group.dates)].sort();
+                                                const startDate = formatFullDate(uniqueDates[0], lang);
+                                                const endDate = formatFullDate(uniqueDates[uniqueDates.length - 1], lang);
+                                                
+                                                // Teks Judul: Rentang Laporan (misal: 21 Feb - 22 Feb)
+                                                const reportDateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
+                                                
+                                                // Teks Subjudul: Tanggal Pelunasan (misal: Paid on: 23 Feb)
+                                                const paidDateFormatted = formatFullDate(dateKey, lang);
+
                                                 return (
                                                     <div key={dateKey} className="group flex justify-between items-center p-3 bg-slate-50 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
                                                         <div className="flex items-center gap-3">
@@ -699,8 +708,9 @@
                                                                 <i className="fas fa-check text-xs"></i>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">{workDateStr}</p>
-                                                                <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.reportTime}: {dateRange}</p>
+                                                                {/* TAMPILAN DIREVISI: Rentang Laporan jadi Judul */}
+                                                                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">{reportDateRange}</p>
+                                                                <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.paidOn}: {paidDateFormatted}</p>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
@@ -1022,7 +1032,7 @@
                         {scheduleForm.startDate && scheduleForm.startTime && (
                             <div className={`rounded-xl p-4 mb-5 border transition-all duration-300 ${isCritical && remainingMinutes < MAX_MINUTES ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
                                 <div className="flex justify-between items-end mb-2">
-                                    <div><p className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-600' : 'text-blue-600'}`}><i className="fas fa-users mr-1"></i> {t.schedule.teamQuota} (Maks {sysSettings?.dailyQuotaHours || 10} {t.common.unitHour})</p><p className="text-xs text-slate-600 mt-1">{t.schedule.used}: <span className="font-bold text-slate-800">{(dailyUsedMinutes/60).toFixed(1)}</span> h</p></div>
+                                    <div><p className={`text-[10px] font-bold uppercase tracking-wider ${isCritical ? 'text-red-600' : 'text-blue-600'}`}><i className="fas fa-users mr-1"></i> {t.schedule.teamQuota} {sysSettings?.dailyQuotaHours || 10} {t.common.unitHour})</p><p className="text-xs text-slate-600 mt-1">{t.schedule.used}: <span className="font-bold text-slate-800">{(dailyUsedMinutes/60).toFixed(1)}</span> h</p></div>
                                     <div className="text-right"><span className={`text-2xl font-bold ${isCritical ? 'text-red-600' : 'text-blue-600'}`}>{(remainingMinutes/60).toFixed(1)}</span><span className="text-[10px] text-slate-500 ml-1 font-medium uppercase">{t.schedule.remaining}</span></div>
                                 </div>
                                 <div className="w-full bg-white/50 rounded-full h-2.5 overflow-hidden border border-slate-100"><div className={`h-2.5 rounded-full transition-all duration-700 ease-out ${isCritical ? 'bg-red-500' : 'bg-blue-600'}`} style={{ width: `${usedPercentage}%` }}></div></div>
