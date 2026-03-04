@@ -109,7 +109,7 @@
                 nav: { home: 'Beranda', schedule: 'Jadwal', timesheet: 'Laporan', analytics: 'Analitik', admin: 'Admin' },
                 common: { 
                     loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'jam',
-                    reminder: 'Periksa zona waktu & bahasa. Isi data dengan teliti.' 
+                    reminder: 'Periksa zona waktu & bahasa. Isi data dengan teliti.', saved: 'Tersimpan!', error: 'Terjadi Kesalahan', unknown: 'Tidak diketahui'
                 },
                 dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal dalam waktu dekat.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada yang bekerja saat ini.' },
                 schedule: { 
@@ -117,7 +117,7 @@
                     confirmBooking: 'Apakah data jadwal (Zona Waktu & Jam) sudah benar?',
                     pastError: 'Tidak bisa membuat jadwal di masa lalu!',
                     deleteLinkedError: 'Tidak bisa menghapus Jadwal karena sudah ada Laporan terkait. Hapus laporan terlebih dahulu!',
-                    visualTitle: 'Peta Jadwal Harian'
+                    visualTitle: 'Peta Jadwal Harian', dailyLimit: 'Batas Harian'
                 },
                 timesheet: { 
                     title: 'Input Laporan Kerja', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Lihat Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun',
@@ -127,11 +127,12 @@
                 analytics: { 
                     myStats: 'Kinerja (7 Hari Terakhir)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim (7 Hari Terakhir)', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam (Semua Waktu)', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran (Lunas)', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)',
                     statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan',
-                    changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat pembayaran tersedia.'
+                    changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat pembayaran tersedia.', reportTime: 'Waktu Lapor'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User (Lunas)', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif',
                          passHeader: 'Password Akses', passPlaceholder: 'Belum ada password', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User (Semua Waktu)', noPendingBills: 'Tidak ada tagihan tertunda.', adminView: 'Tampilan Admin', updatePassHint: 'Ubah password user langsung di sini.',
-                         settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian Tim (Jam)', quotaHelper: 'Batas ini berlaku untuk total durasi booking harian seluruh anggota tim (Maks. 24 Jam).', quotaError: 'Batas kuota harus berupa angka antara 0 hingga 24 jam!'
+                         settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian Tim (Jam)', quotaHelper: 'Batas ini berlaku untuk total durasi booking harian seluruh anggota tim (Maks. 24 Jam).', quotaError: 'Batas kuota harus berupa angka antara 0 hingga 24 jam!',
+                         sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus'
                 },
                 profile: { title: 'Pengaturan Akun', bankTitle: 'Info Rekening', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' },
                 auth: {
@@ -139,14 +140,14 @@
                     createBtn: 'Buat & Masuk', loginBtn: 'Masuk', 
                     successCreate: 'Password dibuat! Anda bisa mengubahnya nanti di menu Pengaturan (ikon gerigi) di Beranda.',
                     successChange: 'Password berhasil diubah!', errorPass: 'Password salah!', errorSame: 'Password baru tidak boleh sama dengan yang lama!',
-                    changeTitle: 'Ubah Password', changeBtn: 'Simpan Password Baru', confirmChange: 'Yakin ingin mengubah password?'
+                    changeTitle: 'Ubah Password', changeBtn: 'Simpan Password Baru', confirmChange: 'Yakin ingin mengubah password?', errorSavePass: 'Gagal menyimpan password', errorUpdatePass: 'Gagal mengupdate password'
                 }
             },
             en: {
                 nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
                 common: { 
                     loading: 'Loading...', save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h',
-                    reminder: 'Check timezone & language. Enter records carefully.' 
+                    reminder: 'Check timezone & language. Enter records carefully.', saved: 'Saved!', error: 'Error occurred', unknown: 'Unknown'
                 },
                 dashboard: { hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.' },
                 schedule: { 
@@ -154,7 +155,7 @@
                     confirmBooking: 'Is the schedule data (Timezone & Time) correct?',
                     pastError: 'Cannot book schedules in the past!',
                     deleteLinkedError: 'Cannot delete schedule with linked timesheet. Delete the timesheet first!',
-                    visualTitle: 'Daily Schedule Map'
+                    visualTitle: 'Daily Schedule Map', dailyLimit: 'Daily Limit'
                 },
                 timesheet: { 
                     title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account',
@@ -164,11 +165,12 @@
                 analytics: { 
                     myStats: 'Performance (Last 7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity (Last 7 Days)', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours (All-Time)', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History (Paid)', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)',
                     statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings',
-                    changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history available.'
+                    changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history available.', reportTime: 'Report Time'
                 },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income (Paid)', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive',
                          passHeader: 'Access Password', passPlaceholder: 'No password set', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Directly update user password here.',
-                         settings: 'System Settings', dailyQuota: 'Daily Team Quota Limit (Hours)', quotaHelper: 'This limit applies to the total daily booking duration for the entire team (Max 24 Hours).', quotaError: 'Quota limit must be a number between 0 and 24 hours!'
+                         settings: 'System Settings', dailyQuota: 'Daily Team Quota Limit (Hours)', quotaHelper: 'This limit applies to the total daily booking duration for the entire team (Max 24 Hours).', quotaError: 'Quota limit must be a number between 0 and 24 hours!',
+                         sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted'
                 },
                 profile: { title: 'Account Settings', bankTitle: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' },
                 auth: {
@@ -176,7 +178,7 @@
                     createBtn: 'Create & Login', loginBtn: 'Login', 
                     successCreate: 'Password created! You can change it later in Settings (cog icon) on Dashboard.',
                     successChange: 'Password updated successfully!', errorPass: 'Wrong password!', errorSame: 'New password cannot be the same as old one!',
-                    changeTitle: 'Change Password', changeBtn: 'Save New Password', confirmChange: 'Are you sure you want to change password?'
+                    changeTitle: 'Change Password', changeBtn: 'Save New Password', confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', errorUpdatePass: 'Error updating password'
                 }
             }
         };
@@ -184,13 +186,27 @@
         // --- HELPERS ---
         const formatDate = (dateString, lang = 'id') => {
             if (!dateString) return '';
+            let dateObj;
+            if (dateString.includes('T')) {
+                dateObj = new Date(dateString);
+            } else {
+                const [y, m, d] = dateString.split('-').map(Number);
+                dateObj = new Date(y, m - 1, d); // Aman dari timezone shifting OS
+            }
             const options = { weekday: 'short', day: 'numeric', month: 'short' };
-            return new Date(dateString).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', options);
+            return dateObj.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', options);
         };
         
         const formatFullDate = (dateString, lang = 'id') => {
             if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+            let dateObj;
+            if (dateString.includes('T')) {
+                dateObj = new Date(dateString);
+            } else {
+                const [y, m, d] = dateString.split('-').map(Number);
+                dateObj = new Date(y, m - 1, d); // Aman dari timezone shifting OS
+            }
+            return dateObj.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
         };
 
         const formatTimeInZone = (dateObj, timeZone) => {
@@ -368,22 +384,37 @@
         };
 
         const UserModal = ({ user, onClose, onSave, loading, t }) => {
-            const [form, setForm] = React.useState(user || { name: '', color: '#3b82f6', hidden: false, password: '' });
+            const [form, setForm] = React.useState(user || { name: '', color: '#3b82f6', hidden: false, password: '', bankName: '', accountNumber: '' });
             return (
                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">{user ? 'Edit User' : t.admin.addUser}</h3>
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">{user ? t.admin.editUser || 'Edit User' : t.admin.addUser}</h3>
                         <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="space-y-4">
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.name}</label><input type="text" required className="w-full p-2 border rounded-lg" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.name}</label><input type="text" required className="w-full p-2 border rounded-lg outline-none focus:border-blue-500" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                             
-                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            {/* Tambahan Info Pembayaran Bank/E-Wallet */}
+                            <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                                <h4 className="text-[10px] font-bold text-blue-600 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-wallet"></i> {t.profile.bankTitle}</h4>
+                                <div className="space-y-2">
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">{t.profile.bankLabel}</label>
+                                        <input type="text" className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" value={form.bankName || ''} onChange={e => setForm({...form, bankName: e.target.value})} placeholder="-" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">{t.profile.accLabel}</label>
+                                        <input type="text" className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" value={form.accountNumber || ''} onChange={e => setForm({...form, accountNumber: e.target.value})} placeholder="-" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between">
                                     {t.admin.passHeader}
                                     <span className="text-[10px] text-blue-500 font-normal"><i className="fas fa-eye"></i> {t.admin.adminView}</span>
                                 </label>
                                 <input 
                                     type="text" 
-                                    className="w-full p-2 border border-slate-300 rounded-md font-mono text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" 
+                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" 
                                     value={form.password || ''} 
                                     onChange={e => setForm({...form, password: e.target.value})} 
                                     placeholder={t.admin.passPlaceholder} 
@@ -391,9 +422,9 @@
                                 <p className="text-[10px] text-slate-400 mt-1 italic">{t.admin.updatePassHint}</p>
                             </div>
 
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.color}</label><input type="color" className="w-full h-10 p-1 border rounded-lg" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
+                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.color}</label><input type="color" className="w-full h-10 p-1 border rounded-lg cursor-pointer" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
                             <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100"><input type="checkbox" id="hideUser" checked={form.hidden || false} onChange={e => setForm({...form, hidden: e.target.checked})} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-50 cursor-pointer" /><label htmlFor="hideUser" className="text-sm text-slate-700 font-medium cursor-pointer flex-1">{t.admin.hideUser} <span className={form.hidden ? "text-red-500 text-xs ml-1" : "text-green-500 text-xs ml-1"}>({form.hidden ? t.admin.inactive : t.admin.active})</span></label></div>
-                            <div className="flex gap-2 mt-6"><button type="button" onClick={onClose} className="flex-1 py-2 text-slate-500 font-medium text-sm hover:bg-slate-100 rounded-lg">{t.common.cancel}</button><button type="submit" disabled={loading} className="flex-1 py-2 bg-purple-600 text-white font-medium text-sm rounded-lg hover:bg-purple-700">{loading ? <Spinner/> : t.common.save}</button></div>
+                            <div className="flex gap-2 mt-6"><button type="button" onClick={onClose} className="flex-1 py-2.5 text-slate-500 font-bold text-sm hover:bg-slate-100 rounded-xl transition-colors">{t.common.cancel}</button><button type="submit" disabled={loading} className="flex-1 py-2.5 bg-purple-600 text-white font-bold text-sm rounded-xl hover:bg-purple-700 shadow-md transition-colors active:scale-95">{loading ? <Spinner/> : t.common.save}</button></div>
                         </form>
                     </div>
                 </div>
@@ -416,7 +447,7 @@
 
             const userStats = {};
             timesheets.forEach(t => { if(!userStats[t.userId]) userStats[t.userId] = { minutes: 0 }; userStats[t.userId].minutes += parseInt(t.duration || 0); });
-            const leaderboard = Object.keys(userStats).map(uid => ({ uid, ...userStats[uid], name: users.find(u => String(u.id) === String(uid))?.name || 'Unknown', color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1' })).sort((a,b) => b.minutes - a.minutes).slice(0, 5); 
+            const leaderboard = Object.keys(userStats).map(uid => ({ uid, ...userStats[uid], name: users.find(u => String(u.id) === String(uid))?.name || t.common.unknown, color: users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1' })).sort((a,b) => b.minutes - a.minutes).slice(0, 5); 
 
             // Personal Data Logic - Dynamic based on Timezone
             const getLast7Days = () => {
@@ -455,7 +486,10 @@
 
             const paidGroups = {};
             myPaidSheets.forEach(t => {
-                const dateKey = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown';
+                // Gunakan Operating Day untuk konsistensi pengelompokan harian
+                const opDay = getOpDay(t.date, t.startTime, timezone) || t.date;
+                const dateKey = opDay; 
+                
                 if(!paidGroups[dateKey]) paidGroups[dateKey] = { totalMinutes: 0, dates: [] };
                 paidGroups[dateKey].totalMinutes += parseInt(t.duration || 0);
                 paidGroups[dateKey].dates.push(t.date);
@@ -657,7 +691,7 @@
                                                 const startDate = formatFullDate(group.dates[0], lang);
                                                 const endDate = formatFullDate(group.dates[group.dates.length - 1], lang);
                                                 const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
-                                                const paidDate = formatFullDate(dateKey, lang);
+                                                const workDateStr = formatFullDate(dateKey, lang);
                                                 return (
                                                     <div key={dateKey} className="group flex justify-between items-center p-3 bg-slate-50 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
                                                         <div className="flex items-center gap-3">
@@ -665,8 +699,8 @@
                                                                 <i className="fas fa-check text-xs"></i>
                                                             </div>
                                                             <div>
-                                                                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">{dateRange}</p>
-                                                                <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.paidOn}: {paidDate}</p>
+                                                                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">{workDateStr}</p>
+                                                                <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.reportTime}: {dateRange}</p>
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
@@ -782,7 +816,7 @@
                 return currentEpoch >= sStartEpoch && currentEpoch <= sEndEpoch;
             }).map(s => {
                 const u = users.find(u => String(u.id) === String(s.userId));
-                return { name: u?.name || 'Unknown', endTime: s.endTime, endDate: s.endDate || s.date, color: u?.color, hidden: u?.hidden };
+                return { name: u?.name || t.common.unknown, endTime: s.endTime, endDate: s.endDate || s.date, color: u?.color, hidden: u?.hidden };
             }).filter(u => !u.hidden);
 
             return (
@@ -968,8 +1002,22 @@
                 <div className="space-y-4 animate-slide-up">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editScheduleId ? 'border-orange-500' : 'border-blue-500'}`}>
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-slate-700">{editScheduleId ? t.schedule.edit : t.schedule.booking}</h3>
-                            {editScheduleId && <button onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'15:00', endDate: '', endTime:'16:00'})}} className="text-xs text-red-500">{t.common.cancel}</button>}
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                {editScheduleId ? t.schedule.edit : t.schedule.booking}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                {!editScheduleId && (
+                                    <div className="text-[10px] bg-slate-50 text-slate-500 border border-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-bold tracking-wide shadow-sm uppercase">
+                                        <i className="fas fa-bolt text-amber-500 text-xs"></i> 
+                                        <span>{t.schedule.dailyLimit}: <span className="text-slate-800">{sysSettings?.dailyQuotaHours || 10} {t.common.unitShort}</span></span>
+                                    </div>
+                                )}
+                                {editScheduleId && (
+                                    <button onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'15:00', endDate: '', endTime:'16:00'})}} className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition shadow-sm">
+                                        <i className="fas fa-times mr-1"></i>{t.common.cancel}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         {scheduleForm.startDate && scheduleForm.startTime && (
                             <div className={`rounded-xl p-4 mb-5 border transition-all duration-300 ${isCritical && remainingMinutes < MAX_MINUTES ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
@@ -1059,14 +1107,18 @@
 
                         <form onSubmit={saveSchedule} className="space-y-3">
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.start} ({TZ_CONFIG[timezone].label})</p>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5">
+                                    <i className="fas fa-play-circle text-blue-500 text-sm"></i> {t.common.start} <span className="font-medium text-slate-400 normal-case ml-1">({TZ_CONFIG[timezone].label})</span>
+                                </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><input type="date" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.startDate} onChange={e => {if(!scheduleForm.endDate) setScheduleForm({...scheduleForm, startDate: e.target.value, endDate: e.target.value});else setScheduleForm({...scheduleForm, startDate: e.target.value});}} /></div>
                                     <div><input type="time" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} /></div>
                                 </div>
                             </div>
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{t.common.end} ({TZ_CONFIG[timezone].label})</p>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5">
+                                    <i className="fas fa-stop-circle text-red-500 text-sm"></i> {t.common.end} <span className="font-medium text-slate-400 normal-case ml-1">({TZ_CONFIG[timezone].label})</span>
+                                </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div><input type="date" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.endDate} onChange={e => setScheduleForm({...scheduleForm, endDate: e.target.value})} /></div>
                                     <div><input type="time" required className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} /></div>
@@ -1145,6 +1197,8 @@
             };
             const currentDur = calculateDurationMins();
 
+            const [filterMine, setFilterMine] = React.useState(false);
+
             return (
                 <div className="space-y-4 fade-in">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
@@ -1172,24 +1226,52 @@
                                         {schedules.filter(s => {
                                             if (String(s.userId) !== String(currentUser)) return false;
                                             
-                                            // 1. Cek dari relasi ID jadwal langsung (Untuk data/fitur baru)
+                                            const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                                            let sEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                                            if (!s.endDate && sEndEpoch <= sStartEpoch) sEndEpoch += 86400000;
+                                            
+                                            // 1. Cek relasi ID langsung
                                             let usedTs = timesheets.find(ts => String(ts.userId) === String(currentUser) && ts.scheduleId && String(ts.scheduleId) === String(s.id));
                                             
-                                            // 2. Fallback untuk data lama (Cari yang waktunya berdekatan/bentrok)
+                                            // 2. Jika tidak ada relasi langsung, cek fallback (data lama)
                                             if (!usedTs) {
-                                                const sStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                                                // Jika di hari ini sudah ada laporan lunas, anggap semua jadwal legacy di hari ini "Selesai"
+                                                const sOpDay = getOpDay(s.startDate || s.date, s.startTime, timezone);
+                                                const isDayPaid = timesheets.some(ts => 
+                                                    String(ts.userId) === String(currentUser) && 
+                                                    ts.status === 'paid' && 
+                                                    getOpDay(ts.date, ts.startTime, timezone) === sOpDay
+                                                );
+                                                if (isDayPaid) return false; // Sembunyikan
+
                                                 usedTs = timesheets.find(ts => {
                                                     if (String(ts.userId) !== String(currentUser)) return false;
+                                                    if (ts.scheduleId && String(ts.scheduleId) !== String(s.id)) return false; // Sudah terikat ke jadwal lain
+
                                                     const tsStartEpoch = getEpochFromWIB(ts.date, ts.startTime);
-                                                    // Jika selisih waktu mulai kurang dari 2 jam, anggap ini jadwal yang sudah dilaporkan
-                                                    return Math.abs(tsStartEpoch - sStartEpoch) < 7200000; 
+                                                    let tsEndEpoch = tsStartEpoch;
+                                                    if (ts.endTime) {
+                                                        tsEndEpoch = getEpochFromWIB(ts.endDate || ts.date, ts.endTime);
+                                                        if (tsEndEpoch <= tsStartEpoch) tsEndEpoch += 86400000;
+                                                    } else if (ts.duration) {
+                                                        tsEndEpoch = tsStartEpoch + (ts.duration * 60000);
+                                                    }
+
+                                                    // Anggap "terpakai" jika ada irisan waktu atau selisih <= 3 jam (toleransi legacy)
+                                                    const isOverlap = (tsStartEpoch <= sEndEpoch && tsEndEpoch >= sStartEpoch);
+                                                    const isClose = Math.abs(tsStartEpoch - sStartEpoch) <= 10800000; 
+                                                    
+                                                    return isOverlap || isClose;
                                                 });
                                             }
                                             
-                                            // Jika sudah ada laporan, hanya tampilkan jika laporan tersebut sedang diedit saat ini
                                             if (usedTs) {
                                                 return editTimesheetId === usedTs.id;
                                             }
+
+                                            // 3. Bersihkan jadwal purba (> 30 hari) agar dropdown tidak penuh
+                                            if (sEndEpoch < Date.now() - (30 * 86400000)) return false;
+
                                             return true;
                                         }).sort((a,b) => getEpochFromWIB(b.startDate || b.date, b.startTime) - getEpochFromWIB(a.startDate || a.date, a.startTime)).slice(0, 15).map(s => {
                                             const sTime = getDisplayTime(s.startTime, s.startDate || s.date, timezone);
@@ -1225,8 +1307,17 @@
                         </form>
                     </div>
                     <div className="pb-20">
-                        <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3><button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button></div>
-                        {filteredTimesheets.map(item => {
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3>
+                            <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button>
+                        </div>
+                        
+                        <div className="flex gap-2 mb-4 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
+                            <button onClick={() => setFilterMine(false)} className={`flex-1 text-[10px] py-1.5 rounded transition font-medium ${!filterMine ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>{t.schedule.allUsers}</button>
+                            <button onClick={() => setFilterMine(true)} className={`flex-1 text-[10px] py-1.5 rounded transition font-medium ${filterMine ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>{t.schedule.onlyMe}</button>
+                        </div>
+
+                        {filteredTimesheets.filter(item => filterMine ? String(item.userId) === String(currentUser) : true).map(item => {
                             const displayObj = getDisplayTime(item.startTime, item.date, timezone);
                             const displayDate = formatDate(displayObj.date, lang);
                             return (
@@ -1236,12 +1327,17 @@
                                 </div>
                             );
                         })}
+                        {filteredTimesheets.filter(item => filterMine ? String(item.userId) === String(currentUser) : true).length === 0 && (
+                            <div className="text-center p-6 bg-slate-50 rounded-xl border border-slate-100 border-dashed">
+                                <p className="text-xs font-medium text-slate-400">{t.timesheet.noData}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
         };
 
-        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, onAddUser, onEditUser, onDeleteUser, onConfirmAction, sysSettings, updateSettings }) => {
+        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, getUserColor, timezone, sysSettings, updateSettings, onAddUser, onEditUser, onDeleteUser, onConfirmAction }) => {
              const [viewMode, setViewMode] = React.useState('pending');
              const [quotaInput, setQuotaInput] = React.useState(sysSettings?.dailyQuotaHours || 10);
              
@@ -1262,20 +1358,39 @@
             const userTotalPaid = {}; 
             const userTotalMins = {}; 
             const userWeeklyPaid = {}; 
-            const userWeeklyMins = {}; 
+            const userWeeklyMins = {};
+            const weeklyDateRanges = {}; 
 
             paidSheets.forEach(t => { 
                 const amount = getAmount(t);
                 const duration = parseInt(t.duration || 0);
-                const d = t.paidAt ? t.paidAt.split('T')[0] : 'Unknown'; 
+                
+                // Gunakan zona waktu yang dipilih untuk mengelompokkan data (OpDay)
+                const opDay = getOpDay(t.date, t.startTime, timezone) || t.date;
+                const d = opDay; 
+                
                 if(!paidHistory[d]) paidHistory[d] = []; 
                 paidHistory[d].push(t);
                 
-                const paidDateObj = new Date(d);
-                const firstDayOfYear = new Date(paidDateObj.getFullYear(), 0, 1);
+                const [y, m, day] = d.split('-').map(Number);
+                const paidDateObj = new Date(y, m - 1, day);
+                const firstDayOfYear = new Date(y, 0, 1);
                 const pastDaysOfYear = (paidDateObj - firstDayOfYear) / 86400000;
                 const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-                const weekKey = `${paidDateObj.getFullYear()}-W${weekNum}`;
+                const weekKey = `${y}-W${String(weekNum).padStart(2, '0')}`;
+
+                // Calculate week range dates safely
+                if (!weeklyDateRanges[weekKey]) {
+                    const wStart = new Date(y, 0, 1 + (weekNum - 1) * 7 - firstDayOfYear.getDay());
+                    const wEnd = new Date(wStart);
+                    wEnd.setDate(wStart.getDate() + 6);
+                    
+                    const formatRangeDate = (dObj) => {
+                        const mStr = dObj.toLocaleString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' });
+                        return `${dObj.getDate()} ${mStr}`;
+                    };
+                    weeklyDateRanges[weekKey] = `${formatRangeDate(wStart)} - ${formatRangeDate(wEnd)}`;
+                }
                 
                 if (!weeklyStats[weekKey]) {
                     weeklyStats[weekKey] = 0;
@@ -1306,7 +1421,7 @@
             const sortedHistory = Object.keys(paidHistory).sort((a,b) => new Date(b) - new Date(a));
             const sortedWeeks = Object.keys(weeklyStats).sort().reverse(); 
 
-            const handleMarkPaid = async (sheetIds) => { onConfirmAction(t.timesheet.confirmPaid, async () => { setLoading(true); try { const batch = window.fs.writeBatch(window.db); sheetIds.forEach(id => { const docRef = window.fs.doc(window.db, "timesheets", id); batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() }); }); await batch.commit(); showNotify("Marked as Paid!"); } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); } }); };
+            const handleMarkPaid = async (sheetIds) => { onConfirmAction(t.timesheet.confirmPaid, async () => { setLoading(true); try { const batch = window.fs.writeBatch(window.db); sheetIds.forEach(id => { const docRef = window.fs.doc(window.db, "timesheets", id); batch.update(docRef, { status: 'paid', paidAt: new Date().toISOString() }); }); await batch.commit(); showNotify(t.admin.markedPaid); } catch(e) { showNotify(t.common.error, "error"); } finally { setLoading(false); } }); };
             
             return (
                 <div className="space-y-4 fade-in pb-20">
@@ -1358,6 +1473,7 @@
 
                     {viewMode === 'history' && ( 
                         <div className="space-y-4">
+                            {/* Header Gradient Akumulasi Total */}
                             <div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
                                 <h2 className="text-xl font-bold mb-1">{t.admin.totalPaidTitle}</h2>
                                 <div className="flex items-end gap-2">
@@ -1366,17 +1482,30 @@
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                                <h3 className="font-bold text-slate-700 text-sm mb-3">{t.admin.totalPerUserAllTime}</h3>
+                            {/* Partisi: Akumulasi Semua Waktu */}
+                            <div className="flex items-center gap-3 mb-4 mt-8">
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-trophy mr-1 text-yellow-500"></i> {t.admin.sectionAllTime}</span>
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                            </div>
+
+                            {/* Daftar Total per User */}
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                                 <div className="space-y-2">
-                                    {Object.keys(userTotalPaid).map(uid => {
+                                    {Object.keys(userTotalPaid).sort((a,b) => userTotalPaid[b] - userTotalPaid[a]).map(uid => {
                                         const u = users.find(user => String(user.id) === String(uid));
+                                        const uColor = getUserColor(uid) || '#cbd5e1';
                                         return (
-                                            <div key={uid} className="flex justify-between items-center text-sm pb-2 border-b border-slate-50 last:border-0 last:pb-0">
-                                                <span className="font-medium text-slate-700">{u?.name || 'Unknown'}</span>
+                                            <div key={uid} className="group flex justify-between items-center p-2 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm group-hover:scale-110 transition-transform" style={{backgroundColor: uColor}}>
+                                                        {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
+                                                    </div>
+                                                    <span className="font-bold text-slate-700 text-sm group-hover:text-slate-900 transition-colors">{u?.name || t.common.unknown}</span>
+                                                </div>
                                                 <div className="text-right">
-                                                    <span className="block font-bold text-green-600">{formatCurrency(userTotalPaid[uid], lang)}</span>
-                                                    <span className="text-[10px] text-slate-400">{(userTotalMins[uid]/60).toFixed(1)} {t.common.unitHour}</span>
+                                                    <span className="block font-bold text-green-600 group-hover:scale-105 transition-transform origin-right">{formatCurrency(userTotalPaid[uid], lang)}</span>
+                                                    <span className="text-[10px] text-slate-400 bg-white border border-slate-100 px-1.5 py-0.5 rounded mt-1 inline-block shadow-sm">{(userTotalMins[uid]/60).toFixed(1)} {t.common.unitHour}</span>
                                                 </div>
                                             </div>
                                         );
@@ -1384,25 +1513,42 @@
                                 </div>
                             </div>
 
-                            <div className="space-y-3">
-                                {sortedWeeks.slice(0, 4).map(week => (
-                                    <div key={week} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                        <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-3">
-                                            <p className="text-xs uppercase text-slate-500 font-bold">{week}</p>
-                                            <div className="text-right">
-                                                <p className="text-sm font-bold text-slate-800">{formatCurrency(weeklyStats[week], lang)}</p>
-                                                <p className="text-[10px] text-slate-400">{(weeklyMins[week]/60).toFixed(1)} {t.common.unitHour}</p>
+                            {/* Partisi: Rekap Mingguan */}
+                            <div className="flex items-center gap-3 mt-10 mb-4">
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-calendar-week mr-1 text-blue-500"></i> {t.admin.sectionWeekly}</span>
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                            </div>
+
+                            {/* Daftar Rekap Mingguan */}
+                            <div className="space-y-4">
+                                {sortedWeeks.slice(0, 4).map((week, idx) => (
+                                    <div key={week} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow animate-slide-up" style={{animationDelay: `${idx * 0.1}s`}}>
+                                        <div className="bg-slate-50 flex justify-between items-center p-3 border-b border-slate-100">
+                                            <div>
+                                                <p className="text-xs uppercase text-slate-700 font-bold">{week}</p>
+                                                <p className="text-[9px] text-slate-500 mt-0.5 flex items-center gap-1"><i className="far fa-calendar-alt"></i> {weeklyDateRanges[week]}</p>
+                                            </div>
+                                            <div className="text-right bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm">
+                                                <p className="text-sm font-black text-slate-800">{formatCurrency(weeklyStats[week], lang)}</p>
+                                                <p className="text-[9px] text-slate-400 font-medium">{(weeklyMins[week]/60).toFixed(1)} {t.common.unitHour}</p>
                                             </div>
                                         </div>
-                                        <div className="space-y-2 pt-1">
-                                            {userWeeklyPaid[week] && Object.keys(userWeeklyPaid[week]).map(uid => {
+                                        <div className="p-3 space-y-2">
+                                            {userWeeklyPaid[week] && Object.keys(userWeeklyPaid[week]).sort((a,b) => userWeeklyPaid[week][b] - userWeeklyPaid[week][a]).map(uid => {
                                                 const u = users.find(user => String(user.id) === String(uid));
+                                                const uColor = getUserColor(uid) || '#cbd5e1';
                                                 return (
-                                                    <div key={uid} className="flex justify-between items-center text-xs text-slate-500">
-                                                        <span>- {u?.name}</span>
-                                                        <div className="text-right flex items-center gap-2">
-                                                            <span className="text-[9px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{(userWeeklyMins[week][uid]/60).toFixed(1)} {t.common.unitShort}</span>
-                                                            <span className="font-semibold text-slate-600 min-w-[70px]">{formatCurrency(userWeeklyPaid[week][uid], lang)}</span>
+                                                    <div key={uid} className="flex justify-between items-center text-xs group p-1.5 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold text-[8px] shadow-sm group-hover:scale-110 transition-transform" style={{backgroundColor: uColor}}>
+                                                                {u?.name ? u.name.substring(0,1).toUpperCase() : '?'}
+                                                            </div>
+                                                            <span className="font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">{u?.name || t.common.unknown}</span>
+                                                        </div>
+                                                        <div className="text-right flex items-center gap-3">
+                                                            <span className="text-[9px] font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-100 shadow-sm">{(userWeeklyMins[week][uid]/60).toFixed(1)} {t.common.unitShort}</span>
+                                                            <span className="font-bold text-slate-700 min-w-[70px] group-hover:text-green-600 transition-colors">{formatCurrency(userWeeklyPaid[week][uid], lang)}</span>
                                                         </div>
                                                     </div>
                                                 )
@@ -1412,22 +1558,64 @@
                                 ))}
                             </div>
 
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-6">
-                                {sortedHistory.map(d => (
-                                    <div key={d}>
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase border-b pb-1 mb-2">{d}</h4>
-                                        {paidHistory[d].map(item => { 
-                                            const u = users.find(u => String(u.id) === String(item.userId)); 
-                                            return (
-                                                <div key={item.id} className="flex justify-between items-center text-sm py-1.5">
-                                                    <span className="font-medium text-slate-700">{u?.name}</span>
-                                                    <div className="text-right">
-                                                        <span className="font-mono font-medium block">{formatCurrency(getAmount(item), lang)}</span>
-                                                        <span className="text-[9px] text-slate-400">{(item.duration/60).toFixed(1)}h</span>
-                                                    </div>
-                                                </div> 
-                                            )
-                                        })}
+                            {/* Partisi: Rincian Harian */}
+                            <div className="flex items-center gap-3 mt-10 mb-4">
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-calendar-day mr-1 text-emerald-500"></i> {t.admin.sectionDaily}</span>
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                            </div>
+
+                            {/* Daftar Rincian Harian */}
+                            <div className="space-y-6">
+                                {sortedHistory.map((d, index) => (
+                                    <div key={d} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+                                        <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                                            <div className="bg-green-100 text-green-600 p-1.5 rounded-lg">
+                                                <i className="fas fa-calendar-day"></i>
+                                            </div>
+                                            <h4 className="text-sm font-bold text-slate-700 tracking-wide">{formatFullDate(d, lang)}</h4>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {paidHistory[d].sort((a,b) => getAmount(b) - getAmount(a)).map((item, idx) => { 
+                                                const u = users.find(u => String(u.id) === String(item.userId)); 
+                                                const uColor = getUserColor(item.userId) || '#cbd5e1';
+                                                
+                                                // Konversi format waktu untuk tampilan baru
+                                                const uiStart = getDisplayTime(item.startTime, item.date, timezone);
+                                                let endTimeStr = '...';
+                                                if (item.endTime) {
+                                                    endTimeStr = getDisplayTime(item.endTime, item.endDate || item.date, timezone).time;
+                                                } else if (item.duration) {
+                                                    const startEpoch = getEpochFromWIB(item.date, item.startTime);
+                                                    const endEpoch = startEpoch + (item.duration * 60000);
+                                                    const dObj = new Date(endEpoch);
+                                                    const targetZone = TZ_CONFIG[timezone].iana;
+                                                    const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
+                                                    endTimeStr = formatterTime.format(dObj);
+                                                }
+
+                                                return (
+                                                    <div key={item.id} className="group relative flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all duration-200">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm transition-transform group-hover:scale-110" style={{backgroundColor: uColor}}>
+                                                                {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
+                                                            </div>
+                                                            <div>
+                                                                <span className="font-bold text-slate-700 text-sm block group-hover:text-slate-900 transition-colors">{u?.name || t.common.unknown}</span>
+                                                                <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                                                    <i className="far fa-clock text-slate-400"></i>
+                                                                    {uiStart.time} - {endTimeStr} <span className="bg-slate-200 px-1 rounded text-[8px] text-slate-600">{TZ_CONFIG[timezone].label}</span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="font-bold text-green-600 block text-sm group-hover:scale-105 transition-transform origin-right">{formatCurrency(getAmount(item), lang)}</span>
+                                                            <span className="text-[10px] text-slate-400 bg-white border border-slate-100 px-1.5 py-0.5 rounded mt-1 inline-block shadow-sm">{(item.duration/60).toFixed(1)}h</span>
+                                                        </div>
+                                                    </div> 
+                                                )
+                                            })}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -1514,23 +1702,23 @@
                 if (duration > 0) setTimeout(() => setNotify(null), duration); 
             };
             
-            const getUserName = (uid) => users.find(u => String(u.id) === String(uid))?.name || 'Unknown';
+            const getUserName = (uid) => users.find(u => String(u.id) === String(uid))?.name || t.common.unknown;
             const getUserColor = (uid) => users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1';
             const dynamicFormatCurrency = (val) => { const num = parseFloat(val) || 0; if (lang === 'id') return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num); return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(num); };
             const triggerConfirm = (message, action) => { setConfirmModal({ show: true, message, action }); };
             const executeConfirm = () => { if (confirmModal.action) confirmModal.action(); setConfirmModal({ ...confirmModal, show: false, action: null }); };
             
-            const saveUserProfile = async (data) => { if(!currentUser) return; setLoading(true); try { await window.fs.updateDoc(window.fs.doc(window.db, 'users', currentUser), data); showNotify(t.profile.saved); setShowProfileModal(false); } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); } };
-            const handleSaveUser = async (userData) => { setLoading(true); try { if (editingUser) { await window.fs.updateDoc(window.fs.doc(window.db, 'users', editingUser.id), userData); showNotify("User Updated"); } else { const newId = Date.now().toString(); await window.fs.setDoc(window.fs.doc(window.db, 'users', newId), { ...userData, id: newId }); showNotify("User Added"); } setShowUserModal(false); setEditingUser(null); } catch(e) { showNotify("Error", "error"); } finally { setLoading(false); } };
-            const handleDeleteUser = (uid) => { triggerConfirm("Delete user?", async () => { try { await window.fs.deleteDoc(window.fs.doc(window.db, 'users', uid)); showNotify("User Deleted"); } catch(e) { showNotify("Error", "error"); } }); };
+            const saveUserProfile = async (data) => { if(!currentUser) return; setLoading(true); try { await window.fs.updateDoc(window.fs.doc(window.db, 'users', currentUser), data); showNotify(t.profile.saved); setShowProfileModal(false); } catch(e) { showNotify(t.common.error, "error"); } finally { setLoading(false); } };
+            const handleSaveUser = async (userData) => { setLoading(true); try { if (editingUser) { await window.fs.updateDoc(window.fs.doc(window.db, 'users', editingUser.id), userData); showNotify(t.admin.userUpdated); } else { const newId = Date.now().toString(); await window.fs.setDoc(window.fs.doc(window.db, 'users', newId), { ...userData, id: newId }); showNotify(t.admin.userAdded); } setShowUserModal(false); setEditingUser(null); } catch(e) { showNotify(t.common.error, "error"); } finally { setLoading(false); } };
+            const handleDeleteUser = (uid) => { triggerConfirm(t.admin.deleteUserConfirm, async () => { try { await window.fs.deleteDoc(window.fs.doc(window.db, 'users', uid)); showNotify(t.admin.userDeleted); } catch(e) { showNotify(t.common.error, "error"); } }); };
             
             const updateSysSettings = async (newSettings) => {
                 setLoading(true);
                 try {
                     await window.fs.setDoc(window.fs.doc(window.db, 'settings', 'global'), newSettings, { merge: true });
-                    showNotify(t.common.save + " Success!");
+                    showNotify(t.common.saved);
                 } catch(e) {
-                    showNotify("Error", "error");
+                    showNotify(t.common.error, "error");
                 } finally {
                     setLoading(false);
                 }
@@ -1563,7 +1751,7 @@
                         setCurrentUser(userId);
                         setPasswordModal({ show: false, mode: 'login', userId: null });
                         showNotify(t.auth.successCreate, 'success', 15000); // 15 seconds duration
-                    } catch(e) { showNotify("Error saving password", "error"); } finally { setLoading(false); }
+                    } catch(e) { showNotify(t.auth.errorSavePass, "error"); } finally { setLoading(false); }
                 } else if (mode === 'login') {
                     if (user && user.password === password) {
                         setCurrentUser(userId);
@@ -1581,7 +1769,7 @@
                         try {
                             await window.fs.updateDoc(window.fs.doc(window.db, 'users', currentUser), { password: password });
                             showNotify(t.auth.successChange, 'success', 15000); // 15 seconds duration
-                        } catch(e) { showNotify("Error updating password", "error"); } finally { setLoading(false); }
+                        } catch(e) { showNotify(t.auth.errorUpdatePass, "error"); } finally { setLoading(false); }
                      });
                 }
             };
@@ -1631,7 +1819,7 @@
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
                         if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
                         showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' }); setEditScheduleId(null);
-                    } catch(err) { showNotify(err.message, "error"); } finally { setLoading(false); }
+                    } catch(err) { showNotify(err.message || t.common.error, "error"); } finally { setLoading(false); }
                 });
             };
 
@@ -1754,11 +1942,11 @@
                             payload.createdAt = new Date().toISOString(); 
                             await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); 
                         }
-                        showNotify("Saved!"); 
+                        showNotify(t.common.saved); 
                         setTimesheetForm({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' }); 
                         setEditTimesheetId(null);
                     } catch(e) { 
-                        showNotify("Error", "error"); 
+                        showNotify(t.common.error, "error"); 
                     } finally { 
                         setLoading(false); 
                     }
@@ -1898,7 +2086,7 @@
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} timezone={timezone} sysSettings={sysSettings} />}
                                 {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} schedules={schedules} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
                                 {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
-                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={formatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} sysSettings={sysSettings} updateSettings={updateSysSettings} />}
+                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={formatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} sysSettings={sysSettings} updateSettings={updateSysSettings} getUserColor={getUserColor} timezone={timezone} />}
                             </>
                         )}
                     </main>
