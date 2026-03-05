@@ -145,7 +145,7 @@
                 }
             },
             en: {
-                nav: { Home: 'Home', Schedule: 'Schedule', Timesheet: 'Timesheet', Analytics: 'Analytics', Admin: 'Admin' },
+                nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
                 common: { 
                     loading: 'Loading...', save: 'Save', cancel: 'Cancel', clear: 'Clear', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h', unitMin: 'm',
                     reminder: 'Check timezone & language. Enter records carefully.', saved: 'Saved!', error: 'Error occurred', unknown: 'Unknown', you: 'YOU', new: 'NEW', est: 'Est.', pst: 'PST',
@@ -477,15 +477,19 @@
         };
 
         /* --- Smart Tooltip Component --- */
-        const InfoTooltip = ({ text }) => (
-            <span className="relative group inline-flex items-center ml-1.5 z-50 normal-case tracking-normal font-normal text-left align-middle">
-                <i className="fas fa-info-circle text-slate-300 hover:text-blue-500 cursor-help transition-colors text-[12px] drop-shadow-sm"></i>
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-800/95 backdrop-blur-sm text-white text-[10px] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl text-center pointer-events-none border border-slate-700 leading-snug">
-                    {text}
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800/95"></span>
+        const InfoTooltip = ({ text, align = 'center' }) => {
+            const posClass = align === 'right' ? 'right-0' : align === 'left' ? 'left-0' : 'left-1/2 -translate-x-1/2';
+            const arrowClass = align === 'right' ? 'right-1.5' : align === 'left' ? 'left-1.5' : 'left-1/2 -translate-x-1/2';
+            return (
+                <span className="relative group inline-flex items-center ml-1.5 z-50 normal-case tracking-normal font-normal text-left align-middle">
+                    <i className="fas fa-info-circle text-slate-300 hover:text-blue-500 cursor-help transition-colors text-[12px] drop-shadow-sm"></i>
+                    <span className={`absolute bottom-full ${posClass} mb-2 w-48 p-2.5 bg-slate-800/95 backdrop-blur-sm text-white text-[10px] rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-xl text-center pointer-events-none border border-slate-700 leading-snug`}>
+                        {text}
+                        <span className={`absolute top-full ${arrowClass} border-4 border-transparent border-t-slate-800/95`}></span>
+                    </span>
                 </span>
-            </span>
-        );
+            );
+        };
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             if (!currentUser) return <div className="space-y-4 fade-in"><div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center"><div className="flex flex-col items-center gap-3 mb-3"><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center"><i className="fas fa-user-lock text-blue-500 text-2xl"></i></div><h3 className="font-bold text-blue-800 text-lg">{t.timesheet.accessRestricted}</h3></div><p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p></div></div>;
@@ -2246,7 +2250,7 @@
                                     </div>
                                  </div>
                                  <div className="flex items-center justify-center bg-slate-50 border border-slate-200 px-2 rounded-lg">
-                                     <InfoTooltip text={t.tooltips.tzInfo} />
+                                     <InfoTooltip text={t.tooltips.tzInfo} align="right" />
                                  </div>
                              </div>
                         </div>
@@ -2282,7 +2286,7 @@
                     </nav>
                 </div>
             );
-        }
+        };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
