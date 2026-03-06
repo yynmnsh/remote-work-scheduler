@@ -139,7 +139,7 @@
                     tzInfo: 'Tabel dan grafik akan menyesuaikan otomatis ke Zona Waktu yang Anda pilih.',
                     estInfo: 'Estimasi pendapatan dari semua laporan yang berstatus PENDING.',
                     quotaInfo: 'Kuota harian tim dihitung berdasar siklus absolut 00:00 - 23:59 PST.',
-                    reportInfo: 'Pilih jadwal untuk input jam aktual.',
+                    reportInfo: 'Pilih jadwal untuk input jam aktual. Gunakan Ad-Hoc jika tugas tidak terjadwal.',
                     disciplineInfo: 'Membandingkan rencana Jadwal vs aktual Laporan (dalam siklus PST).',
                     adminInfo: 'Kelola info anggota tim, kuota, kurs mata uang, dan lain-lain.'
                 }
@@ -188,7 +188,7 @@
                     tzInfo: 'Times and graphs will adjust automatically to your chosen timezone.',
                     estInfo: 'Estimated earnings from all PENDING reports.',
                     quotaInfo: 'Daily team quota is calculated based on an absolute 00:00 - 23:59 PST cycle.',
-                    reportInfo: 'Select a schedule to log actual hours.',
+                    reportInfo: 'Select a schedule to log actual hours. Use Ad-Hoc for unscheduled tasks.',
                     disciplineInfo: 'Compares planned Schedule vs actual Timesheet (in PST cycle).',
                     adminInfo: 'Manage team, quota, currency rates, and other settings.'
                 }
@@ -969,16 +969,20 @@
             
             const displayDate = scheduleForm.startDate || defaultDate;
 
+            /* MENENTUKAN TANGGAL PST TARGET SECARA ABSOLUT */
+            const targetPstDate = React.useMemo(() => {
+                // Jika form diisi, gunakan waktu dari form untuk mengecek ember PST-nya
+                if (scheduleForm.startDate && scheduleForm.startTime) {
+                    const dbTime = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                    const targetEpoch = getEpochFromWIB(dbTime.date, dbTime.time);
+                    return getPSTDayFromEpoch(targetEpoch);
+                }
+                // Jika form kosong, kunci secara absolut ke waktu PST saat ini detik ini juga
+                return getPSTDayFromEpoch(Date.now());
+            }, [scheduleForm.startDate, scheduleForm.startTime, timezone]);
+
             const MAX_MINUTES = (sysSettings?.dailyQuotaHours || 10) * 60; 
             const dailyUsedMinutes = React.useMemo(() => {
-                const dateToUse = scheduleForm.startDate || displayDate;
-                const timeToUse = scheduleForm.startTime || '15:00';
-                
-                /* MENGGUNAKAN LOGIKA PST UNTUK BATAS KUOTA HARIAN (00:00 PST - 23:59 PST) */
-                const dbTime = getDbTime(timeToUse, dateToUse, timezone);
-                const targetEpoch = getEpochFromWIB(dbTime.date, dbTime.time);
-                const targetPstDate = getPSTDayFromEpoch(targetEpoch); 
-                
                 if (!targetPstDate) return 0;
                 
                 return schedules
@@ -993,7 +997,7 @@
                          if (!s.endDate && endEpoch <= startEpoch) endEpoch += 86400000;
                          return acc + Math.floor((endEpoch - startEpoch)/60000);
                     }, 0);
-            }, [schedules, scheduleForm.startDate, scheduleForm.startTime, displayDate, editScheduleId, timezone]);
+            }, [schedules, targetPstDate, editScheduleId]);
 
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
@@ -1096,8 +1100,9 @@
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-1.5">
                                         <i className={`fas fa-bolt text-xs ${isCritical ? 'text-red-500' : 'text-amber-500'}`}></i>
-                                        <span className={`text-[10px] font-bold uppercase tracking-wide ${isCritical ? 'text-red-600' : 'text-slate-600'}`}>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${isCritical ? 'text-red-600' : 'text-slate-600'}`}>
                                             {t.schedule.teamQuota}
+                                            <span className="bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] normal-case tracking-normal border border-slate-300/50 shadow-sm">{formatDate(targetPstDate, lang)} PST</span>
                                         </span>
                                     </div>
                                     <div className="text-[10px] font-medium text-slate-500">
@@ -2293,4 +2298,3 @@
     </script>
 </body>
 </html>
-
