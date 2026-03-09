@@ -17,8 +17,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { 
             getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, 
-            onSnapshot, query, orderBy, setDoc, where, writeBatch 
+            onSnapshot, query, orderBy, setDoc, where, writeBatch, getDoc 
         } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { 
+            getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
+            onAuthStateChanged, signOut, updatePassword 
+        } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-5NB0IjJff_-yXSBqSqZLJihx6kHvj2g",
@@ -32,12 +36,17 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Trik: Secondary App untuk membiarkan Admin bikin user tanpa ter-logout
+        const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
+        const secondaryAuth = getAuth(secondaryApp);
         
         window.db = db;
-        window.fs = { 
-            collection, addDoc, getDocs, doc, deleteDoc, updateDoc, 
-            onSnapshot, query, orderBy, setDoc, where, writeBatch 
-        };
+        window.auth = auth;
+        window.secondaryAuth = secondaryAuth;
+        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch };
+        window.fa = { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword };
     </script>
 
     <script>
@@ -77,10 +86,6 @@
             'AEDT': { label: 'AEDT (Melbourne)', offsetUTC: 11 },
             'PST': { label: 'PST (Pacific)', offsetUTC: -8 }
         };
-        const INITIAL_USERS = [
-            { id: '1', name: 'Habib', color: '#3b82f6', hidden: false },
-            { id: '9', name: 'Yayan', color: '#a855f7', hidden: false },
-        ];
 
         const TRANSLATIONS = {
             id: {
@@ -90,9 +95,9 @@
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim', used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
                 timesheet: { title: 'Input Laporan', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun', confirmSubmit: 'Data laporan akurat?', accessRestricted: 'Akses Terbatas', selectSchedule: 'Pilih Jadwal', adhoc: 'Ad-Hoc (Tanpa Jadwal)', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan jadwal ini sudah ada!', requireSchedule: 'Pilih Jadwal dulu!', earlySubmitError: 'Jadwal belum selesai!' },
                 analytics: { myStats: 'Kinerja (7 Hari)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' },
-                admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Reset Password User', passPlaceholder: 'Ketik sandi baru untuk reset', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'Isi HANYA untuk reset password.', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzAEDT: 'Offset AEDT', tzPST: 'Offset PST' },
+                admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Set Sandi (Firebase Auth)', passPlaceholder: 'Ketik sandi awal untuk user ini', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'HANYA isi saat BIKIN user baru (Minimal 6 karakter).', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzAEDT: 'Offset AEDT', tzPST: 'Offset PST' },
                 profile: { title: 'Pengaturan Akun', bankTitle: 'Info Rekening', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' },
-                auth: { createTitle: 'Buat Password Baru', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'Password Baru', createBtn: 'Buat & Masuk', loginBtn: 'Masuk', successCreate: 'Password dibuat! Bisa diubah di Pengaturan.', successChange: 'Password diubah!', errorPass: 'Password salah/Akun tidak ditemukan!', errorSame: 'Password tidak boleh sama!', changeTitle: 'Ubah Password', changeBtn: 'Simpan', confirmChange: 'Yakin ubah password?', errorSavePass: 'Gagal simpan password', errorUpdatePass: 'Gagal update password', successLogin: 'Login Berhasil!' },
+                auth: { createTitle: 'Buat Password Baru', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'Password Baru', createBtn: 'Buat & Masuk', loginBtn: 'Masuk', successCreate: 'Sandi diamankan! Otentikasi resmi berhasil.', successChange: 'Password diubah!', errorPass: 'Password salah!', errorSame: 'Password baru tidak boleh sama!', changeTitle: 'Ubah Password', changeBtn: 'Simpan', confirmChange: 'Yakin ubah password?', errorSavePass: 'Gagal simpan password', errorUpdatePass: 'Sesi habis, silakan re-login lalu coba lagi.', successLogin: 'Login Berhasil!' },
                 tooltips: { tzToggle: 'Pilih Zona Waktu', langToggle: 'Ganti Bahasa', sortToggle: 'Urutkan Jadwal', settings: 'Pengaturan Akun', userSelect: 'Pilih Akun Pengguna', tzInfo: 'Waktu menyesuaikan otomatis.', estInfo: 'Estimasi pendapatan dari PENDING.', quotaInfo: 'Kuota dihitung berdasar 00:00-23:59 PST.', reportInfo: 'Pilih jadwal. Gunakan Ad-Hoc jika dadakan.', disciplineInfo: 'Perbandingan Rencana vs Aktual.', adminInfo: 'Kelola tim, kuota, mata uang, dll.' }
             },
             en: {
@@ -102,14 +107,13 @@
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota', used: 'Used', remaining: 'Left', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only', confirmBooking: 'Is the schedule data correct?', pastError: 'Cannot book schedules in the past!', deleteLinkedError: 'Cannot delete schedule with linked timesheet!', visualTitle: 'Daily Schedule Map', dailyLimit: 'Daily Limit' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account', confirmSubmit: 'Is the work report accurate?', accessRestricted: 'Access Restricted', selectSchedule: 'Select Schedule', adhoc: 'Ad-Hoc (Unscheduled)', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet already exists!', requireSchedule: 'Please select a schedule first!', earlySubmitError: 'Cannot report yet! Scheduled work is not finished.' },
                 analytics: { myStats: 'Performance (7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)', statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings', changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history.', reportTime: 'Report Time' },
-                admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', editUser: 'Edit User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive', passHeader: 'Reset User Password', passPlaceholder: 'Type new password to reset', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Fill ONLY to overwrite user password.', settings: 'System Settings', dailyQuota: 'Daily Team Quota', quotaHelper: 'Applies to the total daily booking duration.', quotaError: 'Invalid configuration values!', sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted', currencySettings: 'Currency Settings', tzSettings: 'Timezone Settings', workSettings: 'Work Settings', rateUSD: 'Hourly Rate (USD)', rateIDR: '1 USD to IDR Rate', tzWIB: 'WIB Offset', tzAEDT: 'AEDT Offset', tzPST: 'PST Offset' },
+                admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', editUser: 'Edit User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive', passHeader: 'Set Auth Password', passPlaceholder: 'Type init password for this user', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Fill ONLY when CREATING a new user (Min 6 chars).', settings: 'System Settings', dailyQuota: 'Daily Team Quota', quotaHelper: 'Applies to the total daily booking duration.', quotaError: 'Invalid configuration values!', sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted', currencySettings: 'Currency Settings', tzSettings: 'Timezone Settings', workSettings: 'Work Settings', rateUSD: 'Hourly Rate (USD)', rateIDR: '1 USD to IDR Rate', tzWIB: 'WIB Offset', tzAEDT: 'AEDT Offset', tzPST: 'PST Offset' },
                 profile: { title: 'Account Settings', bankTitle: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' },
-                auth: { createTitle: 'Create New Password', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'New Password', createBtn: 'Create & Login', loginBtn: 'Login', successCreate: 'Password created! You can change it later.', successChange: 'Password updated successfully!', errorPass: 'Wrong password or User not found!', errorSame: 'New password cannot be the same!', changeTitle: 'Change Password', changeBtn: 'Save', confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', errorUpdatePass: 'Error updating password', successLogin: 'Login Success!' },
+                auth: { createTitle: 'Create New Password', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'New Password', createBtn: 'Create & Login', loginBtn: 'Login', successCreate: 'Account secured! Auth registration successful.', successChange: 'Password updated successfully!', errorPass: 'Wrong password!', errorSame: 'New password cannot be the same!', changeTitle: 'Change Password', changeBtn: 'Save', confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', errorUpdatePass: 'Session expired, please re-login and try again.', successLogin: 'Login Success!' },
                 tooltips: { tzToggle: 'Select Timezone', langToggle: 'Change Language', sortToggle: 'Sort Schedules', settings: 'Account Settings', userSelect: 'Select User Account', tzInfo: 'Times adjust automatically.', estInfo: 'Estimated earnings from PENDING reports.', quotaInfo: 'Daily quota calculated based on 00:00 - 23:59 PST.', reportInfo: 'Select a schedule. Use Ad-Hoc for unscheduled tasks.', disciplineInfo: 'Compares planned Schedule vs actual Timesheet.', adminInfo: 'Manage team, quota, currency rates, etc.' }
             }
         };
 
-        /* --- BULLETPROOF PASSWORD HASHING --- */
         const hashPassword = async (text) => {
             if (!text) return text;
             try {
@@ -119,7 +123,6 @@
                     const hashArray = Array.from(new Uint8Array(hashBuffer));
                     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
                 } else {
-                    // Fallback alternatif jika browser tidak mendukung crypto API
                     let hash = 0;
                     for (let i = 0; i < text.length; i++) {
                         const char = text.charCodeAt(i);
@@ -130,11 +133,10 @@
                 }
             } catch (err) {
                 console.error("Hashing failed", err);
-                return btoa(encodeURIComponent(text)); // Ultimate fallback
+                return btoa(encodeURIComponent(text)); 
             }
         };
 
-        /* --- HELPER FUNCTIONS --- */
         const formatDate = (dateString, lang = 'id') => {
             if (!dateString) return '';
             let dateObj = dateString.includes('T') ? new Date(dateString) : new Date(dateString.split('-')[0], dateString.split('-')[1]-1, dateString.split('-')[2]);
@@ -186,12 +188,14 @@
 
         const showToastError = (showNotify, message) => showNotify(message, "error", 4000); 
 
-        /* --- UI COMPONENTS --- */
         const Spinner = () => <i className="fas fa-circle-notch fa-spin text-white"></i>;
 
         const Notification = ({ msg, type, onClose }) => (
             <div className={`fixed top-4 right-4 left-4 md:left-auto z-[100] p-4 rounded-xl shadow-2xl text-white flex justify-between items-center animate-slide-up border-2 ${type === 'error' ? 'bg-red-600 border-red-700' : 'bg-green-600 border-green-700'}`}>
-                <div className="flex items-center gap-3"><i className={`fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-lg`}></i><span className="text-sm font-bold tracking-wide drop-shadow-md">{msg}</span></div>
+                <div className="flex items-center gap-3">
+                    <i className={`fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-lg`}></i>
+                    <span className="text-sm font-bold tracking-wide drop-shadow-md">{msg}</span>
+                </div>
                 <button onClick={onClose} className="p-1 hover:bg-white/20 rounded transition-colors ml-4"><i className="fas fa-times opacity-90 hover:opacity-100"></i></button>
             </div>
         );
@@ -201,7 +205,10 @@
             return (
                 <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform transition-all scale-100 border border-gray-100">
-                        <div className="flex items-center gap-3 mb-3 text-orange-500"><i className="fas fa-exclamation-triangle text-xl"></i><h3 className="text-lg font-bold text-slate-800">{t.common.confirmTitle}</h3></div>
+                        <div className="flex items-center gap-3 mb-3 text-orange-500">
+                            <i className="fas fa-exclamation-triangle text-xl"></i>
+                            <h3 className="text-lg font-bold text-slate-800">{t.common.confirmTitle}</h3>
+                        </div>
                         <p className="text-slate-600 mb-6 font-medium leading-relaxed">{message}</p>
                         <div className="flex gap-2">
                             <button onClick={onCancel} className="flex-1 py-2.5 text-slate-500 font-bold text-sm hover:bg-slate-50 border border-slate-200 rounded-xl transition">{t.common.cancel}</button>
@@ -217,16 +224,22 @@
             const handleSubmit = (e) => { e.preventDefault(); if (!password) return showToastError(showNotify, t.common.requiredField); onSubmit(password); };
             let title = mode === 'create' ? t.auth.createTitle : mode === 'change' ? t.auth.changeTitle : t.auth.loginTitle;
             let btnText = mode === 'create' ? t.auth.createBtn : mode === 'change' ? t.auth.changeBtn : t.auth.loginBtn;
+
             return (
                  <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-                        <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold text-slate-800">{title}</h3><button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button></div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+                            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                        </div>
                         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{mode === 'change' || mode === 'create' ? t.auth.newPassLabel : t.auth.passLabel}</label>
                                 <input type="password" required className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={password} onChange={e => setPassword(e.target.value)} autoFocus placeholder="******" />
                             </div>
-                            <div className="mt-6"><button type="submit" disabled={loading} className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">{loading ? <Spinner/> : btnText}</button></div>
+                            <div className="mt-6">
+                                <button type="submit" disabled={loading} className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">{loading ? <Spinner/> : btnText}</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -246,8 +259,14 @@
                             <div>
                                 <h4 className="text-xs font-bold text-blue-600 uppercase mb-3 flex items-center gap-1"><i className="fas fa-wallet"></i> {t.profile.bankTitle}</h4>
                                 <div className="space-y-3">
-                                    <div><label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t.profile.bankLabel}</label><input type="text" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium" value={bankName} onChange={e => setBankName(e.target.value)} required /></div>
-                                    <div><label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t.profile.accLabel}</label><input type="text" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium" value={accNumber} onChange={e => setAccNumber(e.target.value)} required /></div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t.profile.bankLabel}</label>
+                                        <input type="text" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium" value={bankName} onChange={e => setBankName(e.target.value)} required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{t.profile.accLabel}</label>
+                                        <input type="text" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium" value={accNumber} onChange={e => setAccNumber(e.target.value)} required />
+                                    </div>
                                 </div>
                             </div>
                             <div className="pt-4 border-t border-slate-100">
@@ -262,12 +281,12 @@
         };
 
         const UserModal = ({ user, onClose, onSave, loading, t, showNotify }) => {
-            const [form, setForm] = React.useState(user ? { ...user, newPassword: '' } : { name: '', color: '#3b82f6', hidden: false, newPassword: '', bankName: '', accountNumber: '' });
+            const [form, setForm] = React.useState(user ? { name: user.name, color: user.color, hidden: user.hidden, newPassword: '', bankName: user.bankName || '', accountNumber: user.accountNumber || '' } : { name: '', color: '#3b82f6', hidden: false, newPassword: '', bankName: '', accountNumber: '' });
             const onSubmitInternal = async (e) => {
                 e.preventDefault();
                 if (!form.name) return showToastError(showNotify, t.common.requiredField);
                 let payload = { name: form.name, color: form.color, hidden: form.hidden, bankName: form.bankName, accountNumber: form.accountNumber };
-                if (form.newPassword) payload.password = await hashPassword(form.newPassword);
+                if (form.newPassword) payload.password = form.newPassword; 
                 onSave(payload);
             };
             return (
@@ -275,12 +294,21 @@
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold text-slate-800 mb-4">{user ? t.admin.editUser : t.admin.addUser}</h3>
                         <form onSubmit={onSubmitInternal} className="space-y-4" noValidate>
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.name}</label><input type="text" required className="w-full p-2 border rounded-lg outline-none focus:border-blue-500" value={form.name} onChange={e => setForm({...form, name: e.target.value})} title="" /></div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.name}</label>
+                                <input type="text" required className="w-full p-2 border rounded-lg outline-none focus:border-blue-500" value={form.name} onChange={e => setForm({...form, name: e.target.value})} title="" />
+                            </div>
                             <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
                                 <h4 className="text-[10px] font-bold text-blue-600 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-wallet"></i> {t.profile.bankTitle}</h4>
                                 <div className="space-y-2">
-                                    <div><label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">{t.profile.bankLabel}</label><input type="text" className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" value={form.bankName || ''} onChange={e => setForm({...form, bankName: e.target.value})} placeholder="-" /></div>
-                                    <div><label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">{t.profile.accLabel}</label><input type="text" className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" value={form.accountNumber || ''} onChange={e => setForm({...form, accountNumber: e.target.value})} placeholder="-" /></div>
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">{t.profile.bankLabel}</label>
+                                        <input type="text" className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" value={form.bankName || ''} onChange={e => setForm({...form, bankName: e.target.value})} placeholder="-" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">{t.profile.accLabel}</label>
+                                        <input type="text" className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" value={form.accountNumber || ''} onChange={e => setForm({...form, accountNumber: e.target.value})} placeholder="-" />
+                                    </div>
                                 </div>
                             </div>
                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
@@ -288,9 +316,18 @@
                                 <input type="text" className="w-full p-2 border border-slate-300 rounded-lg font-mono text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none" value={form.newPassword || ''} onChange={e => setForm({...form, newPassword: e.target.value})} placeholder={t.admin.passPlaceholder} />
                                 <p className="text-[10px] text-slate-400 mt-1 italic">{t.admin.updatePassHint}</p>
                             </div>
-                            <div><label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.color}</label><input type="color" className="w-full h-10 p-1 border rounded-lg cursor-pointer" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
-                            <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100"><input type="checkbox" id="hideUser" checked={form.hidden || false} onChange={e => setForm({...form, hidden: e.target.checked})} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer" /><label htmlFor="hideUser" className="text-sm text-slate-700 font-medium cursor-pointer flex-1">{t.admin.hideUser} <span className={form.hidden ? "text-red-500 text-xs ml-1" : "text-green-500 text-xs ml-1"}>({form.hidden ? t.admin.inactive : t.admin.active})</span></label></div>
-                            <div className="flex gap-2 mt-6"><button type="button" onClick={onClose} className="flex-1 py-2.5 text-slate-500 font-bold text-sm hover:bg-slate-100 rounded-xl transition-colors">{t.common.cancel}</button><button type="submit" disabled={loading} className="flex-1 py-2.5 bg-purple-600 text-white font-bold text-sm rounded-xl hover:bg-purple-700 shadow-md transition-colors active:scale-95">{loading ? <Spinner/> : t.common.save}</button></div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">{t.admin.color}</label>
+                                <input type="color" className="w-full h-10 p-1 border rounded-lg cursor-pointer" value={form.color} onChange={e => setForm({...form, color: e.target.value})} />
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                <input type="checkbox" id="hideUser" checked={form.hidden || false} onChange={e => setForm({...form, hidden: e.target.checked})} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer" />
+                                <label htmlFor="hideUser" className="text-sm text-slate-700 font-medium cursor-pointer flex-1">{t.admin.hideUser} <span className={form.hidden ? "text-red-500 text-xs ml-1" : "text-green-500 text-xs ml-1"}>({form.hidden ? t.admin.inactive : t.admin.active})</span></label>
+                            </div>
+                            <div className="flex gap-2 mt-6">
+                                <button type="button" onClick={onClose} className="flex-1 py-2.5 text-slate-500 font-bold text-sm hover:bg-slate-100 rounded-xl transition-colors">{t.common.cancel}</button>
+                                <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-purple-600 text-white font-bold text-sm rounded-xl hover:bg-purple-700 shadow-md transition-colors active:scale-95">{loading ? <Spinner/> : t.common.save}</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -710,7 +747,7 @@
                             </div>
                         </div>
 
-                        <form onSubmit={(e) => saveSchedule(e, showNotify)} className="space-y-3" noValidate>
+                        <form onSubmit={(e) => saveSchedule(e)} className="space-y-3" noValidate>
                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-play-circle text-blue-500 text-sm"></i> {t.common.start} <span className="font-medium text-slate-400 normal-case ml-1">({TZ_CONFIG[timezone].label})</span></label>
                                 <div className="grid grid-cols-2 gap-3">
@@ -816,7 +853,7 @@
                             </div>
                         </div>
                         
-                        <form onSubmit={(e) => saveTimesheet(e, showNotify)} className="space-y-3" noValidate>
+                        <form onSubmit={(e) => saveTimesheet(e)} className="space-y-3" noValidate>
                             <div className="mb-3">
                                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5"><i className="fas fa-calendar-check text-blue-500 text-sm"></i> {t.timesheet.selectSchedule}</label>
                                 <div className="relative">
@@ -1386,6 +1423,15 @@
                         showNotify(t.admin.userUpdated); 
                     } else { 
                         const newId = Date.now().toString(); 
+                        if (userData.password) {
+                            const newEmail = `user${newId}@remotework.local`;
+                            try {
+                                await window.fa.createUserWithEmailAndPassword(window.secondaryAuth, newEmail, userData.password);
+                                await window.fa.signOut(window.secondaryAuth);
+                            } catch(authErr) {
+                                console.error("Secondary Auth Error:", authErr);
+                            }
+                        }
                         await window.fs.setDoc(window.fs.doc(window.db, 'users', newId), { ...userData, id: newId }); 
                         showNotify(t.admin.userAdded); 
                     } 
@@ -1421,9 +1467,10 @@
                 } 
             };
 
-            const handleLogout = () => {
+            const handleLogout = async () => {
+                await window.fa.signOut(window.auth);
                 setCurrentUser(null);
-                showNotify("Logged out successfully");
+                showNotify(t.common.logout + " sukses");
             };
 
             const handleUserChange = (e) => { 
@@ -1442,21 +1489,34 @@
             const handlePasswordSubmit = async (password) => {
                 const { mode, userId } = passwordModal;
                 const user = users.find(u => String(u.id) === String(userId));
+                const email = `user${userId}@remotework.local`;
                 
                 setLoading(true);
                 try {
                     const hashed = await hashPassword(password);
                     
                     if (mode === 'create') {
+                        try {
+                            await window.fa.createUserWithEmailAndPassword(window.auth, email, password);
+                        } catch (err) {
+                            if (err.code !== 'auth/email-already-in-use') throw err;
+                            await window.fa.signInWithEmailAndPassword(window.auth, email, password);
+                        }
                         await window.fs.updateDoc(window.fs.doc(window.db, 'users', userId), { password: hashed }); 
                         setCurrentUser(userId); 
                         setPasswordModal({ show: false, mode: 'login', userId: null }); 
-                        showNotify(t.auth.successCreate, 'success', 10000); 
+                        showNotify(t.auth.successCreate, 'success', 5000); 
                     } else if (mode === 'login') {
                         if (user && (user.password === password || user.password === hashed)) { 
-                            // Auto-upgrade Plaintext to Hash if needed
                             if (user.password === password) {
                                 await window.fs.updateDoc(window.fs.doc(window.db, 'users', userId), { password: hashed }); 
+                                try {
+                                    await window.fa.createUserWithEmailAndPassword(window.auth, email, password);
+                                } catch (e) {
+                                    await window.fa.signInWithEmailAndPassword(window.auth, email, password);
+                                }
+                            } else {
+                                await window.fa.signInWithEmailAndPassword(window.auth, email, password);
                             }
                             setCurrentUser(userId); 
                             setPasswordModal({ show: false, mode: 'login', userId: null }); 
@@ -1474,18 +1534,23 @@
                         triggerConfirm(t.auth.confirmChange, async () => { 
                             setLoading(true); 
                             try { 
+                                if (window.auth.currentUser) {
+                                    await window.fa.updatePassword(window.auth.currentUser, password);
+                                } else {
+                                    throw new Error(t.auth.errorUpdatePass);
+                                }
                                 await window.fs.updateDoc(window.fs.doc(window.db, 'users', currentUser), { password: hashed }); 
-                                showNotify(t.auth.successChange, 'success', 10000); 
+                                showNotify(t.auth.successChange, 'success', 5000); 
                             } catch(err) { 
-                                showNotify(t.auth.errorUpdatePass + ": " + err.message, "error"); 
+                                showNotify(t.auth.errorUpdatePass, "error"); 
                             } finally { 
                                 setLoading(false); 
                             } 
                         });
-                        return; // return early so we don't hit the finally block for confirm modal
+                        return; 
                     }
                 } catch(err) {
-                    showNotify("Error: " + err.message, "error");
+                    showNotify(t.auth.errorPass, "error");
                     console.error(err);
                 } finally {
                     if (mode !== 'change') {
@@ -1534,7 +1599,7 @@
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
                         if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
                         showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' }); setEditScheduleId(null);
-                    } catch(err) { showNotify(err.message || t.common.error, "error"); } finally { setLoading(false); }
+                    } catch(err) { showNotify(t.common.error, "error"); } finally { setLoading(false); }
                 });
             };
 
