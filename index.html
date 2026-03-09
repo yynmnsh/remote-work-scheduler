@@ -65,7 +65,6 @@
                     animation: {
                         'fade-in': 'fadeIn 0.4s ease-out',
                         'slide-up': 'slideUp 0.3s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                     },
                     keyframes: {
                         fadeIn: { 
@@ -120,7 +119,7 @@
                     saved: 'Tersimpan!', error: 'Terjadi Kesalahan', unknown: 'Tidak diketahui', 
                     you: 'ANDA', new: 'BARU', est: 'Perkiraan', pst: 'PST', requiredField: 'Mohon lengkapi semua kolom.', 
                     selectDate: 'Pilih Tanggal', selectTime: 'Pilih Waktu', logout: 'Keluar Akun',
-                    migrating: 'Memulai sinkronisasi data lama...', migrateSuccess: 'Berhasil memulihkan {count} akun! Refresh halaman.',
+                    migrating: 'Memulai sinkronisasi data lama...', migrateSuccess: 'Berhasil memulihkan {count} akun! Refresh otomatis...',
                     migrateError: 'Gagal memuat data dari database. Cek Aturan Keamanan.', dbError: 'Koneksi basis data bermasalah.',
                     logoutSuccess: 'Berhasil keluar dari akun.'
                 },
@@ -477,7 +476,7 @@
             );
         };
 
-        const ProfileModal = ({ user, vault, onClose, onSave, loading, lang, t, onChangePassword, showNotify }) => {
+        const ProfileModal = ({ user, vault, onClose, onSave, loading, t, onChangePassword, showNotify }) => {
             const [bankName, setBankName] = React.useState(vault?.bankName || '');
             const [accNumber, setAccNumber] = React.useState(vault?.accountNumber || '');
             
@@ -1975,6 +1974,547 @@
                             </div>
                         </div> 
                     )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = React.useState('dashboard');
+            const [currentUser, setCurrentUser] = React.useState(null);
+            const [users, setUsers] = React.useState([]);
+            const [vaults, setVaults] = React.useState({});
+            const [schedules, setSchedules] = React.useState([]);
+            const [timesheets, setTimesheets] = React.useState([]);
+            const [loading, setLoading] = React.useState(false);
+            const [notify, setNotify] = React.useState(null);
+            const [sysSettings, setSysSettings] = React.useState({ dailyQuotaHours: 10 });
+            const [showProfileModal, setShowProfileModal] = React.useState(false);
+            const [showUserModal, setShowUserModal] = React.useState(false);
+            const [passwordModal, setPasswordModal] = React.useState({ show: false, mode: 'login', userId: null });
+            const [editingUser, setEditingUser] = React.useState(null);
+            
+            const [lang, setLang] = React.useState('en'); 
+            const [timezone, setTimezone] = React.useState('AEDT'); 
+            const t = TRANSLATIONS[lang];
+            
+            const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
+            const [editScheduleId, setEditScheduleId] = React.useState(null);
+            const [timesheetForm, setTimesheetForm] = React.useState({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' });
+            const [editTimesheetId, setEditTimesheetId] = React.useState(null);
+            const [confirmModal, setConfirmModal] = React.useState({ show: false, message: '', action: null });
+
+            React.useEffect(() => {
+                const initData = async () => {
+                    if (!window.db) return;
+
+                    try {
+                        const oldUsersSnap = await window.fs.getDocs(window.fs.collection(window.db, 'users'));
+                        if (!oldUsersSnap.empty) {
+                            showNotify(t.common.migrating, "success");
+                            const batch = window.fs.writeBatch(window.db);
+                            let count = 0;
+                            oldUsersSnap.docs.forEach(docSnap => {
+                                const data = docSnap.data();
+                                batch.set(window.fs.doc(window.db, 'public_profiles', docSnap.id), { 
+                                    name: data.name, color: data.color || '#3b82f6', hidden: data.hidden || false, authUid: data.authUid || null 
+                                }, {merge: true});
+                                batch.set(window.fs.doc(window.db, 'private_vault', docSnap.id), { 
+                                    bankName: data.bankName || '', accountNumber: data.accountNumber || '' 
+                                }, {merge: true});
+                                count++;
+                            });
+                            await batch.commit();
+                            showNotify(t.common.migrateSuccess.replace('{count}', count), "success", 10000);
+                        }
+                    } catch(err) {
+                        if (err.code !== 'permission-denied') {
+                            console.error("Migration error:", err);
+                        }
+                    }
+                    
+                    window.fs.onSnapshot(window.fs.collection(window.db, 'public_profiles'), (snapshot) => {
+                        const fetchedUsers = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                        if(fetchedUsers.length === 0) { 
+                            setUsers(INITIAL_USERS); 
+                            INITIAL_USERS.forEach(async (u) => {
+                                try {
+                                    await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', u.id), { 
+                                        name: u.name, color: u.color, hidden: u.hidden 
+                                    });
+                                } catch(e) {}
+                            }); 
+                        } else { 
+                            setUsers(fetchedUsers); 
+                        }
+                    }, (err) => {
+                        console.error("Profiles error:", err.message);
+                    });
+                    
+                    window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'schedules')), (snapshot) => { 
+                        setSchedules(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}))); 
+                    }, (err) => console.error(err));
+                    
+                    window.fs.onSnapshot(window.fs.query(window.fs.collection(window.db, 'timesheets')), (snapshot) => { 
+                        setTimesheets(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}))); 
+                    }, (err) => console.error(err));
+                    
+                    window.fs.onSnapshot(window.fs.doc(window.db, 'settings', 'global'), (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            setSysSettings(data);
+                            if (data.baseHourlyRateUSD !== undefined) RATES.en = data.baseHourlyRateUSD;
+                            if (data.baseHourlyRateUSD !== undefined && data.usdToIdr !== undefined) RATES.id = data.baseHourlyRateUSD * data.usdToIdr;
+                            if (data.offsetWIB !== undefined) TZ_CONFIG['WIB'].offsetUTC = data.offsetWIB;
+                            if (data.offsetAEDT !== undefined) TZ_CONFIG['AEDT'].offsetUTC = data.offsetAEDT;
+                            if (data.offsetPST !== undefined) TZ_CONFIG['PST'].offsetUTC = data.offsetPST;
+                        } else {
+                            window.fs.setDoc(window.fs.doc(window.db, 'settings', 'global'), { 
+                                dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, 
+                                offsetWIB: 7, offsetAEDT: 11, offsetPST: -8 
+                            }).catch(e => {});
+                        }
+                    }, (err) => console.error(err));
+                };
+                setTimeout(initData, 500);
+            }, []);
+
+            React.useEffect(() => {
+                const unsub = window.fa.onAuthStateChanged(window.auth, user => {
+                    if (user && user.email) {
+                        const match = user.email.match(new RegExp('user(\\d+)@'));
+                        if (match) setCurrentUser(match[1]);
+                    } else {
+                        setCurrentUser(null);
+                    }
+                });
+                return () => unsub();
+            }, []);
+
+            React.useEffect(() => {
+                if (!currentUser) return;
+                let unsubscribeVault = () => {};
+                if (currentUser === ADMIN_ID) {
+                     unsubscribeVault = window.fs.onSnapshot(window.fs.collection(window.db, 'private_vault'), snap => {
+                         const v = {};
+                         snap.docs.forEach(doc => v[doc.id] = doc.data());
+                         setVaults(v);
+                     }, (err) => console.error(err));
+                } else {
+                     unsubscribeVault = window.fs.onSnapshot(window.fs.doc(window.db, 'private_vault', currentUser), doc => {
+                         if(doc.exists()) setVaults({ [currentUser]: doc.data() });
+                     }, (err) => console.error(err));
+                }
+                return () => unsubscribeVault();
+            }, [currentUser]);
+
+            const showNotify = (msg, type = 'success', duration = 3000) => { setNotify({ msg, type }); if (duration > 0) setTimeout(() => setNotify(null), duration); };
+            const getUserName = (uid) => users.find(u => String(u.id) === String(uid))?.name || t.common.unknown;
+            const getUserColor = (uid) => users.find(u => String(u.id) === String(uid))?.color || '#cbd5e1';
+            const triggerConfirm = (message, action) => { setConfirmModal({ show: true, message, action }); };
+            const executeConfirm = () => { if (confirmModal.action) confirmModal.action(); setConfirmModal({ show: false, message: '', action: null }); };
+            
+            const saveUserProfile = async (data) => { 
+                if(!currentUser) return; 
+                setLoading(true); 
+                try { 
+                    await window.fs.setDoc(window.fs.doc(window.db, 'private_vault', currentUser), data, { merge: true }); 
+                    showNotify(t.common.saved); 
+                    setShowProfileModal(false); 
+                } catch(e) { 
+                    showNotify(t.common.error, "error"); 
+                } finally { 
+                    setLoading(false); 
+                } 
+            };
+            
+            const handleSaveUser = async (userData) => { 
+                setLoading(true); 
+                try { 
+                    let targetId = editingUser ? editingUser.id : Date.now().toString();
+                    
+                    await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', targetId), {
+                        name: userData.name,
+                        color: userData.color,
+                        hidden: userData.hidden
+                    }, { merge: true });
+                    
+                    await window.fs.setDoc(window.fs.doc(window.db, 'private_vault', targetId), {
+                        bankName: userData.bankName || '',
+                        accountNumber: userData.accountNumber || ''
+                    }, { merge: true });
+                    
+                    if (!editingUser && userData.password) {
+                        const newEmail = `user${targetId}@remotework.local`;
+                        try {
+                            const cred = await window.fa.createUserWithEmailAndPassword(window.secondaryAuth, newEmail, userData.password);
+                            await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', targetId), { authUid: cred.user.uid }, { merge: true });
+                            await window.fa.signOut(window.secondaryAuth);
+                        } catch(authErr) {
+                            console.error("Secondary Auth Error:", authErr);
+                        }
+                    }
+                    
+                    showNotify(editingUser ? t.admin.userUpdated : t.admin.userAdded); 
+                    setShowUserModal(false); 
+                    setEditingUser(null); 
+                } catch(e) { 
+                    showNotify(t.common.error, "error"); 
+                } finally { 
+                    setLoading(false); 
+                } 
+            };
+            
+            const handleDeleteUser = (uid) => { 
+                triggerConfirm(t.admin.deleteUserConfirm, async () => { 
+                    try { 
+                        await window.fs.deleteDoc(window.fs.doc(window.db, 'public_profiles', uid)); 
+                        await window.fs.deleteDoc(window.fs.doc(window.db, 'private_vault', uid)); 
+                        showNotify(t.admin.userDeleted); 
+                    } catch(e) { 
+                        showNotify(t.common.error, "error"); 
+                    } 
+                }); 
+            };
+            
+            const updateSysSettings = async (newSettings) => { 
+                setLoading(true); 
+                try { 
+                    await window.fs.setDoc(window.fs.doc(window.db, 'settings', 'global'), newSettings, { merge: true }); 
+                    showNotify(t.common.saved); 
+                } catch(e) { 
+                    showNotify(t.common.error, "error"); 
+                } finally { 
+                    setLoading(false); 
+                } 
+            };
+
+            const handleLogout = async () => {
+                try {
+                    await window.fa.signOut(window.auth);
+                    setCurrentUser(null);
+                    showNotify(t.common.logoutSuccess);
+                } catch(e) {
+                    console.error("Logout failed:", e);
+                }
+            };
+
+            const handleUserChange = (selectedId) => { 
+                if (!selectedId) return;
+                
+                const currentEmail = window.auth.currentUser?.email;
+                const targetEmail = `user${selectedId}@remotework.local`;
+                
+                if (currentEmail === targetEmail) {
+                    setCurrentUser(selectedId);
+                } else {
+                    setPasswordModal({ show: true, mode: 'login', userId: selectedId }); 
+                }
+            };
+
+            const handlePasswordSubmit = async (password) => {
+                const { mode, userId } = passwordModal;
+                const email = `user${userId}@remotework.local`;
+                
+                setLoading(true);
+                try {
+                    if (mode === 'login') {
+                        let userCredential;
+                        try {
+                            userCredential = await window.fa.signInWithEmailAndPassword(window.auth, email, password);
+                        } catch (err) {
+                            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                                 try {
+                                     userCredential = await window.fa.createUserWithEmailAndPassword(window.auth, email, password);
+                                 } catch(regErr) {
+                                     if (regErr.code === 'auth/weak-password') throw new Error(t.auth.errorWeakPass);
+                                     if (regErr.code === 'auth/email-already-in-use') throw new Error(t.auth.errorAlreadyInUse);
+                                     if (regErr.code === 'auth/operation-not-allowed') throw new Error(t.auth.errorNotAllowed);
+                                     throw new Error(t.auth.errorPass);
+                                 }
+                            } else if (err.code === 'auth/network-request-failed') {
+                                throw new Error(t.auth.errorNetwork);
+                            } else {
+                                throw new Error(t.auth.errorPass);
+                            }
+                        }
+                        
+                        if (userCredential && userCredential.user) {
+                            await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', userId), { authUid: userCredential.user.uid }, { merge: true });
+                        }
+                        
+                        setPasswordModal({ show: false, mode: 'login', userId: null }); 
+                        showNotify(t.auth.successLogin, 'success'); 
+                    } else if (mode === 'change') {
+                        if (window.auth.currentUser) {
+                            await window.fa.updatePassword(window.auth.currentUser, password);
+                            showNotify(t.auth.successChange, 'success'); 
+                            setPasswordModal(prev => ({ ...prev, show: false }));
+                        } else {
+                             throw new Error(t.auth.errorUpdatePass);
+                        }
+                    }
+                } catch(err) {
+                    showNotify(err.message, "error");
+                    console.error("Auth Error:", err);
+                } finally {
+                    setLoading(false); 
+                }
+            };
+
+            const saveSchedule = async (e) => {
+                e.preventDefault(); 
+                if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
+                if (!scheduleForm.startDate || !scheduleForm.startTime || !scheduleForm.endDate || !scheduleForm.endTime) return showNotify(t.common.requiredField, "error");
+                
+                const startStr = `${scheduleForm.startDate}T${scheduleForm.startTime}`;
+                const endStr = `${scheduleForm.endDate}T${scheduleForm.endTime}`;
+                if (endStr <= startStr) return showNotify(t.timesheet.timeError, "error"); 
+
+                const dbStart = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                const dbEnd = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
+                const newStartEpoch = getEpochFromWIB(dbStart.date, dbStart.time);
+                const newEndEpoch = getEpochFromWIB(dbEnd.date, dbEnd.time);
+
+                const currentEpochNow = Date.now();
+                const dNowComp = new Date(currentEpochNow + TZ_CONFIG[timezone].offsetUTC * 3600000);
+                
+                const yearStr = dNowComp.getUTCFullYear();
+                const monthStr = String(dNowComp.getUTCMonth() + 1).padStart(2, '0');
+                const dayStr = String(dNowComp.getUTCDate()).padStart(2, '0');
+                const hourStr = String(dNowComp.getUTCHours()).padStart(2, '0');
+                const minStr = String(dNowComp.getUTCMinutes()).padStart(2, '0');
+                const currentTimeTzStr = `${yearStr}-${monthStr}-${dayStr}T${hourStr}:${minStr}`;
+                
+                if (!editScheduleId && startStr < currentTimeTzStr) {
+                    if ((new Date(currentTimeTzStr) - new Date(startStr)) > 60000) return showNotify(t.schedule.pastError, "error");
+                }
+
+                let conflictUser = null;
+                const isConflict = schedules.some(s => {
+                    if (editScheduleId && s.id === editScheduleId) return false;
+                    const existStartEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                    let existEndEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                    if (!s.endDate && existEndEpoch <= existStartEpoch) existEndEpoch += 86400000;
+                    if (newStartEpoch < existEndEpoch && newEndEpoch > existStartEpoch) { conflictUser = getUserName(s.userId); return true; }
+                    return false;
+                });
+
+                if (isConflict) return showNotify(`${t.schedule.conflict} ${conflictUser}!`, "error");
+
+                triggerConfirm(t.schedule.confirmBooking, async () => {
+                    setLoading(true);
+                    try {
+                        const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
+                        if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
+                        showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' }); setEditScheduleId(null);
+                    } catch(err) { showNotify(err.message || t.common.error, "error"); } finally { setLoading(false); }
+                });
+            };
+
+            const deleteSchedule = (id) => { 
+                if (timesheets.some(ts => ts.scheduleId === id)) return showNotify(t.schedule.deleteLinkedError, "error", 5000);
+                triggerConfirm(t.common.delete + "?", async () => { 
+                    try {
+                        await window.fs.deleteDoc(window.fs.doc(window.db, 'schedules', id)); 
+                    } catch(e) {
+                        showNotify(t.common.error, "error");
+                    }
+                }); 
+            };
+
+            const editSchedule = (item) => { 
+                const uiStart = getDisplayTime(item.startTime, item.startDate || item.date, timezone);
+                const uiEnd = getDisplayTime(item.endTime, item.endDate || item.date, timezone);
+                setScheduleForm({startDate: uiStart.date, startTime: uiStart.time, endDate: uiEnd.date, endTime: uiEnd.time}); setEditScheduleId(item.id); window.scrollTo({top:0,behavior:'smooth'}); 
+            };
+
+            const saveTimesheet = async (e) => {
+                e.preventDefault(); 
+                if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
+                if (!timesheetForm.scheduleId || !timesheetForm.date || !timesheetForm.startTime || !timesheetForm.endDate || !timesheetForm.endTime) return showNotify(t.common.requiredField, "error");
+
+                const startStr = `${timesheetForm.date}T${timesheetForm.startTime}`;
+                const endStr = `${timesheetForm.endDate || timesheetForm.date}T${timesheetForm.endTime}`;
+                if (endStr <= startStr) return showNotify(t.timesheet.timeError, "error"); 
+
+                if (timesheetForm.scheduleId) {
+                    if (timesheets.some(ts => String(ts.userId) === String(currentUser) && ts.scheduleId && String(ts.scheduleId) === String(timesheetForm.scheduleId) && ts.id !== editTimesheetId)) return showNotify(t.timesheet.duplicateError, "error");
+                    const selectedSchedule = schedules.find(s => String(s.id) === String(timesheetForm.scheduleId));
+                    if (selectedSchedule) {
+                        const schedStartEpoch = getEpochFromWIB(selectedSchedule.startDate || selectedSchedule.date, selectedSchedule.startTime);
+                        let schedEndEpoch = getEpochFromWIB(selectedSchedule.endDate || selectedSchedule.date, selectedSchedule.endTime);
+                        if (schedEndEpoch <= schedStartEpoch) schedEndEpoch += 86400000; 
+                        if (Date.now() < (schedEndEpoch - 120000)) return showNotify(t.timesheet.earlySubmitError, "error");
+                    }
+                }
+
+                const dbStart = getDbTime(timesheetForm.startTime, timesheetForm.date, timezone);
+                const dbEnd = getDbTime(timesheetForm.endTime, timesheetForm.endDate || timesheetForm.date, timezone);
+                const newStartEpoch = getEpochFromWIB(dbStart.date, dbStart.time);
+                let newEndEpoch = getEpochFromWIB(dbEnd.date, dbEnd.time);
+                if (newEndEpoch <= newStartEpoch) newEndEpoch += 86400000;
+
+                const isOverlap = timesheets.some(ts => {
+                    if (String(ts.userId) !== String(currentUser)) return false;
+                    if (editTimesheetId && ts.id === editTimesheetId) return false;
+                    const existStartEpoch = getEpochFromWIB(ts.date, ts.startTime);
+                    let existEndEpoch;
+                    if (ts.endTime) { existEndEpoch = getEpochFromWIB(ts.endDate || ts.date, ts.endTime); if (existEndEpoch <= existStartEpoch) existEndEpoch += 86400000; } else if (ts.duration) { existEndEpoch = existStartEpoch + (ts.duration * 60000); } else return false;
+                    return (newStartEpoch < existEndEpoch && newEndEpoch > existStartEpoch);
+                });
+
+                if (isOverlap) return showNotify(t.timesheet.overlapError, "error");
+
+                triggerConfirm(t.timesheet.confirmSubmit, async () => {
+                    setLoading(true);
+                    try {
+                        const d1 = new Date(`${dbStart.date}T${dbStart.time}:00Z`);
+                        let d2 = new Date(`${dbEnd.date}T${dbEnd.time}:00Z`);
+                        if (d2 < d1) d2.setUTCDate(d2.getUTCDate() + 1);
+                        const dur = Math.max(0, Math.round((d2 - d1) / 60000));
+                        if (dur <= 0) { setLoading(false); return showNotify(t.timesheet.timeError, "error"); }
+
+                        const idr = Math.round((dur/60) * RATES.id);
+                        const usd = ((dur/60) * RATES.en).toFixed(2); 
+                        
+                        const payload = { userId: currentUser, scheduleId: timesheetForm.scheduleId || '', date: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, duration: dur, paymentUSD: usd, paymentIDR: idr, status: 'pending', updatedAt: new Date().toISOString() };
+                        if (editTimesheetId) { await window.fs.updateDoc(window.fs.doc(window.db, 'timesheets', editTimesheetId), payload); } else { payload.createdAt = new Date().toISOString(); await window.fs.addDoc(window.fs.collection(window.db, 'timesheets'), payload); }
+                        showNotify(t.common.saved); setTimesheetForm({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' }); setEditTimesheetId(null);
+                    } catch(e) { showNotify(t.common.error, "error"); } finally { setLoading(false); }
+                });
+            };
+            
+            const deleteTimesheet = (id) => { 
+                triggerConfirm(t.common.delete + "?", async () => { 
+                    try {
+                        await window.fs.deleteDoc(window.fs.doc(window.db, 'timesheets', id)); 
+                    } catch(e) {
+                        showNotify(t.common.error, "error");
+                    }
+                }); 
+            };
+            
+            const editTimesheet = (item) => { 
+                const uiStart = getDisplayTime(item.startTime, item.date, timezone);
+                let finalEndDate = item.endDate || item.date;
+                let finalEndTime = item.endTime;
+
+                if (!finalEndTime && item.duration) {
+                     const startEpoch = getEpochFromWIB(item.date, item.startTime);
+                     const endEpoch = startEpoch + (item.duration * 60000);
+                     const d = new Date(endEpoch);
+                     const targetZone = TZ_CONFIG[timezone].iana || 'Asia/Jakarta';
+                     const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+                     const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
+                     finalEndDate = formatterDate.format(d);
+                     finalEndTime = formatterTime.format(d);
+                } else if (finalEndTime) {
+                     const uiEnd = getDisplayTime(finalEndTime, finalEndDate, timezone);
+                     finalEndDate = uiEnd.date;
+                     finalEndTime = uiEnd.time;
+                }
+
+                setTimesheetForm({ scheduleId: item.scheduleId || '', date: uiStart.date, startTime: uiStart.time, endDate: finalEndDate, endTime: finalEndTime || '' }); 
+                setEditTimesheetId(item.id); window.scrollTo({top:0,behavior:'smooth'}); 
+            };
+
+            const isAdmin = String(currentUser) === ADMIN_ID;
+            const activeVault = vaults[currentUser] || {};
+            const hasPaymentInfo = !!(activeVault.bankName && activeVault.accountNumber);
+
+            const activeU = users.find(u => String(u.id) === String(currentUser));
+            const pendingU = passwordModal.show ? users.find(u => String(u.id) === String(passwordModal.userId)) : null;
+            const displayU = activeU || pendingU;
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+                    {notify && <Notification msg={notify.msg} type={notify.type} onClose={() => setNotify(null)} />}
+                    {showProfileModal && <ProfileModal user={activeU} vault={activeVault} onClose={() => setShowProfileModal(false)} onSave={saveUserProfile} loading={loading} lang={lang} t={t} onChangePassword={() => { setShowProfileModal(false); setPasswordModal({show: true, mode: 'change', userId: currentUser}); }} showNotify={showNotify} />}
+                    {showUserModal && <UserModal user={editingUser} vault={editingUser ? vaults[editingUser.id] : null} onClose={() => {setShowUserModal(false); setEditingUser(null);}} onSave={handleSaveUser} loading={loading} t={t} showNotify={showNotify} />}
+                    {passwordModal.show && <PasswordModal mode={passwordModal.mode} userName={pendingU?.name} onSubmit={handlePasswordSubmit} onClose={() => setPasswordModal({ ...passwordModal, show: false })} loading={loading} t={t} showNotify={showNotify} isChangeMode={passwordModal.mode === 'change'} />}
+                    {confirmModal.show && <ConfirmationModal isOpen={confirmModal.show} message={confirmModal.message} onConfirm={executeConfirm} onCancel={() => setConfirmModal({ ...confirmModal, show: false })} t={t} />}
+
+                    <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
+                        <div className="px-4 pt-3 pb-2 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                                    <i className="fas fa-layer-group text-sm"></i>
+                                </div>
+                                <div>
+                                    <h1 className="font-bold text-lg text-slate-800 leading-tight tracking-tight">Scheduler</h1>
+                                    <p className="text-[10px] text-slate-400 font-medium tracking-wide flex items-center">REMOTE WORK</p>
+                                </div>
+                            </div>
+                            
+                            <div className="relative group flex items-center gap-2">
+                                {currentUser && (
+                                    <button onClick={handleLogout} title={t.common.logout} className="text-slate-400 hover:text-red-500 transition p-1.5 rounded-full hover:bg-red-50">
+                                        <i className="fas fa-sign-out-alt"></i>
+                                    </button>
+                                )}
+                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full pl-1 pr-3 py-1 shadow-sm group-hover:border-blue-300 transition-all cursor-pointer" title={t.tooltips.userSelect}>
+                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm" style={{backgroundColor: displayU ? displayU.color : '#94a3b8'}}>
+                                        {displayU ? displayU.name.substring(0,1) : <i className="fas fa-user"></i>}
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-600 max-w-[80px] truncate">
+                                        {displayU ? displayU.name : t.timesheet.selectUser}
+                                    </span>
+                                    <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                                    <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || passwordModal.userId || ''} onChange={(e) => handleUserChange(e.target.value)}>
+                                        <option value="" disabled>{t.timesheet.selectUser}</option>
+                                        {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="px-4 pb-3 flex flex-col gap-2">
+                             <div className="flex gap-2 mt-1">
+                                 <button onClick={() => setLang(l => l === 'id' ? 'en' : 'id')} title={t.tooltips.langToggle} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all active:scale-95">
+                                    <div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-600">{lang === 'id' ? 'ID' : 'EN'}</div>
+                                    <span className="text-[10px] font-semibold text-slate-600">{lang === 'id' ? 'Bahasa Indonesia' : 'English'}</span>
+                                 </button>
+
+                                 <div className="relative flex-1">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none"><i className="far fa-clock text-slate-400 text-xs"></i></div>
+                                    <select className="appearance-none w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer" value={timezone} title={t.tooltips.tzToggle} onChange={e => setTimezone(e.target.value)}>
+                                        {Object.keys(TZ_CONFIG).map(k => <option key={k} value={k}>{TZ_CONFIG[k].label}</option>)}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2.5 pointer-events-none"><i className="fas fa-chevron-down text-[10px] text-slate-400"></i></div>
+                                 </div>
+                                 <div className="flex items-center justify-center bg-slate-50 border border-slate-200 px-2 rounded-lg">
+                                     <InfoTooltip text={t.tooltips.tzInfo} align="right" />
+                                 </div>
+                             </div>
+                        </div>
+
+                        <div className="bg-amber-50 border-y border-amber-100 px-4 py-2 flex items-center gap-2">
+                            <i className="fas fa-exclamation-circle text-amber-500 text-xs flex-shrink-0"></i>
+                            <p className="text-[10px] text-amber-700 font-medium leading-tight">{t.common.reminder}</p>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 p-4">
+                        {loading && !users.length ? <div className="flex flex-col items-center justify-center h-64 text-slate-400"><i className="fas fa-circle-notch fa-spin text-4xl mb-3"></i><p>{t.common.loading}</p></div> : (
+                            <>
+                                {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={formatCurrency} lang={lang} timezone={timezone} />}
+                                {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} timezone={timezone} sysSettings={sysSettings} showNotify={showNotify} />}
+                                {view === 'timesheet' && <ReportManager saveTimesheet={saveTimesheet} timesheetForm={timesheetForm} setTimesheetForm={setTimesheetForm} loading={loading} timesheets={timesheets} schedules={schedules} getUserName={getUserName} currentUser={currentUser} deleteTimesheet={deleteTimesheet} editTimesheetId={editTimesheetId} setEditTimesheetId={setEditTimesheetId} editTimesheet={editTimesheet} hasPaymentInfo={hasPaymentInfo} onOpenProfile={() => setShowProfileModal(true)} isAdmin={isAdmin} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} showNotify={showNotify} />}
+                                {view === 'analytics' && <AnalyticsView timesheets={timesheets} schedules={schedules} users={users} currentUser={currentUser} isAdmin={isAdmin} loading={loading} lang={lang} t={t} formatCurrency={formatCurrency} timezone={timezone} />}
+                                {view === 'admin' && isAdmin && <AdminPanel timesheets={timesheets} users={users} schedules={schedules} vaults={vaults} loading={loading} setLoading={setLoading} showNotify={showNotify} t={t} lang={lang} formatCurrency={formatCurrency} onAddUser={() => { setEditingUser(null); setShowUserModal(true); }} onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }} onDeleteUser={handleDeleteUser} onConfirmAction={triggerConfirm} sysSettings={sysSettings} updateSettings={updateSysSettings} getUserColor={getUserColor} timezone={timezone} />}
+                            </>
+                        )}
+                    </main>
+
+                    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 z-30 max-w-md mx-auto">
+                        <div className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} gap-1 px-2`}>
+                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}><i className="fas fa-home text-lg mb-1"></i> <span className="text-[10px] font-medium">{t.nav.home}</span></button>
+                            <button onClick={() => setView('schedule')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'schedule' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}><i className="fas fa-calendar-alt text-lg mb-1"></i> <span className="text-[10px] font-medium">{t.nav.schedule}</span></button>
+                            <button onClick={() => setView('timesheet')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'timesheet' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}><i className="fas fa-file-invoice-dollar text-lg mb-1"></i> <span className="text-[10px] font-medium">{t.nav.timesheet}</span></button>
+                            <button onClick={() => setView('analytics')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'analytics' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}><i className="fas fa-chart-pie text-lg mb-1"></i> <span className="text-[10px] font-medium">{t.nav.analytics}</span></button>
+                            {isAdmin && <button onClick={() => setView('admin')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'admin' ? 'text-purple-600 bg-purple-50' : 'text-slate-400 hover:bg-slate-50'}`}><i className="fas fa-user-shield text-lg mb-1"></i> <span className="text-[10px] font-medium">{t.nav.admin}</span></button>}
+                        </div>
+                    </nav>
                 </div>
             );
         };
