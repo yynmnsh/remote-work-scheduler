@@ -54,13 +54,12 @@
                 extend: {
                     colors: { primary: '#2563eb', secondary: '#475569', success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' },
                     animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        'fade-in': 'fadeIn 0.4s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
                     },
                     keyframes: {
                         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { transform: 'translateY(15px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                        slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
                     }
                 }
             }
@@ -163,13 +162,11 @@
                     accLabel: 'Nomor Rekening', saved: 'Info disimpan!' 
                 },
                 auth: { 
-                    createTitle: 'Buat Password Baru', loginTitle: 'Login', passLabel: 'Password', 
-                    newPassLabel: 'Password Baru', createBtn: 'Buat & Masuk', loginBtn: 'Masuk', 
-                    successCreate: 'Akun diklaim! Otentikasi resmi berhasil.', successChange: 'Password diubah!', 
-                    errorPass: 'Sandi salah / Akun belum disetup!', errorSame: 'Password baru tidak boleh sama!', 
-                    changeTitle: 'Ubah Password', changeBtn: 'Simpan', confirmChange: 'Yakin ubah password?', 
-                    errorSavePass: 'Gagal simpan password', errorUpdatePass: 'Sesi habis, silakan re-login lalu coba lagi.', 
-                    successLogin: 'Login Berhasil!' 
+                    loginTitle: 'Otorisasi Akun', changeTitle: 'Ubah Password', 
+                    loginBtn: 'Lanjutkan', changeBtn: 'Simpan Sandi', 
+                    successLogin: 'Otentikasi berhasil!', successChange: 'Password diubah!', 
+                    errorPass: 'Sandi salah atau koneksi gagal!', errorSame: 'Password tidak boleh sama!', 
+                    confirmChange: 'Yakin ubah password?', errorUpdatePass: 'Sesi habis, silakan re-login lalu coba lagi.'
                 },
                 tooltips: { 
                     tzToggle: 'Pilih Zona Waktu', langToggle: 'Ganti Bahasa', sortToggle: 'Urutkan Jadwal', 
@@ -246,12 +243,11 @@
                     saved: 'Info saved!' 
                 },
                 auth: { 
-                    createTitle: 'Create New Password', loginTitle: 'Login', passLabel: 'Password', newPassLabel: 'New Password', 
-                    createBtn: 'Create & Login', loginBtn: 'Login', successCreate: 'Account claimed! Registration successful.', 
-                    successChange: 'Password updated successfully!', errorPass: 'Wrong password or User not found!', 
-                    errorSame: 'New password cannot be the same!', changeTitle: 'Change Password', changeBtn: 'Save', 
-                    confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', 
-                    errorUpdatePass: 'Session expired, please re-login and try again.', successLogin: 'Login Success!' 
+                    loginTitle: 'Account Authorization', changeTitle: 'Change Password', 
+                    loginBtn: 'Proceed', changeBtn: 'Save Password', 
+                    successLogin: 'Authentication successful!', successChange: 'Password updated successfully!', 
+                    errorPass: 'Wrong password or network error!', errorSame: 'New password cannot be the same!', 
+                    confirmChange: 'Are you sure you want to change password?', errorUpdatePass: 'Session expired, please re-login and try again.'
                 },
                 tooltips: { 
                     tzToggle: 'Select Timezone', langToggle: 'Change Language', sortToggle: 'Sort Schedules', 
@@ -368,29 +364,28 @@
             );
         };
 
-        const PasswordModal = ({ mode, userName, onSubmit, onClose, loading, t, showNotify }) => {
+        const PasswordModal = ({ userName, onSubmit, onClose, loading, t, showNotify, isChangeMode }) => {
             const [password, setPassword] = React.useState('');
             const handleSubmit = (e) => { e.preventDefault(); if (!password) return showToastError(showNotify, t.common.requiredField); onSubmit(password); };
-            let title = mode === 'create' ? t.auth.createTitle : mode === 'change' ? t.auth.changeTitle : t.auth.loginTitle;
-            let btnText = mode === 'create' ? t.auth.createBtn : mode === 'change' ? t.auth.changeBtn : t.auth.loginBtn;
-
+            
             return (
                  <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-slate-800">
-                                {title}
+                                {isChangeMode ? t.auth.changeTitle : t.auth.loginTitle}
                                 {userName && <span className="text-blue-600 border-l-2 border-slate-200 pl-2 ml-2">{userName}</span>}
                             </h3>
                             <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{mode === 'change' || mode === 'create' ? t.auth.newPassLabel : t.auth.passLabel}</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{isChangeMode ? t.auth.newPassLabel : t.auth.passLabel}</label>
                                 <input type="password" required className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={password} onChange={e => setPassword(e.target.value)} autoFocus placeholder="******" />
+                                {!isChangeMode && <p className="text-[10px] text-slate-400 mt-2 leading-snug">Jika ini pertama kali, password yang Anda ketik akan didaftarkan sebagai sandi permanen.</p>}
                             </div>
                             <div className="mt-6">
-                                <button type="submit" disabled={loading} className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">{loading ? <Spinner/> : btnText}</button>
+                                <button type="submit" disabled={loading || !password} className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50">{loading ? <Spinner/> : (isChangeMode ? t.auth.changeBtn : t.auth.loginBtn)}</button>
                             </div>
                         </form>
                     </div>
@@ -749,7 +744,7 @@
                     </div>
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
-                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2"><span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>{t.dashboard.workingNow}</h3>
+                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2"><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>{t.dashboard.workingNow}</h3>
                             <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">{currentTimeDisplay} {TZ_CONFIG[timezone].label}</span>
                         </div>
                         {activeWorkers.length > 0 ? (
@@ -1527,7 +1522,9 @@
                     try {
                         const oldUsersSnap = await window.fs.getDocs(window.fs.collection(window.db, 'users'));
                         if (!oldUsersSnap.empty) {
+                            showNotify("Memulai sinkronisasi data lama...", "success");
                             const batch = window.fs.writeBatch(window.db);
+                            let count = 0;
                             oldUsersSnap.docs.forEach(docSnap => {
                                 const data = docSnap.data();
                                 batch.set(window.fs.doc(window.db, 'public_profiles', docSnap.id), { 
@@ -1536,29 +1533,20 @@
                                 batch.set(window.fs.doc(window.db, 'private_vault', docSnap.id), { 
                                     bankName: data.bankName || '', accountNumber: data.accountNumber || '' 
                                 }, {merge: true});
+                                count++;
                             });
                             await batch.commit();
+                            showNotify(`Berhasil memulihkan ${count} akun! Refresh halaman.`, "success", 10000);
                         }
                     } catch(err) {
-                        // Jika kena permission-denied (artinya rules sudah ketat), abaikan saja.
+                        if (err.code !== 'permission-denied') {
+                            console.error("Migration error:", err);
+                        }
                     }
                     
                     window.fs.onSnapshot(window.fs.collection(window.db, 'public_profiles'), (snapshot) => {
                         const fetchedUsers = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                        if(fetchedUsers.length === 0) { 
-                            setUsers(INITIAL_USERS); 
-                            INITIAL_USERS.forEach(async (u) => {
-                                try {
-                                    await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', u.id), { 
-                                        name: u.name, color: u.color, hidden: u.hidden 
-                                    });
-                                } catch(e) {
-                                    // Abaikan error permission-denied saat init pertama
-                                }
-                            }); 
-                        } else { 
-                            setUsers(fetchedUsers); 
-                        }
+                        setUsers(fetchedUsers); 
                     }, (err) => {
                         console.error("Profiles error:", err.message);
                     });
@@ -1711,8 +1699,7 @@
                 }
             };
 
-            const handleUserChange = (e) => { 
-                const selectedId = e.target.value; 
+            const handleUserChange = (selectedId) => { 
                 if (!selectedId) return;
                 
                 const currentEmail = window.auth.currentUser?.email;
@@ -1721,12 +1708,7 @@
                 if (currentEmail === targetEmail) {
                     setCurrentUser(selectedId);
                 } else {
-                    const u = users.find(x => String(x.id) === String(selectedId));
-                    if(u && !u.authUid) {
-                        setPasswordModal({ show: true, mode: 'create', userId: selectedId }); 
-                    } else {
-                        setPasswordModal({ show: true, mode: 'login', userId: selectedId }); 
-                    }
+                    setPasswordModal({ show: true, mode: 'login', userId: selectedId }); 
                 }
             };
 
@@ -1736,27 +1718,23 @@
                 
                 setLoading(true);
                 try {
-                    // Double-check fallback: always try to log in first.
-                    let userCredential;
-                    try {
-                        userCredential = await window.fa.signInWithEmailAndPassword(window.auth, email, password);
-                    } catch (err) {
-                        // If user doesn't exist, and we're supposed to create OR login (fallback)
-                        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                             try {
-                                 userCredential = await window.fa.createUserWithEmailAndPassword(window.auth, email, password);
-                             } catch(regErr) {
-                                 throw err; // throw original error if registration fails (e.g. invalid password)
-                             }
-                        } else {
-                            throw err;
+                    if (mode === 'login') {
+                        let userCredential;
+                        try {
+                            userCredential = await window.fa.signInWithEmailAndPassword(window.auth, email, password);
+                        } catch (err) {
+                            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                                 try {
+                                     userCredential = await window.fa.createUserWithEmailAndPassword(window.auth, email, password);
+                                 } catch(regErr) {
+                                     throw err;
+                                 }
+                            } else {
+                                throw err;
+                            }
                         }
-                    }
-                    
-                    // If we get here, authentication was successful (either existing or new)
-                    if (mode === 'create' || mode === 'login') {
+                        
                         if (userCredential && userCredential.user) {
-                            // Link the new Auth UID to the profile
                             await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', userId), { authUid: userCredential.user.uid }, { merge: true });
                         }
                         
@@ -1767,6 +1745,8 @@
                             await window.fa.updatePassword(window.auth.currentUser, password);
                             showNotify(t.auth.successChange, 'success'); 
                             setPasswordModal(prev => ({ ...prev, show: false }));
+                        } else {
+                             throw new Error(t.auth.errorUpdatePass);
                         }
                     }
                 } catch(err) {
@@ -1941,7 +1921,7 @@
                     {notify && <Notification msg={notify.msg} type={notify.type} onClose={() => setNotify(null)} />}
                     {showProfileModal && <ProfileModal user={activeU} vault={activeVault} onClose={() => setShowProfileModal(false)} onSave={saveUserProfile} loading={loading} lang={lang} t={t} onChangePassword={() => { setShowProfileModal(false); setPasswordModal({show: true, mode: 'change', userId: currentUser}); }} showNotify={showNotify} />}
                     {showUserModal && <UserModal user={editingUser} vault={editingUser ? vaults[editingUser.id] : null} onClose={() => {setShowUserModal(false); setEditingUser(null);}} onSave={handleSaveUser} loading={loading} t={t} showNotify={showNotify} />}
-                    {passwordModal.show && <PasswordModal mode={passwordModal.mode} userName={pendingU?.name} onSubmit={handlePasswordSubmit} onClose={() => setPasswordModal({ ...passwordModal, show: false })} loading={loading} t={t} showNotify={showNotify} />}
+                    {passwordModal.show && <PasswordModal mode={passwordModal.mode} userName={pendingU?.name} onSubmit={handlePasswordSubmit} onClose={() => setPasswordModal({ ...passwordModal, show: false })} loading={loading} t={t} showNotify={showNotify} isChangeMode={passwordModal.mode === 'change'} />}
                     {confirmModal.show && <ConfirmationModal isOpen={confirmModal.show} message={confirmModal.message} onConfirm={executeConfirm} onCancel={() => setConfirmModal({ ...confirmModal, show: false })} t={t} />}
 
                     <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
@@ -1970,8 +1950,8 @@
                                         {displayU ? displayU.name : t.timesheet.selectUser}
                                     </span>
                                     <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
-                                    <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || ''} onChange={handleUserChange}>
-                                        <option value="">{t.timesheet.selectUser}</option>
+                                    <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || ''} onChange={(e) => handleUserChange(e.target.value)}>
+                                        <option value="" disabled>{t.timesheet.selectUser}</option>
                                         {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                     </select>
                                 </div>
@@ -2005,7 +1985,7 @@
                     </header>
 
                     <main className="flex-1 p-4">
-                        {loading && !users.length ? <div className="flex flex-col items-center justify-center h-64 text-slate-400 animate-pulse"><i className="fas fa-database text-4xl mb-3"></i><p>{t.common.loading}</p></div> : (
+                        {loading && !users.length ? <div className="flex flex-col items-center justify-center h-64 text-slate-400"><i className="fas fa-circle-notch fa-spin text-4xl mb-3"></i><p>{t.common.loading}</p></div> : (
                             <>
                                 {view === 'dashboard' && <DashboardView currentUser={currentUser} getUserName={getUserName} timesheets={timesheets} schedules={schedules} users={users} getUserColor={getUserColor} onEditProfile={() => { if(!currentUser) return showNotify(t.timesheet.selectUser, "error"); setShowProfileModal(true); }} setView={setView} t={t} formatCurrency={formatCurrency} lang={lang} timezone={timezone} />}
                                 {view === 'schedule' && <ScheduleManager editScheduleId={editScheduleId} setEditScheduleId={setEditScheduleId} scheduleForm={scheduleForm} setScheduleForm={setScheduleForm} saveSchedule={saveSchedule} loading={loading} schedules={schedules} currentUser={currentUser} getUserColor={getUserColor} getUserName={getUserName} deleteSchedule={deleteSchedule} editSchedule={editSchedule} isAdmin={isAdmin} lang={lang} t={t} timezone={timezone} sysSettings={sysSettings} showNotify={showNotify} />}
