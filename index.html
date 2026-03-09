@@ -100,7 +100,10 @@
                     unitShort: 'j', unitMin: 'm', reminder: 'Periksa zona waktu & bahasa.', 
                     saved: 'Tersimpan!', error: 'Terjadi Kesalahan', unknown: 'Tidak diketahui', 
                     you: 'ANDA', new: 'BARU', est: 'Perkiraan', pst: 'PST', requiredField: 'Mohon lengkapi semua kolom.', 
-                    selectDate: 'Pilih Tanggal', selectTime: 'Pilih Waktu', logout: 'Keluar Akun' 
+                    selectDate: 'Pilih Tanggal', selectTime: 'Pilih Waktu', logout: 'Keluar Akun',
+                    migrating: 'Memulai sinkronisasi data lama...', migrateSuccess: 'Berhasil memulihkan {count} akun! Refresh halaman.',
+                    migrateError: 'Gagal memuat data dari database. Cek Aturan Keamanan.', dbError: 'Koneksi basis data bermasalah.',
+                    logoutSuccess: 'Berhasil keluar dari akun.'
                 },
                 dashboard: { 
                     hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', 
@@ -109,7 +112,7 @@
                 },
                 schedule: { 
                     booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim', 
-                    used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Booked by', conflict: 'Bentrok dengan', 
+                    used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', 
                     full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', 
                     deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', 
                     upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', 
@@ -135,7 +138,7 @@
                     actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', 
                     viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', 
                     statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', 
-                    statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', 
+                    statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Berdasarkan hari/tanggal PST', 
                     labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', 
                     totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', 
                     passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' 
@@ -162,11 +165,14 @@
                     accLabel: 'Nomor Rekening', saved: 'Info disimpan!' 
                 },
                 auth: { 
-                    loginTitle: 'Otorisasi Akun', changeTitle: 'Ubah Password', 
-                    loginBtn: 'Lanjutkan', changeBtn: 'Simpan Sandi', 
-                    successLogin: 'Otentikasi berhasil!', successChange: 'Password diubah!', 
-                    errorPass: 'Sandi salah atau koneksi gagal!', errorSame: 'Password tidak boleh sama!', 
-                    confirmChange: 'Yakin ubah password?', errorUpdatePass: 'Sesi habis, silakan re-login lalu coba lagi.'
+                    createTitle: 'Buat Password Baru', loginTitle: 'Otorisasi Akun', passLabel: 'Password', 
+                    newPassLabel: 'Password Baru', createBtn: 'Buat & Masuk', loginBtn: 'Masuk', 
+                    successCreate: 'Akun diklaim! Otentikasi resmi berhasil.', successChange: 'Password diubah!', 
+                    errorPass: 'Sandi salah atau koneksi gagal!', errorSame: 'Password baru tidak boleh sama!', 
+                    changeTitle: 'Ubah Password', changeBtn: 'Simpan', confirmChange: 'Yakin ubah password?', 
+                    errorSavePass: 'Gagal simpan password', errorUpdatePass: 'Sesi habis, silakan re-login lalu coba lagi.', 
+                    successLogin: 'Login Berhasil!', firstTimeHint: 'Jika ini pertama kali, sandi yang Anda ketik akan didaftarkan permanen (Min. 6 karakter).',
+                    errorWeakPass: 'Sandi terlalu pendek! Minimal 6 karakter.'
                 },
                 tooltips: { 
                     tzToggle: 'Pilih Zona Waktu', langToggle: 'Ganti Bahasa', sortToggle: 'Urutkan Jadwal', 
@@ -185,7 +191,10 @@
                     unitMin: 'm', reminder: 'Check timezone & language.', saved: 'Saved!', error: 'Error occurred', 
                     unknown: 'Unknown', you: 'YOU', new: 'NEW', est: 'Est.', pst: 'PST', 
                     requiredField: 'Please fill out all required fields.', selectDate: 'Select Date', 
-                    selectTime: 'Select Time', logout: 'Logout' 
+                    selectTime: 'Select Time', logout: 'Logout',
+                    migrating: 'Synchronizing legacy data...', migrateSuccess: 'Successfully recovered {count} accounts! Refreshing...',
+                    migrateError: 'Failed to load database. Check Security Rules.', dbError: 'Database connection issue.',
+                    logoutSuccess: 'Successfully logged out.'
                 },
                 dashboard: { 
                     hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', 
@@ -219,7 +228,7 @@
                     paymentHistory: 'Payment History', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', 
                     modeLocal: 'Local Time', modeOp: 'Op Hours (US)', statusOnTrack: 'On Schedule', statusUnder: 'Under Time', 
                     statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', 
-                    logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', 
+                    logicPacific: 'Based on PST day/date', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', 
                     tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings', changePass: 'Change Password', 
                     passTitle: 'Account Security', noPayHistory: 'No payment history.', reportTime: 'Report Time' 
                 },
@@ -243,11 +252,14 @@
                     saved: 'Info saved!' 
                 },
                 auth: { 
-                    loginTitle: 'Account Authorization', changeTitle: 'Change Password', 
-                    loginBtn: 'Proceed', changeBtn: 'Save Password', 
-                    successLogin: 'Authentication successful!', successChange: 'Password updated successfully!', 
-                    errorPass: 'Wrong password or network error!', errorSame: 'New password cannot be the same!', 
-                    confirmChange: 'Are you sure you want to change password?', errorUpdatePass: 'Session expired, please re-login and try again.'
+                    createTitle: 'Create New Password', loginTitle: 'Account Authorization', passLabel: 'Password', newPassLabel: 'New Password', 
+                    createBtn: 'Create & Login', loginBtn: 'Login', successCreate: 'Account claimed! Registration successful.', 
+                    successChange: 'Password updated successfully!', errorPass: 'Wrong password or account not found!', 
+                    errorSame: 'New password cannot be the same!', changeTitle: 'Change Password', changeBtn: 'Save', 
+                    confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', 
+                    errorUpdatePass: 'Session expired, please re-login and try again.', successLogin: 'Login Success!',
+                    firstTimeHint: 'If this is your first time, the password you enter will be registered permanently (Min. 6 chars).',
+                    errorWeakPass: 'Password is too weak! Minimum 6 characters.'
                 },
                 tooltips: { 
                     tzToggle: 'Select Timezone', langToggle: 'Change Language', sortToggle: 'Sort Schedules', 
@@ -382,7 +394,7 @@
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">{isChangeMode ? t.auth.newPassLabel : t.auth.passLabel}</label>
                                 <input type="password" required className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={password} onChange={e => setPassword(e.target.value)} autoFocus placeholder="******" />
-                                {!isChangeMode && <p className="text-[10px] text-slate-400 mt-2 leading-snug">Jika ini pertama kali, password yang Anda ketik akan didaftarkan sebagai sandi permanen.</p>}
+                                {!isChangeMode && <p className="text-[10px] text-slate-400 mt-2 leading-snug">{t.auth.firstTimeHint}</p>}
                             </div>
                             <div className="mt-6">
                                 <button type="submit" disabled={loading || !password} className="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-50">{loading ? <Spinner/> : (isChangeMode ? t.auth.changeBtn : t.auth.loginBtn)}</button>
@@ -668,7 +680,7 @@
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
                                         <h3 className="font-bold text-slate-700 text-sm">{t.analytics.teamActivity}</h3>
-                                        <p className="text-[9px] text-slate-400 mt-0.5">* {lang === 'id' ? 'Berdasarkan hari/tanggal PST' : 'Based on PST day/date'}</p>
+                                        <p className="text-[9px] text-slate-400 mt-0.5">* {t.analytics.logicPacific}</p>
                                     </div>
                                     <span className="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded">{t.analytics.totalHours}: {totalActivityHours.toFixed(1)}{t.common.unitShort}</span>
                                 </div>
@@ -699,7 +711,7 @@
             );
         };
 
-        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, users, getUserColor, onEditProfile, setView, t, formatCurrency, lang, timezone }) => {
+        const DashboardView = ({ currentUser, getUserName, timesheets, schedules, users, getUserColor, onEditProfile, setView, t, formatCurrency, lang, timezone, onLogout }) => {
             const myPending = timesheets.filter(ts => String(ts.userId) === String(currentUser) && ts.status === 'pending');
             const estEarned = (myPending.reduce((acc, ts) => acc + (parseInt(ts.duration) || 0), 0) / 60) * RATES[lang];
             let periodText = t.dashboard.noSchedule;
@@ -730,7 +742,9 @@
                     <div className="bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden hover:shadow-xl transition-all">
                         <div className="relative z-10 flex justify-between items-start">
                             <div><h2 className="text-xl font-bold flex items-center gap-2">{t.dashboard.hello}, {currentUser ? getUserName(currentUser) : t.dashboard.team}!</h2><p className="text-blue-200 text-xs mt-0.5">Remote Work Scheduler</p></div>
-                            <button onClick={onEditProfile} title={t.tooltips.settings} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition backdrop-blur-sm"><i className="fas fa-cog text-white text-sm"></i></button>
+                            <div className="flex gap-2">
+                                <button onClick={onEditProfile} title={t.tooltips.settings} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition backdrop-blur-sm"><i className="fas fa-cog text-white text-sm"></i></button>
+                            </div>
                         </div>
                         <div className="relative z-10 mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 flex justify-between items-center">
                             <div>
@@ -744,7 +758,10 @@
                     </div>
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
-                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2"><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>{t.dashboard.workingNow}</h3>
+                            <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                {t.dashboard.workingNow}
+                            </h3>
                             <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-mono">{currentTimeDisplay} {TZ_CONFIG[timezone].label}</span>
                         </div>
                         {activeWorkers.length > 0 ? (
@@ -1518,11 +1535,10 @@
                 const initData = async () => {
                     if (!window.db) return;
 
-                    // Skrip Migrasi 1x Jalan: Pindahkan data dari 'users' ke 'public_profiles' & 'private_vault'
                     try {
                         const oldUsersSnap = await window.fs.getDocs(window.fs.collection(window.db, 'users'));
                         if (!oldUsersSnap.empty) {
-                            showNotify("Memulai sinkronisasi data lama...", "success");
+                            showNotify(t.common.migrating, "success");
                             const batch = window.fs.writeBatch(window.db);
                             let count = 0;
                             oldUsersSnap.docs.forEach(docSnap => {
@@ -1536,7 +1552,7 @@
                                 count++;
                             });
                             await batch.commit();
-                            showNotify(`Berhasil memulihkan ${count} akun! Refresh halaman.`, "success", 10000);
+                            showNotify(t.common.migrateSuccess.replace('{count}', count), "success", 10000);
                         }
                     } catch(err) {
                         if (err.code !== 'permission-denied') {
@@ -1546,7 +1562,18 @@
                     
                     window.fs.onSnapshot(window.fs.collection(window.db, 'public_profiles'), (snapshot) => {
                         const fetchedUsers = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                        setUsers(fetchedUsers); 
+                        if(fetchedUsers.length === 0) { 
+                            setUsers(INITIAL_USERS); 
+                            INITIAL_USERS.forEach(async (u) => {
+                                try {
+                                    await window.fs.setDoc(window.fs.doc(window.db, 'public_profiles', u.id), { 
+                                        name: u.name, color: u.color, hidden: u.hidden 
+                                    });
+                                } catch(e) {}
+                            }); 
+                        } else { 
+                            setUsers(fetchedUsers); 
+                        }
                     }, (err) => {
                         console.error("Profiles error:", err.message);
                     });
@@ -1693,7 +1720,7 @@
                 try {
                     await window.fa.signOut(window.auth);
                     setCurrentUser(null);
-                    showNotify(t.common.logout + " sukses");
+                    showNotify(t.common.logoutSuccess);
                 } catch(e) {
                     console.error("Logout failed:", e);
                 }
@@ -1727,6 +1754,9 @@
                                  try {
                                      userCredential = await window.fa.createUserWithEmailAndPassword(window.auth, email, password);
                                  } catch(regErr) {
+                                     if (regErr.code === 'auth/weak-password') {
+                                         throw new Error(t.auth.errorWeakPass);
+                                     }
                                      throw err;
                                  }
                             } else {
@@ -1750,8 +1780,8 @@
                         }
                     }
                 } catch(err) {
-                    showNotify(t.auth.errorPass, "error");
-                    console.error("Auth Error:", err);
+                    // Tampilkan pesan error spesifik jika dilempar dari blok catch
+                    showNotify(err.message === t.auth.errorWeakPass ? err.message : t.auth.errorPass, "error");
                 } finally {
                     setLoading(false); 
                 }
@@ -1950,7 +1980,7 @@
                                         {displayU ? displayU.name : t.timesheet.selectUser}
                                     </span>
                                     <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
-                                    <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || ''} onChange={(e) => handleUserChange(e.target.value)}>
+                                    <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || passwordModal.userId || ''} onChange={(e) => handleUserChange(e.target.value)}>
                                         <option value="" disabled>{t.timesheet.selectUser}</option>
                                         {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                     </select>
