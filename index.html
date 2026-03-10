@@ -19,6 +19,8 @@
             getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, 
             onSnapshot, query, orderBy, setDoc, where, writeBatch, getDoc 
         } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        // Mengembalikan modul Auth untuk Opsi Keamanan
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-5NB0IjJff_-yXSBqSqZLJihx6kHvj2g",
@@ -32,22 +34,19 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app); // Inisialisasi Auth
         
         window.db = db;
-        window.fs = { 
-            collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, 
-            onSnapshot, query, orderBy, setDoc, where, writeBatch 
-        };
+        window.auth = auth;
+        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch };
+        window.fa = { signInAnonymously }; // Menyediakan fungsi untuk dipanggil di React
     </script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { 
-                        primary: '#2563eb', secondary: '#475569', 
-                        success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' 
-                    },
+                    colors: { primary: '#2563eb', secondary: '#475569', success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' },
                     animation: {
                         'fade-in': 'fadeIn 0.5s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
@@ -73,6 +72,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        /* --- CONSTANTS & CONFIGURATION --- */
         const ADMIN_ID = '9'; 
         const RATES = { id: 240000, en: 15 };
         const TZ_CONFIG = {
@@ -85,12 +85,13 @@
             { id: '9', name: 'Yayan', color: '#a855f7', hidden: false },
         ];
 
+        /* --- CLEANED TRANSLATION DICTIONARY --- */
         const TRANSLATIONS = {
             id: {
                 nav: { home: 'Beranda', schedule: 'Jadwal', timesheet: 'Laporan', analytics: 'Analitik', admin: 'Admin' },
                 common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', clear: 'Bersihkan', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'j', unitMin: 'm', reminder: 'Periksa zona waktu & bahasa.', saved: 'Tersimpan!', error: 'Terjadi Kesalahan', unknown: 'Tidak diketahui', you: 'ANDA', new: 'BARU', est: 'Perkiraan', pst: 'PST', requiredField: 'Mohon lengkapi semua kolom.', selectDate: 'Pilih Tanggal', selectTime: 'Pilih Waktu', logout: 'Keluar Akun' },
                 dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada aktivitas.', until: 'hingga' },
-                schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim', used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
+                schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian', used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
                 timesheet: { title: 'Input Laporan', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun', confirmSubmit: 'Data laporan akurat?', accessRestricted: 'Akses Terbatas', selectSchedule: 'Pilih Jadwal', adhoc: 'Ad-Hoc (Tanpa Jadwal)', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan jadwal ini sudah ada!', requireSchedule: 'Pilih Jadwal dulu!', earlySubmitError: 'Jadwal belum selesai!' },
                 analytics: { myStats: 'Kinerja (7 Hari)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Set Sandi/PIN', passPlaceholder: 'Ketik sandi baru untuk user ini', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'Isi HANYA untuk mengubah password.', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzAEDT: 'Offset AEDT', tzPST: 'Offset PST' },
@@ -112,6 +113,7 @@
             }
         };
 
+        /* --- CRYPTOGRAPHY --- */
         const hashPassword = async (text) => {
             if (!text) return text;
             const msgUint8 = new TextEncoder().encode(text);
@@ -120,6 +122,7 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         };
 
+        /* --- HELPER FUNCTIONS --- */
         const formatDate = (dateString, lang = 'id') => {
             if (!dateString) return '';
             let dateObj = dateString.includes('T') ? new Date(dateString) : new Date(dateString.split('-')[0], dateString.split('-')[1]-1, dateString.split('-')[2]);
@@ -130,6 +133,10 @@
             if (!dateString) return '';
             let dateObj = dateString.includes('T') ? new Date(dateString) : new Date(dateString.split('-')[0], dateString.split('-')[1]-1, dateString.split('-')[2]);
             return dateObj.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+        };
+
+        const formatTimeInZone = (dateObj, timeZone) => {
+            return dateObj.toLocaleTimeString('en-US', { timeZone, hour12: false, hour: '2-digit', minute: '2-digit' });
         };
 
         const getEpochFromWIB = (dateStr, timeStr) => {
@@ -1190,33 +1197,37 @@
         };
         
         const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify }) => {
-            if (!currentUser) return (
-                <div className="space-y-4 fade-in">
-                    <div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center">
-                        <div className="flex flex-col items-center gap-3 mb-3">
-                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                                <i className="fas fa-user-lock text-blue-500 text-2xl"></i>
+            if (!currentUser) {
+                return (
+                    <div className="space-y-4 fade-in">
+                        <div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center">
+                            <div className="flex flex-col items-center gap-3 mb-3">
+                                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i className="fas fa-user-lock text-blue-500 text-2xl"></i>
+                                </div>
+                                <h3 className="font-bold text-blue-800 text-lg">{t.timesheet.accessRestricted}</h3>
                             </div>
-                            <h3 className="font-bold text-blue-800 text-lg">{t.timesheet.accessRestricted}</h3>
+                            <p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p>
                         </div>
-                        <p className="text-sm text-blue-600 mb-6 max-w-xs mx-auto">{t.timesheet.selectUser}</p>
                     </div>
-                </div>
-            );
+                );
+            }
 
-            if (!hasPaymentInfo) return (
-                <div className="space-y-4 fade-in">
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm">
-                        <div className="flex items-center gap-3 mb-2">
-                            <i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
-                            <h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3>
+            if (!hasPaymentInfo) {
+                return (
+                    <div className="space-y-4 fade-in">
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm">
+                            <div className="flex items-center gap-3 mb-2">
+                                <i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                                <h3 className="font-bold text-yellow-700">{t.timesheet.payInfo}</h3>
+                            </div>
+                            <button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">
+                                {t.timesheet.fillPayInfo}
+                            </button>
                         </div>
-                        <button onClick={onOpenProfile} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition shadow-md active:scale-95">
-                            {t.timesheet.fillPayInfo}
-                        </button>
                     </div>
-                </div>
-            );
+                );
+            }
 
             const [showHistory, setShowHistory] = React.useState(false); 
             const filteredTimesheets = timesheets
@@ -1875,7 +1886,18 @@
                     }, (err) => console.error(err));
                 };
                 
-                initData();
+                // Implementasi Opsi 2: Ambil Karcis Anonymous sebelum menarik data
+                if (window.fa && window.auth) {
+                    window.fa.signInAnonymously(window.auth).then(() => {
+                        initData();
+                    }).catch(err => {
+                        console.error("Anonymous auth failed (might be preview environment):", err);
+                        // Fallback ke initData meskipun gagal, berjaga-jaga jika rules masih terbuka
+                        initData();
+                    });
+                } else {
+                    initData();
+                }
                 
             }, []);
 
@@ -1976,6 +1998,7 @@
                         showNotify(t.auth.successCreate, 'success');
                     } else if (mode === 'login') {
                         if (user && (user.password === password || user.password === hashed)) {
+                            // Upgrade plain text silently if it matches exactly
                             if (user.password === password) {
                                 await window.fs.updateDoc(window.fs.doc(window.db, 'users', targetId), { password: hashed });
                             }
@@ -2154,7 +2177,13 @@
 
             return (
                 <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
-                    {notify && <Notification msg={notify.msg} type={notify.type} onClose={() => setNotify(null)} />}
+                    {notify && (
+                        <Notification 
+                            msg={notify.msg} 
+                            type={notify.type} 
+                            onClose={() => setNotify(null)} 
+                        />
+                    )}
                     
                     {showProfileModal && (
                         <ProfileModal 
