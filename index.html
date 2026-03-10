@@ -961,7 +961,7 @@
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
             const isCritical = remainingMinutes < 60;
-            const isFormDirty = scheduleForm.startDate !== '' || scheduleForm.startTime !== '15:00' || scheduleForm.endDate !== '' || scheduleForm.endTime !== '16:00';
+            const isFormDirty = scheduleForm.startDate !== '' || scheduleForm.startTime !== '14:00' || scheduleForm.endDate !== '' || scheduleForm.endTime !== '15:00';
 
             const filteredSchedules = React.useMemo(() => {
                 let filtered = [...schedules];
@@ -1025,11 +1025,11 @@
                                 </h3>
                                 <div className="flex items-center gap-2">
                                     {editScheduleId ? (
-                                        <button type="button" title={t.common.cancel} onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'15:00', endDate: '', endTime:'16:00'})}} className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg hover:bg-red-100 transition shadow-sm uppercase flex items-center gap-1.5">
+                                        <button type="button" title={t.common.cancel} onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'14:00', endDate: '', endTime:'15:00'})}} className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg hover:bg-red-100 transition shadow-sm uppercase flex items-center gap-1.5">
                                             <i className="fas fa-times"></i> {t.common.cancel}
                                         </button>
                                     ) : isFormDirty ? (
-                                        <button type="button" title={t.common.clear} onClick={() => {setScheduleForm({startDate:'', startTime:'15:00', endDate: '', endTime:'16:00'})}} className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm uppercase flex items-center gap-1.5">
+                                        <button type="button" title={t.common.clear} onClick={() => {setScheduleForm({startDate:'', startTime:'14:00', endDate: '', endTime:'15:00'})}} className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm uppercase flex items-center gap-1.5">
                                             <i className="fas fa-undo"></i> {t.common.clear}
                                         </button>
                                     ) : null}
@@ -1836,7 +1836,7 @@
             const [timezone, setTimezone] = React.useState('AEDT'); 
             const t = TRANSLATIONS[lang];
             
-            const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' });
+            const [scheduleForm, setScheduleForm] = React.useState({ startDate: '', startTime: '14:00', endDate: '', endTime: '15:00' });
             const [editScheduleId, setEditScheduleId] = React.useState(null);
             const [timesheetForm, setTimesheetForm] = React.useState({ scheduleId: '', date: '', startTime: '', endDate: '', endTime: '' });
             const [editTimesheetId, setEditTimesheetId] = React.useState(null);
@@ -2073,7 +2073,7 @@
                     try {
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
                         if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
-                        showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '15:00', endDate: '', endTime: '16:00' }); setEditScheduleId(null);
+                        showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '14:00', endDate: '', endTime: '15:00' }); setEditScheduleId(null);
                     } catch(err) { showNotify(err.message || t.common.error, "error"); } finally { setLoading(false); }
                 });
             };
@@ -2440,3 +2440,4 @@
     </script>
 </body>
 </html>
+
