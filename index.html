@@ -958,19 +958,8 @@
                     }, 0);
             }, [schedules, targetPstDate, editScheduleId]);
 
-            // Compute how long the schedule being drafted would be (in the PST day)
-            const newScheduleDurationMins = React.useMemo(() => {
-                if (!scheduleForm.startDate || !scheduleForm.startTime || !scheduleForm.endDate || !scheduleForm.endTime) return 0;
-                const dbS = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
-                const dbE = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
-                const sEpoch = getEpochFromWIB(dbS.date, dbS.time);
-                const eEpoch = getEpochFromWIB(dbE.date, dbE.time);
-                return Math.max(0, Math.floor((eEpoch - sEpoch) / 60000));
-            }, [scheduleForm, timezone]);
-
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
-            const wouldExceedQuota = !editScheduleId && newScheduleDurationMins > 0 && (dailyUsedMinutes + newScheduleDurationMins > MAX_MINUTES);
             const isCritical = remainingMinutes < 60;
             const isFormDirty = scheduleForm.startDate !== '' || scheduleForm.startTime !== '14:00' || scheduleForm.endDate !== '' || scheduleForm.endTime !== '15:00';
 
@@ -1147,8 +1136,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <button disabled={loading || (remainingMinutes <= 0 && !editScheduleId) || wouldExceedQuota} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : wouldExceedQuota ? 'bg-red-500' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                {loading ? <Spinner/> : (editScheduleId ? t.common.save : (remainingMinutes <= 0 ? t.schedule.full : wouldExceedQuota ? `⚠ ${lang === 'id' ? 'Kuota Terlampaui!' : 'Quota Exceeded!'}` : t.schedule.booking))}
+                            <button disabled={loading || (remainingMinutes <= 0 && !editScheduleId)} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                {loading ? <Spinner/> : (editScheduleId ? t.common.save : (remainingMinutes <= 0 ? t.schedule.full : t.schedule.booking))}
                             </button>
                         </form>
                     </div>
@@ -1207,7 +1196,7 @@
             );
         };
         
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, users, getUserName, getUserColor, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify }) => {
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify }) => {
             if (!currentUser) {
                 return (
                     <div className="space-y-4 fade-in">
@@ -1387,223 +1376,6 @@
                     </div>
                     
                     <div className="pb-20">
-                        {/* ── ACTUAL SCHEDULE MAP ── */}
-                        {(() => {
-                            const [mapPstDate, setMapPstDate] = React.useState(() => getPSTDayFromEpoch(Date.now()));
-
-                            // Navigation helpers
-                            const shiftDay = (delta) => {
-                                const [y, m, d] = mapPstDate.split('-').map(Number);
-                                const dt = new Date(y, m - 1, d);
-                                dt.setDate(dt.getDate() + delta);
-                                setMapPstDate(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`);
-                            };
-
-                            // Collect schedule blocks for this PST day
-                            const planBlocks = schedules.filter(s => {
-                                return getPSTDay(s.startDate || s.date, s.startTime) === mapPstDate ||
-                                       getPSTDay(s.endDate || s.date, s.endTime) === mapPstDate;
-                            }).map(s => {
-                                const uiS = getDisplayTime(s.startTime, s.startDate || s.date, 'PST');
-                                const uiE = getDisplayTime(s.endTime, s.endDate || s.date, 'PST');
-                                return { ...s, uiS, uiE, isPlan: true };
-                            });
-
-                            const actualBlocks = timesheets.filter(ts => {
-                                return getPSTDay(ts.date, ts.startTime) === mapPstDate ||
-                                       (ts.endDate && getPSTDay(ts.endDate, ts.endTime) === mapPstDate);
-                            }).map(ts => {
-                                const uiS = getDisplayTime(ts.startTime, ts.date, 'PST');
-                                let uiE;
-                                if (ts.endTime) {
-                                    uiE = getDisplayTime(ts.endTime, ts.endDate || ts.date, 'PST');
-                                } else if (ts.duration) {
-                                    const sEpoch = getEpochFromWIB(ts.date, ts.startTime);
-                                    const eEpoch = sEpoch + ts.duration * 60000;
-                                    const eD = new Date(eEpoch + TZ_CONFIG['PST'].offsetUTC * 3600000);
-                                    uiE = { time: `${String(eD.getUTCHours()).padStart(2,'0')}:${String(eD.getUTCMinutes()).padStart(2,'0')}`, date: mapPstDate };
-                                } else {
-                                    uiE = { time: '23:59', date: mapPstDate };
-                                }
-                                return { ...ts, uiS, uiE, isPlan: false };
-                            });
-
-                            const toMins = (timeStr) => {
-                                const [h, m] = timeStr.split(':').map(Number);
-                                return h * 60 + m;
-                            };
-
-                            const totalActualMins = actualBlocks.reduce((acc, b) => {
-                                const sM = toMins(b.uiS.time);
-                                let eM = toMins(b.uiE.time);
-                                if (eM <= sM) eM = 1440;
-                                return acc + Math.max(0, eM - sM);
-                            }, 0);
-
-                            const isToday = mapPstDate === getPSTDayFromEpoch(Date.now());
-
-                            const renderBlock = (b, idx, rowOffset = 0) => {
-                                const sM = toMins(b.uiS.time);
-                                let eM = toMins(b.uiE.time);
-                                if (eM < sM) eM = 1440;
-                                if (eM <= sM) return null;
-                                const startPct = sM / 1440 * 100;
-                                const widthPct = Math.max(0.5, (eM - sM) / 1440 * 100);
-                                const color = getUserColor(b.userId) || '#94a3b8';
-                                const name = getUserName(b.userId);
-                                const tipSide = startPct > 55 ? 'right-0' : 'left-0';
-
-                                if (b.isPlan) {
-                                    return (
-                                        <div key={`plan-${b.id}-${idx}`} className="absolute group cursor-pointer hover:z-30"
-                                            style={{ left: `${startPct}%`, width: `${widthPct}%`, top: `${rowOffset * 14}px`, height: '12px' }}>
-                                            <div className="w-full h-full rounded-sm border-2 transition-all"
-                                                style={{ borderColor: color, backgroundColor: `${color}20` }}></div>
-                                            <div className={`hidden group-hover:flex absolute bottom-full mb-1 ${tipSide} bg-slate-800 text-white text-[9px] p-1.5 rounded-lg shadow-xl z-50 whitespace-nowrap flex-col gap-0.5 border border-slate-700`}>
-                                                <span className="font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
-                                                <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PST</span></span>
-                                                <span className="text-slate-400 text-[8px]">{lang==='id'?'Rencana':'Plan'}</span>
-                                            </div>
-                                        </div>
-                                    );
-                                } else {
-                                    return (
-                                        <div key={`act-${b.id}-${idx}`} className="absolute group cursor-pointer hover:z-30"
-                                            style={{ left: `${startPct}%`, width: `${widthPct}%`, top: `${rowOffset * 14 + 14}px`, height: '12px' }}>
-                                            <div className="w-full h-full rounded-sm transition-all shadow-sm"
-                                                style={{ backgroundColor: color, opacity: 0.85 }}></div>
-                                            <div className={`hidden group-hover:flex absolute bottom-full mb-1 ${tipSide} bg-slate-800 text-white text-[9px] p-1.5 rounded-lg shadow-xl z-50 whitespace-nowrap flex-col gap-0.5 border border-slate-700`}>
-                                                <span className="font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
-                                                <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PST</span></span>
-                                                <span className="text-emerald-400 text-[8px] font-bold">{lang==='id'?'Aktual':'Actual'} · {b.status==='paid'?'✓ PAID':'⏳ PENDING'}</span>
-                                            </div>
-                                        </div>
-                                    );
-                                }
-                            };
-
-                            // Assign row per user so overlaps are stacked per user
-                            const userIds = [...new Set([...planBlocks, ...actualBlocks].map(b => b.userId))];
-                            const rowMap = {};
-                            userIds.forEach((uid, i) => { rowMap[uid] = i; });
-                            const totalRows = Math.max(1, userIds.length);
-                            const mapHeight = totalRows * 28 + 20; // 2 rows per user (plan+actual) × 14px + header
-
-                            return (
-                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-4">
-                                    {/* Header */}
-                                    <div className="bg-gradient-to-r from-teal-600 to-cyan-700 px-4 py-3 flex items-center justify-between">
-                                        <div>
-                                            <h3 className="text-white font-bold text-sm flex items-center gap-2">
-                                                <i className="fas fa-chart-gantt"></i>
-                                                {lang === 'id' ? 'Peta Aktual' : 'Actual Schedule Map'}
-                                            </h3>
-                                            <p className="text-teal-200 text-[10px] mt-0.5">
-                                                {lang === 'id' ? 'Outline = Rencana · Solid = Aktual · Zona PST' : 'Outline = Plan · Solid = Actual · PST timezone'}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1 backdrop-blur-sm">
-                                            <button onClick={() => shiftDay(-1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs">
-                                                <i className="fas fa-chevron-left"></i>
-                                            </button>
-                                            <span className="text-white text-[10px] font-bold min-w-[80px] text-center">
-                                                {isToday ? (lang==='id'?'Hari Ini':'Today') : (() => {
-                                                    const [y,m,d] = mapPstDate.split('-').map(Number);
-                                                    return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short'});
-                                                })()}
-                                            </span>
-                                            <button onClick={() => shiftDay(1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs">
-                                                <i className="fas fa-chevron-right"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Stats row */}
-                                    <div className="flex divide-x divide-slate-100 bg-slate-50 border-b border-slate-100">
-                                        <div className="flex-1 px-3 py-2 text-center">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Rencana':'Planned'}</p>
-                                            <p className="text-sm font-black text-slate-700">{planBlocks.length}</p>
-                                        </div>
-                                        <div className="flex-1 px-3 py-2 text-center">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Aktual':'Actual'}</p>
-                                            <p className="text-sm font-black text-teal-600">{actualBlocks.length}</p>
-                                        </div>
-                                        <div className="flex-1 px-3 py-2 text-center">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Jam Aktual':'Actual Hours'}</p>
-                                            <p className="text-sm font-black text-cyan-600">{(totalActualMins/60).toFixed(1)}h</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Timeline */}
-                                    <div className="p-3">
-                                        {/* Hour labels */}
-                                        <div className="relative w-full h-4 mb-1 flex justify-between">
-                                            {[0,4,8,12,16,20,24].map(h => (
-                                                <div key={h} className="w-0 relative">
-                                                    <span className={`absolute text-[7px] text-slate-400 font-bold ${h===0?'left-0':h===24?'right-0':'-translate-x-1/2'}`}>
-                                                        {String(h).padStart(2,'0')}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {/* Grid + blocks */}
-                                        <div className="relative w-full bg-slate-50 border border-slate-200 rounded-lg overflow-visible" style={{height: `${mapHeight}px`}}>
-                                            {/* vertical grid lines */}
-                                            {[0,4,8,12,16,20,24].map(h => (
-                                                <div key={h} className="absolute top-0 bottom-0 border-l border-slate-200 border-dashed w-0" style={{left: `${h/24*100}%`}}></div>
-                                            ))}
-                                            {/* Per-user rows label */}
-                                            {userIds.map((uid, rowIdx) => {
-                                                const color = getUserColor(uid) || '#94a3b8';
-                                                const name = getUserName(uid);
-                                                return (
-                                                    <div key={uid} className="absolute left-0 flex items-center gap-1 z-20 pointer-events-none" style={{ top: `${rowIdx*28+2}px` }}>
-                                                        <div className="w-1 h-5 rounded-r opacity-70" style={{backgroundColor: color}}></div>
-                                                        <span className="text-[7px] font-bold text-slate-400">{name.substring(0,6)}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                            {/* Plan blocks */}
-                                            {planBlocks.map((b, i) => renderBlock(b, i, rowMap[b.userId]))}
-                                            {/* Actual blocks */}
-                                            {actualBlocks.map((b, i) => renderBlock(b, i, rowMap[b.userId]))}
-                                            {/* Now line */}
-                                            {isToday && (() => {
-                                                const nowPst = new Date(Date.now() + TZ_CONFIG['PST'].offsetUTC * 3600000);
-                                                const nowMins = nowPst.getUTCHours() * 60 + nowPst.getUTCMinutes();
-                                                return (
-                                                    <div className="absolute top-0 bottom-0 w-px bg-red-400 z-40 pointer-events-none" style={{left: `${nowMins/1440*100}%`}}>
-                                                        <div className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-red-400"></div>
-                                                    </div>
-                                                );
-                                            })()}
-                                            {/* Empty state */}
-                                            {planBlocks.length === 0 && actualBlocks.length === 0 && (
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <p className="text-[10px] text-slate-400 italic">{lang==='id'?'Tidak ada data untuk hari ini.':'No data for this day.'}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {/* Legend */}
-                                        <div className="flex items-center gap-4 mt-2 justify-center">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-5 h-2.5 rounded-sm border-2 border-slate-400 bg-slate-100"></div>
-                                                <span className="text-[9px] text-slate-500 font-medium">{lang==='id'?'Rencana':'Plan'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-5 h-2.5 rounded-sm bg-teal-500"></div>
-                                                <span className="text-[9px] text-slate-500 font-medium">{lang==='id'?'Aktual':'Actual'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-px h-3 bg-red-400"></div>
-                                                <span className="text-[9px] text-slate-500 font-medium">{lang==='id'?'Sekarang':'Now'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()}
-                        {/* History header */}
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3>
                             <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button>
@@ -1654,9 +1426,6 @@
         const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, getUserColor, timezone, sysSettings, updateSettings, onAddUser, onEditUser, onDeleteUser, onConfirmAction }) => {
              const [viewMode, setViewMode] = React.useState('pending');
              const [settingsForm, setSettingsForm] = React.useState({ dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, offsetWIB: 7, offsetAEDT: 11, offsetPST: -8 });
-             const [selectedSheets, setSelectedSheets] = React.useState({});  // { userId: Set of sheetIds }
-             const [transferAmounts, setTransferAmounts] = React.useState({}); // { userId: string }
-             const [expandedUsers, setExpandedUsers] = React.useState({});    // { userId: bool }
              
              React.useEffect(() => { 
                  setSettingsForm({ 
@@ -1762,52 +1531,7 @@
                         <button onClick={() => setViewMode('settings')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 ${viewMode === 'settings' ? 'bg-slate-700 text-white' : 'text-slate-500'}`}><i className="fas fa-cog"></i></button>
                     </div>
                     
-                    {viewMode === 'pending' && (() => {
-                        // Group pending sheets by user with full sheet objects
-                        const pendingByUser = Object.values(pendingSheets.reduce((acc, curr) => {
-                            if (!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, totalMins: 0, sheets: [] };
-                            acc[curr.userId].total += getAmount(curr);
-                            acc[curr.userId].totalMins += parseInt(curr.duration || 0);
-                            acc[curr.userId].sheets.push(curr);
-                            return acc;
-                        }, {}));
-
-                        const toggleSheet = (userId, sheetId, sheetAmount) => {
-                            setSelectedSheets(prev => {
-                                const userSel = new Set(prev[userId] || []);
-                                if (userSel.has(sheetId)) userSel.delete(sheetId); else userSel.add(sheetId);
-                                const newSel = { ...prev, [userId]: userSel };
-                                // Recalculate transfer amount for this user
-                                const grp = pendingByUser.find(g => String(g.userId) === String(userId));
-                                if (grp) {
-                                    const selTotal = grp.sheets
-                                        .filter(s => newSel[userId]?.has(s.id))
-                                        .reduce((sum, s) => sum + getAmount(s), 0);
-                                    setTransferAmounts(ta => ({ ...ta, [userId]: selTotal.toFixed(2) }));
-                                }
-                                return newSel;
-                            });
-                        };
-
-                        const toggleAllUser = (userId, sheets) => {
-                            setSelectedSheets(prev => {
-                                const userSel = prev[userId] || new Set();
-                                const allSelected = sheets.every(s => userSel.has(s.id));
-                                const newSel = allSelected ? new Set() : new Set(sheets.map(s => s.id));
-                                const selTotal = allSelected ? 0 : sheets.reduce((sum, s) => sum + getAmount(s), 0);
-                                setTransferAmounts(ta => ({ ...ta, [userId]: selTotal.toFixed(2) }));
-                                return { ...prev, [userId]: newSel };
-                            });
-                        };
-
-                        const handleMarkSelectedPaid = (userId, sheets) => {
-                            const sel = selectedSheets[userId] || new Set();
-                            const ids = sheets.filter(s => sel.has(s.id)).map(s => s.id);
-                            if (ids.length === 0) { showNotify(lang === 'id' ? 'Pilih timesheet dulu!' : 'Select at least one timesheet!', 'error'); return; }
-                            handleMarkPaid(ids);
-                        };
-
-                        return (
+                    {viewMode === 'pending' && ( 
                         <div className="space-y-4">
                             <div className="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
                                 <h2 className="text-xl font-bold mb-1">{t.admin.pendingBill}</h2>
@@ -1816,157 +1540,38 @@
                                     <p className="text-sm text-purple-200 mb-1 font-medium">({(totalPendingMins/60).toFixed(1)}{t.common.unitShort})</p>
                                 </div>
                             </div>
-
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                                {pendingSheets.length === 0 ? (
-                                    <p className="text-center text-slate-400 text-sm py-4">{t.admin.noPendingBills}</p>
-                                ) : (
-                                    <div className="space-y-5">
-                                        {pendingByUser.map(grp => {
+                                {pendingSheets.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">{t.admin.noPendingBills}</p> : (
+                                    <div className="space-y-4">
+                                        {Object.values(pendingSheets.reduce((acc, curr) => { 
+                                            if(!acc[curr.userId]) acc[curr.userId] = { userId: curr.userId, total: 0, totalMins: 0, sheets: [] }; 
+                                            acc[curr.userId].total += getAmount(curr); 
+                                            acc[curr.userId].totalMins += parseInt(curr.duration || 0);
+                                            acc[curr.userId].sheets.push(curr.id); 
+                                            return acc; 
+                                        }, {})).map(grp => { 
                                             const u = users.find(u => String(u.id) === String(grp.userId));
-                                            const uColor = getUserColor(grp.userId) || '#cbd5e1';
-                                            const userSel = selectedSheets[grp.userId] || new Set();
-                                            const allSelected = grp.sheets.every(s => userSel.has(s.id));
-                                            const someSelected = grp.sheets.some(s => userSel.has(s.id));
-                                            const selectedTotal = grp.sheets.filter(s => userSel.has(s.id)).reduce((sum, s) => sum + getAmount(s), 0);
-                                            const selectedMins = grp.sheets.filter(s => userSel.has(s.id)).reduce((sum, s) => sum + parseInt(s.duration || 0), 0);
-                                            const isExpanded = expandedUsers[grp.userId] !== false; // default expanded
-                                            const transferVal = transferAmounts[grp.userId] !== undefined ? transferAmounts[grp.userId] : '';
-
                                             return (
-                                                <div key={grp.userId} className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                                                    {/* User Header */}
-                                                    <div className="bg-slate-50 p-4 flex items-center gap-3 border-b border-slate-100">
-                                                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0" style={{backgroundColor: uColor}}>
-                                                            {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
+                                                <div key={grp.userId} className="border border-slate-100 rounded-xl p-4">
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <div>
+                                                            <p className="font-bold text-slate-800">{u?.name}</p>
+                                                            <p className="text-xs text-slate-500">{u?.bankName || '-'} - {u?.accountNumber || '-'}</p>
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-slate-800 text-sm">{u?.name || t.common.unknown}</p>
-                                                            <p className="text-[10px] text-slate-400 truncate">
-                                                                <i className="fas fa-university mr-1"></i>{u?.bankName || '-'} · {u?.accountNumber || '-'}
-                                                            </p>
+                                                        <div className="text-right">
+                                                            <p className="font-bold text-green-600 text-lg">{formatCurrency(grp.total, lang)}</p>
+                                                            <p className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded inline-block mt-0.5">{(grp.totalMins/60).toFixed(1)} {t.common.unitHour}</p>
                                                         </div>
-                                                        <div className="text-right flex-shrink-0">
-                                                            <p className="font-bold text-purple-600 text-base">{formatCurrency(grp.total, lang)}</p>
-                                                            <p className="text-[10px] text-slate-400">{(grp.totalMins/60).toFixed(1)}{t.common.unitShort} total</p>
-                                                        </div>
-                                                        <button onClick={() => setExpandedUsers(prev => ({...prev, [grp.userId]: !isExpanded}))} className="ml-2 text-slate-400 hover:text-slate-600 transition-colors w-6 text-center">
-                                                            <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'} text-xs`}></i>
-                                                        </button>
                                                     </div>
-
-                                                    {isExpanded && (
-                                                        <div className="p-4 space-y-3">
-                                                            {/* Select All toggle */}
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <label className="flex items-center gap-2 cursor-pointer select-none">
-                                                                    <div onClick={() => toggleAllUser(grp.userId, grp.sheets)} className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${allSelected ? 'bg-purple-600 border-purple-600' : someSelected ? 'bg-purple-200 border-purple-400' : 'border-slate-300 bg-white'}`}>
-                                                                        {allSelected && <i className="fas fa-check text-white text-[9px]"></i>}
-                                                                        {someSelected && !allSelected && <i className="fas fa-minus text-purple-600 text-[9px]"></i>}
-                                                                    </div>
-                                                                    <span className="text-xs font-bold text-slate-600">{lang === 'id' ? 'Pilih Semua' : 'Select All'} ({grp.sheets.length})</span>
-                                                                </label>
-                                                                {someSelected && (
-                                                                    <span className="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
-                                                                        {userSel.size} {lang === 'id' ? 'dipilih' : 'selected'} · {formatCurrency(selectedTotal, lang)}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Individual Timesheet rows */}
-                                                            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                                                                {grp.sheets.sort((a,b) => new Date(b.date) - new Date(a.date)).map(sheet => {
-                                                                    const isChecked = userSel.has(sheet.id);
-                                                                    const sheetAmount = getAmount(sheet);
-                                                                    const uiStart = getDisplayTime(sheet.startTime, sheet.date, timezone);
-                                                                    const sheetMins = parseInt(sheet.duration || 0);
-                                                                    return (
-                                                                        <label key={sheet.id} className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-all select-none ${isChecked ? 'bg-purple-50 border border-purple-200' : 'bg-slate-50 border border-slate-100 hover:border-slate-200'}`}>
-                                                                            <div onClick={(e) => { e.preventDefault(); toggleSheet(grp.userId, sheet.id, sheetAmount); }} className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isChecked ? 'bg-purple-600 border-purple-600' : 'border-slate-300 bg-white'}`}>
-                                                                                {isChecked && <i className="fas fa-check text-white text-[9px]"></i>}
-                                                                            </div>
-                                                                            <div className="flex-1 min-w-0" onClick={() => toggleSheet(grp.userId, sheet.id, sheetAmount)}>
-                                                                                <div className="flex justify-between items-start gap-2">
-                                                                                    <div className="min-w-0">
-                                                                                        <p className="text-xs font-bold text-slate-700 truncate">{formatDate(sheet.date, lang)}</p>
-                                                                                        <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
-                                                                                            <i className="far fa-clock"></i>
-                                                                                            {uiStart.time} · {(sheetMins/60).toFixed(1)}{t.common.unitShort}
-                                                                                            {sheet.scheduleId === 'adhoc' && <span className="bg-orange-100 text-orange-500 px-1 rounded text-[8px] font-bold ml-1">AD-HOC</span>}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <div className="text-right flex-shrink-0">
-                                                                                        <p className={`text-xs font-bold ${isChecked ? 'text-purple-600' : 'text-slate-600'}`}>{formatCurrency(sheetAmount, lang)}</p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </label>
-                                                                    );
-                                                                })}
-                                                            </div>
-
-                                                            {/* Transfer Amount + Pay Button */}
-                                                            {someSelected && (
-                                                                <div className="mt-3 pt-3 border-t border-slate-100 space-y-3">
-                                                                    <div>
-                                                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 flex items-center gap-1.5">
-                                                                            <i className="fas fa-paper-plane text-purple-500"></i>
-                                                                            {lang === 'id' ? 'Jumlah Transfer' : 'Transfer Amount'}
-                                                                            <span className="text-[9px] font-normal text-slate-400 normal-case tracking-normal">(default: {formatCurrency(selectedTotal, lang)})</span>
-                                                                        </label>
-                                                                        <div className="flex gap-2 items-center">
-                                                                            <div className="relative flex-1">
-                                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">{lang === 'id' ? 'Rp' : '$'}</span>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    min="0"
-                                                                                    step="0.01"
-                                                                                    className="w-full pl-8 pr-3 py-2.5 border-2 border-purple-200 rounded-xl text-sm font-bold text-slate-700 focus:border-purple-500 outline-none bg-purple-50/50 transition-colors"
-                                                                                    value={transferVal}
-                                                                                    onChange={e => setTransferAmounts(ta => ({ ...ta, [grp.userId]: e.target.value }))}
-                                                                                    placeholder={selectedTotal.toFixed(2)}
-                                                                                />
-                                                                            </div>
-                                                                            <button onClick={() => setTransferAmounts(ta => ({...ta, [grp.userId]: selectedTotal.toFixed(2)}))} className="text-[10px] text-purple-500 hover:text-purple-700 font-bold whitespace-nowrap px-2 py-2 rounded-lg hover:bg-purple-50 transition-colors border border-purple-100" title={lang === 'id' ? 'Reset ke estimasi' : 'Reset to estimate'}>
-                                                                                <i className="fas fa-sync-alt mr-1"></i>{lang === 'id' ? 'Reset' : 'Reset'}
-                                                                            </button>
-                                                                        </div>
-                                                                        {transferVal && parseFloat(transferVal) !== selectedTotal && (
-                                                                            <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
-                                                                                <i className="fas fa-exclamation-triangle"></i>
-                                                                                {lang === 'id' ? `Berbeda dari estimasi (${formatCurrency(selectedTotal, lang)})` : `Differs from estimate (${formatCurrency(selectedTotal, lang)})`}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={() => handleMarkSelectedPaid(grp.userId, grp.sheets)}
-                                                                        disabled={loading}
-                                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all text-white text-sm font-bold py-3 rounded-xl shadow-md shadow-green-200 flex items-center justify-center gap-2 active:scale-95"
-                                                                    >
-                                                                        {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-check-circle"></i>}
-                                                                        {t.admin.markPaid} · {userSel.size} timesheet
-                                                                        {transferVal && <span className="bg-white/20 px-2 py-0.5 rounded-lg text-[11px]">{lang === 'id' ? 'Rp' : '$'}{parseFloat(transferVal || 0).toLocaleString()}</span>}
-                                                                    </button>
-                                                                </div>
-                                                            )}
-
-                                                            {!someSelected && (
-                                                                <p className="text-center text-[11px] text-slate-400 py-2 italic">
-                                                                    <i className="fas fa-hand-pointer mr-1"></i>
-                                                                    {lang === 'id' ? 'Pilih timesheet yang ingin dibayar' : 'Select timesheets to pay'}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                                    <button onClick={() => handleMarkPaid(grp.sheets)} className="w-full bg-green-600 hover:bg-green-700 transition-colors text-white text-sm font-bold py-2.5 rounded-lg">{t.admin.markPaid}</button>
                                                 </div>
-                                            );
+                                            ); 
                                         })}
                                     </div>
                                 )}
                             </div>
-                        </div>
-                        );
-                    })()}
+                        </div> 
+                    )}
 
                     {viewMode === 'history' && ( 
                         <div className="space-y-4">
@@ -2463,28 +2068,7 @@
 
                 if (isConflict) return showNotify(`${t.schedule.conflict} ${conflictUser}!`, "error");
 
-                // Hard quota enforcement per PST day
-                if (!editScheduleId) {
-                    const newPstDay = getPSTDayFromEpoch(newStartEpoch);
-                    const existingMinsOnDay = schedules.reduce((acc, s) => {
-                        if (getPSTDay(s.startDate || s.date, s.startTime) !== newPstDay) return acc;
-                        const sE = getEpochFromWIB(s.startDate || s.date, s.startTime);
-                        let eE = getEpochFromWIB(s.endDate || s.date, s.endTime);
-                        if (!s.endDate && eE <= sE) eE += 86400000;
-                        return acc + Math.floor((eE - sE) / 60000);
-                    }, 0);
-                    const newDurMins = Math.floor((newEndEpoch - newStartEpoch) / 60000);
-                    const maxMins = (sysSettings?.dailyQuotaHours || 10) * 60;
-                    if (existingMinsOnDay + newDurMins > maxMins) {
-                        const overBy = existingMinsOnDay + newDurMins - maxMins;
-                        return showNotify(
-                            lang === 'id'
-                                ? `Kuota harian PST terlampaui! Sisa ${(maxMins-existingMinsOnDay).toFixed(0)} menit, durasi baru ${newDurMins} menit (lebih ${overBy} menit).`
-                                : `Daily PST quota exceeded! Remaining ${(maxMins-existingMinsOnDay).toFixed(0)} min, new schedule is ${newDurMins} min (over by ${overBy} min).`,
-                            "error", 5000
-                        );
-                    }
-                }
+                triggerConfirm(t.schedule.confirmBooking, async () => {
                     setLoading(true);
                     try {
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
@@ -2766,9 +2350,7 @@
                                         loading={loading} 
                                         timesheets={timesheets} 
                                         schedules={schedules} 
-                                        users={users}
                                         getUserName={getUserName} 
-                                        getUserColor={getUserColor}
                                         currentUser={currentUser} 
                                         deleteTimesheet={deleteTimesheet} 
                                         editTimesheetId={editTimesheetId} 
@@ -2858,3 +2440,5 @@
     </script>
 </body>
 </html>
+
+
