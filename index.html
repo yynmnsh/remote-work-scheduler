@@ -958,8 +958,19 @@
                     }, 0);
             }, [schedules, targetPstDate, editScheduleId]);
 
+            // Compute how long the schedule being drafted would be (in the PST day)
+            const newScheduleDurationMins = React.useMemo(() => {
+                if (!scheduleForm.startDate || !scheduleForm.startTime || !scheduleForm.endDate || !scheduleForm.endTime) return 0;
+                const dbS = getDbTime(scheduleForm.startTime, scheduleForm.startDate, timezone);
+                const dbE = getDbTime(scheduleForm.endTime, scheduleForm.endDate, timezone);
+                const sEpoch = getEpochFromWIB(dbS.date, dbS.time);
+                const eEpoch = getEpochFromWIB(dbE.date, dbE.time);
+                return Math.max(0, Math.floor((eEpoch - sEpoch) / 60000));
+            }, [scheduleForm, timezone]);
+
             const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
+            const wouldExceedQuota = !editScheduleId && newScheduleDurationMins > 0 && (dailyUsedMinutes + newScheduleDurationMins > MAX_MINUTES);
             const isCritical = remainingMinutes < 60;
             const isFormDirty = scheduleForm.startDate !== '' || scheduleForm.startTime !== '14:00' || scheduleForm.endDate !== '' || scheduleForm.endTime !== '15:00';
 
@@ -1136,8 +1147,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <button disabled={loading || (remainingMinutes <= 0 && !editScheduleId)} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                {loading ? <Spinner/> : (editScheduleId ? t.common.save : (remainingMinutes <= 0 ? t.schedule.full : t.schedule.booking))}
+                            <button disabled={loading || (remainingMinutes <= 0 && !editScheduleId) || wouldExceedQuota} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : wouldExceedQuota ? 'bg-red-500' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                {loading ? <Spinner/> : (editScheduleId ? t.common.save : (remainingMinutes <= 0 ? t.schedule.full : wouldExceedQuota ? `⚠ ${lang === 'id' ? 'Kuota Terlampaui!' : 'Quota Exceeded!'}` : t.schedule.booking))}
                             </button>
                         </form>
                     </div>
@@ -1196,7 +1207,7 @@
             );
         };
         
-        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, getUserName, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify }) => {
+        const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, users, getUserName, getUserColor, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify }) => {
             if (!currentUser) {
                 return (
                     <div className="space-y-4 fade-in">
@@ -1376,6 +1387,223 @@
                     </div>
                     
                     <div className="pb-20">
+                        {/* ── ACTUAL SCHEDULE MAP ── */}
+                        {(() => {
+                            const [mapPstDate, setMapPstDate] = React.useState(() => getPSTDayFromEpoch(Date.now()));
+
+                            // Navigation helpers
+                            const shiftDay = (delta) => {
+                                const [y, m, d] = mapPstDate.split('-').map(Number);
+                                const dt = new Date(y, m - 1, d);
+                                dt.setDate(dt.getDate() + delta);
+                                setMapPstDate(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`);
+                            };
+
+                            // Collect schedule blocks for this PST day
+                            const planBlocks = schedules.filter(s => {
+                                return getPSTDay(s.startDate || s.date, s.startTime) === mapPstDate ||
+                                       getPSTDay(s.endDate || s.date, s.endTime) === mapPstDate;
+                            }).map(s => {
+                                const uiS = getDisplayTime(s.startTime, s.startDate || s.date, 'PST');
+                                const uiE = getDisplayTime(s.endTime, s.endDate || s.date, 'PST');
+                                return { ...s, uiS, uiE, isPlan: true };
+                            });
+
+                            const actualBlocks = timesheets.filter(ts => {
+                                return getPSTDay(ts.date, ts.startTime) === mapPstDate ||
+                                       (ts.endDate && getPSTDay(ts.endDate, ts.endTime) === mapPstDate);
+                            }).map(ts => {
+                                const uiS = getDisplayTime(ts.startTime, ts.date, 'PST');
+                                let uiE;
+                                if (ts.endTime) {
+                                    uiE = getDisplayTime(ts.endTime, ts.endDate || ts.date, 'PST');
+                                } else if (ts.duration) {
+                                    const sEpoch = getEpochFromWIB(ts.date, ts.startTime);
+                                    const eEpoch = sEpoch + ts.duration * 60000;
+                                    const eD = new Date(eEpoch + TZ_CONFIG['PST'].offsetUTC * 3600000);
+                                    uiE = { time: `${String(eD.getUTCHours()).padStart(2,'0')}:${String(eD.getUTCMinutes()).padStart(2,'0')}`, date: mapPstDate };
+                                } else {
+                                    uiE = { time: '23:59', date: mapPstDate };
+                                }
+                                return { ...ts, uiS, uiE, isPlan: false };
+                            });
+
+                            const toMins = (timeStr) => {
+                                const [h, m] = timeStr.split(':').map(Number);
+                                return h * 60 + m;
+                            };
+
+                            const totalActualMins = actualBlocks.reduce((acc, b) => {
+                                const sM = toMins(b.uiS.time);
+                                let eM = toMins(b.uiE.time);
+                                if (eM <= sM) eM = 1440;
+                                return acc + Math.max(0, eM - sM);
+                            }, 0);
+
+                            const isToday = mapPstDate === getPSTDayFromEpoch(Date.now());
+
+                            const renderBlock = (b, idx, rowOffset = 0) => {
+                                const sM = toMins(b.uiS.time);
+                                let eM = toMins(b.uiE.time);
+                                if (eM < sM) eM = 1440;
+                                if (eM <= sM) return null;
+                                const startPct = sM / 1440 * 100;
+                                const widthPct = Math.max(0.5, (eM - sM) / 1440 * 100);
+                                const color = getUserColor(b.userId) || '#94a3b8';
+                                const name = getUserName(b.userId);
+                                const tipSide = startPct > 55 ? 'right-0' : 'left-0';
+
+                                if (b.isPlan) {
+                                    return (
+                                        <div key={`plan-${b.id}-${idx}`} className="absolute group cursor-pointer hover:z-30"
+                                            style={{ left: `${startPct}%`, width: `${widthPct}%`, top: `${rowOffset * 14}px`, height: '12px' }}>
+                                            <div className="w-full h-full rounded-sm border-2 transition-all"
+                                                style={{ borderColor: color, backgroundColor: `${color}20` }}></div>
+                                            <div className={`hidden group-hover:flex absolute bottom-full mb-1 ${tipSide} bg-slate-800 text-white text-[9px] p-1.5 rounded-lg shadow-xl z-50 whitespace-nowrap flex-col gap-0.5 border border-slate-700`}>
+                                                <span className="font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
+                                                <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PST</span></span>
+                                                <span className="text-slate-400 text-[8px]">{lang==='id'?'Rencana':'Plan'}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                } else {
+                                    return (
+                                        <div key={`act-${b.id}-${idx}`} className="absolute group cursor-pointer hover:z-30"
+                                            style={{ left: `${startPct}%`, width: `${widthPct}%`, top: `${rowOffset * 14 + 14}px`, height: '12px' }}>
+                                            <div className="w-full h-full rounded-sm transition-all shadow-sm"
+                                                style={{ backgroundColor: color, opacity: 0.85 }}></div>
+                                            <div className={`hidden group-hover:flex absolute bottom-full mb-1 ${tipSide} bg-slate-800 text-white text-[9px] p-1.5 rounded-lg shadow-xl z-50 whitespace-nowrap flex-col gap-0.5 border border-slate-700`}>
+                                                <span className="font-bold flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
+                                                <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PST</span></span>
+                                                <span className="text-emerald-400 text-[8px] font-bold">{lang==='id'?'Aktual':'Actual'} · {b.status==='paid'?'✓ PAID':'⏳ PENDING'}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                            };
+
+                            // Assign row per user so overlaps are stacked per user
+                            const userIds = [...new Set([...planBlocks, ...actualBlocks].map(b => b.userId))];
+                            const rowMap = {};
+                            userIds.forEach((uid, i) => { rowMap[uid] = i; });
+                            const totalRows = Math.max(1, userIds.length);
+                            const mapHeight = totalRows * 28 + 20; // 2 rows per user (plan+actual) × 14px + header
+
+                            return (
+                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-4">
+                                    {/* Header */}
+                                    <div className="bg-gradient-to-r from-teal-600 to-cyan-700 px-4 py-3 flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                                                <i className="fas fa-chart-gantt"></i>
+                                                {lang === 'id' ? 'Peta Aktual' : 'Actual Schedule Map'}
+                                            </h3>
+                                            <p className="text-teal-200 text-[10px] mt-0.5">
+                                                {lang === 'id' ? 'Outline = Rencana · Solid = Aktual · Zona PST' : 'Outline = Plan · Solid = Actual · PST timezone'}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1 backdrop-blur-sm">
+                                            <button onClick={() => shiftDay(-1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs">
+                                                <i className="fas fa-chevron-left"></i>
+                                            </button>
+                                            <span className="text-white text-[10px] font-bold min-w-[80px] text-center">
+                                                {isToday ? (lang==='id'?'Hari Ini':'Today') : (() => {
+                                                    const [y,m,d] = mapPstDate.split('-').map(Number);
+                                                    return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short'});
+                                                })()}
+                                            </span>
+                                            <button onClick={() => shiftDay(1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs">
+                                                <i className="fas fa-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Stats row */}
+                                    <div className="flex divide-x divide-slate-100 bg-slate-50 border-b border-slate-100">
+                                        <div className="flex-1 px-3 py-2 text-center">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Rencana':'Planned'}</p>
+                                            <p className="text-sm font-black text-slate-700">{planBlocks.length}</p>
+                                        </div>
+                                        <div className="flex-1 px-3 py-2 text-center">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Aktual':'Actual'}</p>
+                                            <p className="text-sm font-black text-teal-600">{actualBlocks.length}</p>
+                                        </div>
+                                        <div className="flex-1 px-3 py-2 text-center">
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Jam Aktual':'Actual Hours'}</p>
+                                            <p className="text-sm font-black text-cyan-600">{(totalActualMins/60).toFixed(1)}h</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Timeline */}
+                                    <div className="p-3">
+                                        {/* Hour labels */}
+                                        <div className="relative w-full h-4 mb-1 flex justify-between">
+                                            {[0,4,8,12,16,20,24].map(h => (
+                                                <div key={h} className="w-0 relative">
+                                                    <span className={`absolute text-[7px] text-slate-400 font-bold ${h===0?'left-0':h===24?'right-0':'-translate-x-1/2'}`}>
+                                                        {String(h).padStart(2,'0')}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {/* Grid + blocks */}
+                                        <div className="relative w-full bg-slate-50 border border-slate-200 rounded-lg overflow-visible" style={{height: `${mapHeight}px`}}>
+                                            {/* vertical grid lines */}
+                                            {[0,4,8,12,16,20,24].map(h => (
+                                                <div key={h} className="absolute top-0 bottom-0 border-l border-slate-200 border-dashed w-0" style={{left: `${h/24*100}%`}}></div>
+                                            ))}
+                                            {/* Per-user rows label */}
+                                            {userIds.map((uid, rowIdx) => {
+                                                const color = getUserColor(uid) || '#94a3b8';
+                                                const name = getUserName(uid);
+                                                return (
+                                                    <div key={uid} className="absolute left-0 flex items-center gap-1 z-20 pointer-events-none" style={{ top: `${rowIdx*28+2}px` }}>
+                                                        <div className="w-1 h-5 rounded-r opacity-70" style={{backgroundColor: color}}></div>
+                                                        <span className="text-[7px] font-bold text-slate-400">{name.substring(0,6)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                            {/* Plan blocks */}
+                                            {planBlocks.map((b, i) => renderBlock(b, i, rowMap[b.userId]))}
+                                            {/* Actual blocks */}
+                                            {actualBlocks.map((b, i) => renderBlock(b, i, rowMap[b.userId]))}
+                                            {/* Now line */}
+                                            {isToday && (() => {
+                                                const nowPst = new Date(Date.now() + TZ_CONFIG['PST'].offsetUTC * 3600000);
+                                                const nowMins = nowPst.getUTCHours() * 60 + nowPst.getUTCMinutes();
+                                                return (
+                                                    <div className="absolute top-0 bottom-0 w-px bg-red-400 z-40 pointer-events-none" style={{left: `${nowMins/1440*100}%`}}>
+                                                        <div className="absolute -top-1 -left-1 w-2 h-2 rounded-full bg-red-400"></div>
+                                                    </div>
+                                                );
+                                            })()}
+                                            {/* Empty state */}
+                                            {planBlocks.length === 0 && actualBlocks.length === 0 && (
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <p className="text-[10px] text-slate-400 italic">{lang==='id'?'Tidak ada data untuk hari ini.':'No data for this day.'}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* Legend */}
+                                        <div className="flex items-center gap-4 mt-2 justify-center">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-5 h-2.5 rounded-sm border-2 border-slate-400 bg-slate-100"></div>
+                                                <span className="text-[9px] text-slate-500 font-medium">{lang==='id'?'Rencana':'Plan'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-5 h-2.5 rounded-sm bg-teal-500"></div>
+                                                <span className="text-[9px] text-slate-500 font-medium">{lang==='id'?'Aktual':'Actual'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-px h-3 bg-red-400"></div>
+                                                <span className="text-[9px] text-slate-500 font-medium">{lang==='id'?'Sekarang':'Now'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                        {/* History header */}
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wide">{showHistory ? t.timesheet.history : t.timesheet.pending}</h3>
                             <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button>
@@ -2235,7 +2463,28 @@
 
                 if (isConflict) return showNotify(`${t.schedule.conflict} ${conflictUser}!`, "error");
 
-                triggerConfirm(t.schedule.confirmBooking, async () => {
+                // Hard quota enforcement per PST day
+                if (!editScheduleId) {
+                    const newPstDay = getPSTDayFromEpoch(newStartEpoch);
+                    const existingMinsOnDay = schedules.reduce((acc, s) => {
+                        if (getPSTDay(s.startDate || s.date, s.startTime) !== newPstDay) return acc;
+                        const sE = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                        let eE = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                        if (!s.endDate && eE <= sE) eE += 86400000;
+                        return acc + Math.floor((eE - sE) / 60000);
+                    }, 0);
+                    const newDurMins = Math.floor((newEndEpoch - newStartEpoch) / 60000);
+                    const maxMins = (sysSettings?.dailyQuotaHours || 10) * 60;
+                    if (existingMinsOnDay + newDurMins > maxMins) {
+                        const overBy = existingMinsOnDay + newDurMins - maxMins;
+                        return showNotify(
+                            lang === 'id'
+                                ? `Kuota harian PST terlampaui! Sisa ${(maxMins-existingMinsOnDay).toFixed(0)} menit, durasi baru ${newDurMins} menit (lebih ${overBy} menit).`
+                                : `Daily PST quota exceeded! Remaining ${(maxMins-existingMinsOnDay).toFixed(0)} min, new schedule is ${newDurMins} min (over by ${overBy} min).`,
+                            "error", 5000
+                        );
+                    }
+                }
                     setLoading(true);
                     try {
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
@@ -2517,7 +2766,9 @@
                                         loading={loading} 
                                         timesheets={timesheets} 
                                         schedules={schedules} 
+                                        users={users}
                                         getUserName={getUserName} 
+                                        getUserColor={getUserColor}
                                         currentUser={currentUser} 
                                         deleteTimesheet={deleteTimesheet} 
                                         editTimesheetId={editTimesheetId} 
