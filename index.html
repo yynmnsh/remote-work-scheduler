@@ -76,9 +76,9 @@
         const ADMIN_ID = '9'; 
         const RATES = { id: 240000, en: 15 };
         const TZ_CONFIG = {
-            'WIB': { label: 'WIB (Jakarta)', offsetUTC: 7 },
+            'WIB':  { label: 'WIB (Jakarta)',    offsetUTC: 7  },
             'AEDT': { label: 'AEDT (Melbourne)', offsetUTC: 11 },
-            'PST': { label: 'PT (Pacific)', offsetUTC: -8 }
+            'PST':  { label: 'PT (Pacific)',     offsetUTC: -8 }
         };
         const INITIAL_USERS = [
             { id: '1', name: 'Habib', color: '#3b82f6', hidden: false },
@@ -1218,9 +1218,10 @@
                 return h * 60 + m;
             };
 
+            // Filter by START PT day only. A session belongs to the PT day it begins on,
+            // even if it crosses PT midnight (00:00). The block renderer clips it at 1440 mins.
             const planBlocks = schedules.filter(s =>
-                getPSTDay(s.startDate || s.date, s.startTime) === mapPstDate ||
-                getPSTDay(s.endDate || s.date, s.endTime) === mapPstDate
+                getPSTDay(s.startDate || s.date, s.startTime) === mapPstDate
             ).map(s => ({
                 ...s,
                 uiS: getDisplayTime(s.startTime, s.startDate || s.date, 'PST'),
@@ -1229,8 +1230,7 @@
             }));
 
             const actualBlocks = timesheets.filter(ts =>
-                getPSTDay(ts.date, ts.startTime) === mapPstDate ||
-                (ts.endDate && getPSTDay(ts.endDate, ts.endTime) === mapPstDate)
+                getPSTDay(ts.date, ts.startTime) === mapPstDate
             ).map(ts => {
                 const uiS = getDisplayTime(ts.startTime, ts.date, 'PST');
                 let uiE;
@@ -2670,12 +2670,10 @@
                 if (!finalEndTime && item.duration) {
                      const startEpoch = getEpochFromWIB(item.date, item.startTime);
                      const endEpoch = startEpoch + (item.duration * 60000);
-                     const d = new Date(endEpoch);
-                     const targetZone = TZ_CONFIG[timezone].iana || 'Asia/Jakarta';
-                     const formatterDate = new Intl.DateTimeFormat('en-CA', { timeZone: targetZone, year: 'numeric', month: '2-digit', day: '2-digit' });
-                     const formatterTime = new Intl.DateTimeFormat('en-GB', { timeZone: targetZone, hour: '2-digit', minute: '2-digit', hour12: false });
-                     finalEndDate = formatterDate.format(d);
-                     finalEndTime = formatterTime.format(d);
+                     // Use offsetUTC-based display conversion (consistent with getDisplayTime)
+                     const endObj = new Date(endEpoch + TZ_CONFIG[timezone].offsetUTC * 3600000);
+                     finalEndDate = `${endObj.getUTCFullYear()}-${String(endObj.getUTCMonth()+1).padStart(2,'0')}-${String(endObj.getUTCDate()).padStart(2,'0')}`;
+                     finalEndTime = `${String(endObj.getUTCHours()).padStart(2,'0')}:${String(endObj.getUTCMinutes()).padStart(2,'0')}`;
                 } else if (finalEndTime) {
                      const uiEnd = getDisplayTime(finalEndTime, finalEndDate, timezone);
                      finalEndDate = uiEnd.date;
