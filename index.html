@@ -1297,25 +1297,36 @@
 
             return (
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-4">
-                    <div className="bg-gradient-to-r from-teal-600 to-cyan-700 px-4 py-3 flex items-center justify-between">
-                        <div>
-                            <h3 className="text-white font-bold text-sm flex items-center gap-2">
-                                <i className="fas fa-chart-gantt"></i>
-                                {lang === 'id' ? 'Peta Aktual' : 'Actual Schedule Map'}
-                            </h3>
-                            <p className="text-teal-200 text-[10px] mt-0.5">
-                                {lang === 'id' ? 'Atas = Jadwal · Bawah = Laporan · Zona PT' : 'Top row = Schedule · Bottom row = Timesheet · PT timezone'}
-                            </p>
+                    <div className="bg-gradient-to-r from-teal-600 to-cyan-700 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                                    <i className="fas fa-chart-gantt"></i>
+                                    {lang === 'id' ? 'Peta Jadwal Harian' : 'Daily Schedule Map'}
+                                </h3>
+                                <p className="text-teal-200 text-[10px] mt-0.5">
+                                    {lang === 'id' ? 'Atas = Jadwal · Bawah = Laporan' : 'Top = Scheduled · Bottom = Reported'}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1">
+                                <button onClick={() => shiftDay(-1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs"><i className="fas fa-chevron-left"></i></button>
+                                <span className="text-white text-[10px] font-bold min-w-[72px] text-center">
+                                    {isToday ? (lang==='id'?'Hari Ini':'Today') : (() => {
+                                        const [y,m,d] = mapPstDate.split('-').map(Number);
+                                        return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short'});
+                                    })()}
+                                </span>
+                                <button onClick={() => shiftDay(1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs"><i className="fas fa-chevron-right"></i></button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1">
-                            <button onClick={() => shiftDay(-1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs"><i className="fas fa-chevron-left"></i></button>
-                            <span className="text-white text-[10px] font-bold min-w-[72px] text-center">
-                                {isToday ? (lang==='id'?'Hari Ini':'Today') : (() => {
-                                    const [y,m,d] = mapPstDate.split('-').map(Number);
-                                    return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short'});
-                                })()}
+                        {/* PT timezone notice */}
+                        <div className="mt-2 flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1.5">
+                            <i className="fas fa-clock text-teal-200 text-[9px]"></i>
+                            <span className="text-teal-100 text-[9px] leading-snug">
+                                {lang === 'id'
+                                    ? 'Hari kerja dihitung berdasarkan PT (Pacific Time) — 00:00–23:59 PT — terlepas dari zona waktu tampilan yang dipilih.'
+                                    : 'Work day boundaries use PT (Pacific Time) — 00:00–23:59 PT — regardless of the display timezone selected.'}
                             </span>
-                            <button onClick={() => shiftDay(1)} className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded-lg transition text-xs"><i className="fas fa-chevron-right"></i></button>
                         </div>
                     </div>
 
@@ -2059,7 +2070,7 @@
                                     </div>
                                     {sortedBatches.map(batchKey => {
                                         const batch = paymentBatches[batchKey];
-                                        const isBatchExpanded = expandedUsers['batch_' + batchKey] !== false;
+                                        const isBatchExpanded = expandedUsers['batch_' + batchKey] === true; // collapsed by default
                                         const batchDate = (() => {
                                             const [y,m,d] = batchKey.split('-').map(Number);
                                             return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US', {day:'numeric', month:'long', year:'numeric'});
@@ -2103,7 +2114,7 @@
                                                     </div>
                                                 </div>
 
-                                                {/* Batch detail: per-user then per-timesheet */}
+                                                {/* Batch detail: per-user accordion */}
                                                 {isBatchExpanded && (
                                                     <div className="border-t border-slate-50">
                                                         {Object.keys(batch.byUser)
@@ -2112,54 +2123,69 @@
                                                                 const uData = batch.byUser[uid];
                                                                 const u = users.find(user => String(user.id) === String(uid));
                                                                 const uColor = getUserColor(uid) || '#cbd5e1';
-                                                                const uPct = batch.total > 0 ? (uData.total / batch.total * 100) : 0;
+                                                                const uKey = 'user_' + batchKey + '_' + uid;
+                                                                const isUserExpanded = expandedUsers[uKey] === true; // collapsed by default
                                                                 return (
                                                                     <div key={uid} className="border-b border-slate-50 last:border-0">
-                                                                        {/* User sub-header */}
-                                                                        <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60">
-                                                                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white font-black text-[9px] flex-shrink-0" style={{backgroundColor: uColor}}>
+                                                                        {/* User row — clickable to expand timesheets */}
+                                                                        <div onClick={() => setExpandedUsers(prev => ({...prev, [uKey]: !isUserExpanded}))}
+                                                                            className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors"
+                                                                            style={{backgroundColor: isUserExpanded ? uColor+'08' : undefined}}>
+                                                                            <div className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-black text-[10px] flex-shrink-0" style={{backgroundColor: uColor}}>
                                                                                 {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
                                                                             </div>
-                                                                            <span className="text-xs font-bold text-slate-700 flex-1">{u?.name || t.common.unknown}</span>
-                                                                            <span className="text-[10px] text-slate-400">{(uData.mins/60).toFixed(1)}{t.common.unitShort}</span>
-                                                                            <span className="text-xs font-black text-slate-700 min-w-[60px] text-right">{formatCurrency(uData.total, lang)}</span>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <span className="text-xs font-bold text-slate-700">{u?.name || t.common.unknown}</span>
+                                                                                <p className="text-[9px] text-slate-400 mt-0.5">
+                                                                                    {uData.sheets.length} timesheet · {(uData.mins/60).toFixed(1)}{t.common.unitShort}
+                                                                                </p>
+                                                                            </div>
+                                                                            <span className="text-xs font-black flex-shrink-0" style={{color: uColor}}>{formatCurrency(uData.total, lang)}</span>
+                                                                            <i className={`fas fa-chevron-${isUserExpanded?'up':'down'} text-slate-300 text-[9px] flex-shrink-0`}></i>
                                                                         </div>
-                                                                        {/* Timesheet rows */}
-                                                                        {uData.sheets.sort((a,b) => new Date(a.date) - new Date(b.date)).map(item => {
-                                                                            const uiStart = getDisplayTime(item.startTime, item.date, timezone);
-                                                                            let endStr = '...';
-                                                                            if (item.endTime) {
-                                                                                endStr = getDisplayTime(item.endTime, item.endDate || item.date, timezone).time;
-                                                                            } else if (item.duration) {
-                                                                                const eEpoch = getEpochFromWIB(item.date, item.startTime) + item.duration * 60000;
-                                                                                const dObj = new Date(eEpoch + TZ_CONFIG[timezone].offsetUTC * 3600000);
-                                                                                endStr = `${String(dObj.getUTCHours()).padStart(2,'0')}:${String(dObj.getUTCMinutes()).padStart(2,'0')}`;
-                                                                            }
-                                                                            const workDay = getPSTDay(item.date, item.startTime) || item.date;
-                                                                            return (
-                                                                                <div key={item.id} className="flex items-center gap-3 px-4 py-2.5 group hover:bg-slate-50 transition-colors border-t border-slate-50">
-                                                                                    <div className="w-1 h-8 rounded-full flex-shrink-0" style={{backgroundColor: uColor+'55'}}></div>
-                                                                                    <div className="flex-1 min-w-0">
-                                                                                        <p className="text-[10px] font-bold text-slate-600">{formatDate(workDay, lang)}</p>
-                                                                                        <p className="text-[9px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                                                                            <span className="font-mono">{uiStart.time}–{endStr}</span>
-                                                                                            <span className="opacity-40">·</span>
-                                                                                            <span>{(parseInt(item.duration||0)/60).toFixed(1)}h</span>
-                                                                                            <span className="bg-slate-100 text-slate-400 px-1 rounded text-[8px]">{TZ_CONFIG[timezone].label}</span>
-                                                                                            {item.scheduleId === 'adhoc' && <span className="bg-orange-100 text-orange-400 px-1 rounded text-[8px] font-bold">AD-HOC</span>}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                                                                        <p className="text-xs font-black text-emerald-600">{formatCurrency(getAmount(item), lang)}</p>
-                                                                                        <button onClick={(e) => { e.stopPropagation(); handleMarkUnpaid(item.id); }}
-                                                                                            className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg border border-slate-200 hover:border-orange-300 hover:bg-orange-50 flex items-center justify-center text-slate-300 hover:text-orange-500 flex-shrink-0"
-                                                                                            title={lang==='id'?'Kembalikan ke Pending':'Move back to Pending'}>
-                                                                                            <i className="fas fa-undo text-[9px]"></i>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        })}
+                                                                        {/* Timesheet rows — sorted descending (newest first) */}
+                                                                        {isUserExpanded && (
+                                                                            <div className="bg-slate-50/50">
+                                                                                {uData.sheets
+                                                                                    .slice()
+                                                                                    .sort((a,b) => new Date(b.date+' '+(b.startTime||'00:00')) - new Date(a.date+' '+(a.startTime||'00:00')))
+                                                                                    .map(item => {
+                                                                                    const uiStart = getDisplayTime(item.startTime, item.date, timezone);
+                                                                                    let endStr = '...';
+                                                                                    if (item.endTime) {
+                                                                                        endStr = getDisplayTime(item.endTime, item.endDate || item.date, timezone).time;
+                                                                                    } else if (item.duration) {
+                                                                                        const eEpoch = getEpochFromWIB(item.date, item.startTime) + item.duration * 60000;
+                                                                                        const dObj = new Date(eEpoch + TZ_CONFIG[timezone].offsetUTC * 3600000);
+                                                                                        endStr = `${String(dObj.getUTCHours()).padStart(2,'0')}:${String(dObj.getUTCMinutes()).padStart(2,'0')}`;
+                                                                                    }
+                                                                                    const workDay = getPSTDay(item.date, item.startTime) || item.date;
+                                                                                    return (
+                                                                                        <div key={item.id} className="flex items-center gap-3 px-4 py-2.5 group hover:bg-white transition-colors border-t border-slate-100">
+                                                                                            <div className="w-1 h-8 rounded-full flex-shrink-0" style={{backgroundColor: uColor+'55'}}></div>
+                                                                                            <div className="flex-1 min-w-0">
+                                                                                                <p className="text-[10px] font-bold text-slate-600">{formatDate(workDay, lang)}</p>
+                                                                                                <p className="text-[9px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                                                                                    <span className="font-mono">{uiStart.time}–{endStr}</span>
+                                                                                                    <span className="opacity-40">·</span>
+                                                                                                    <span>{(parseInt(item.duration||0)/60).toFixed(1)}h</span>
+                                                                                                    <span className="bg-slate-200 text-slate-400 px-1 rounded text-[8px]">{TZ_CONFIG[timezone].label}</span>
+                                                                                                    {item.scheduleId === 'adhoc' && <span className="bg-orange-100 text-orange-400 px-1 rounded text-[8px] font-bold">AD-HOC</span>}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                                                                <p className="text-xs font-black text-emerald-600">{formatCurrency(getAmount(item), lang)}</p>
+                                                                                                <button onClick={(e) => { e.stopPropagation(); handleMarkUnpaid(item.id); }}
+                                                                                                    className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg border border-slate-200 hover:border-orange-300 hover:bg-orange-50 flex items-center justify-center text-slate-300 hover:text-orange-500 flex-shrink-0"
+                                                                                                    title={lang==='id'?'Kembalikan ke Pending':'Move back to Pending'}>
+                                                                                                    <i className="fas fa-undo text-[9px]"></i>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 );
                                                             })
