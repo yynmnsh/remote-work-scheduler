@@ -1281,7 +1281,7 @@
                             <span className="font-bold flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
                             <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PT</span></span>
                             {b.isPlan
-                                ? <span className="text-slate-400 text-[8px] flex items-center gap-1"><i className="far fa-calendar"></i>{lang==='id'?'Dijadwalkan · belum dilaporkan':'Scheduled · not yet reported'}</span>
+                                ? <span className="text-slate-400 text-[8px] flex items-center gap-1"><i className="far fa-calendar"></i>{lang==='id'?'Dijadwalkan':'Scheduled'}</span>
                                 : <span className="flex flex-col gap-0.5">
                                     <span className="text-sky-300 text-[8px] font-bold flex items-center gap-1"><i className="fas fa-check-square"></i>{lang==='id'?'Sudah dilaporkan':'Reported'}</span>
                                     <span className={`text-[8px] flex items-center gap-1 ${b.status==='paid'?'text-green-400':'text-orange-300'}`}>
@@ -1649,57 +1649,44 @@
             const totalAllTimePaid = paidSheets.reduce((sum, t) => sum + getAmount(t), 0);
             const totalAllTimePaidMins = paidSheets.reduce((sum, t) => sum + parseInt(t.duration || 0), 0);
             
-            const paidHistory = {};
-            const weeklyStats = {}; 
-            const weeklyMins = {}; 
-            const userTotalPaid = {}; 
-            const userTotalMins = {}; 
-            const userWeeklyPaid = {}; 
-            const userWeeklyMins = {};
-            const weeklyDateRanges = {}; 
+            // ── Payment Batches: grouped by paidAt date (when admin clicked Mark Paid) ──
+            const paymentBatches = {}; // key = paidAt date string YYYY-MM-DD
+            const userTotalPaid = {};
+            const userTotalMins = {};
 
-            paidSheets.forEach(t => { 
-                const amount = getAmount(t);
-                const duration = parseInt(t.duration || 0);
-                const pstDay = getPSTDay(t.date, t.startTime) || t.date;
-                const d = pstDay; 
-                
-                if(!paidHistory[d]) paidHistory[d] = []; 
-                paidHistory[d].push(t);
-                
-                const [y, m, day] = d.split('-').map(Number);
-                const paidDateObj = new Date(y, m - 1, day);
-                const firstDayOfYear = new Date(y, 0, 1);
-                const pastDaysOfYear = (paidDateObj - firstDayOfYear) / 86400000;
-                const weekNum = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-                const weekKey = `${y}-W${String(weekNum).padStart(2, '0')}`;
+            paidSheets.forEach(ts => {
+                const amount = getAmount(ts);
+                const duration = parseInt(ts.duration || 0);
 
-                if (!weeklyDateRanges[weekKey]) {
-                    const wStart = new Date(y, 0, 1 + (weekNum - 1) * 7 - firstDayOfYear.getDay());
-                    const wEnd = new Date(wStart);
-                    wEnd.setDate(wStart.getDate() + 6);
-                    
-                    const strStart = `${wStart.getDate()} ${wStart.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' })}`;
-                    const strEnd = `${wEnd.getDate()} ${wEnd.toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { month: 'short' })}`;
-                    weeklyDateRanges[weekKey] = `${strStart} - ${strEnd}`;
-                }
-                
-                if (!weeklyStats[weekKey]) { weeklyStats[weekKey] = 0; weeklyMins[weekKey] = 0; }
-                weeklyStats[weekKey] += amount;
-                weeklyMins[weekKey] += duration;
+                // Use paidAt date as batch key; fall back to work date if missing
+                const batchKey = ts.paidAt ? ts.paidAt.substring(0, 10) : (getPSTDay(ts.date, ts.startTime) || ts.date);
 
-                if (!userTotalPaid[t.userId]) { userTotalPaid[t.userId] = 0; userTotalMins[t.userId] = 0; }
-                userTotalPaid[t.userId] += amount;
-                userTotalMins[t.userId] += duration;
+                if (!paymentBatches[batchKey]) paymentBatches[batchKey] = { sheets: [], total: 0, totalMins: 0 };
+                paymentBatches[batchKey].sheets.push(ts);
+                paymentBatches[batchKey].total += amount;
+                paymentBatches[batchKey].totalMins += duration;
 
-                if (!userWeeklyPaid[weekKey]) { userWeeklyPaid[weekKey] = {}; userWeeklyMins[weekKey] = {}; }
-                if (!userWeeklyPaid[weekKey][t.userId]) { userWeeklyPaid[weekKey][t.userId] = 0; userWeeklyMins[weekKey][t.userId] = 0; }
-                userWeeklyPaid[weekKey][t.userId] += amount;
-                userWeeklyMins[weekKey][t.userId] += duration;
+                if (!userTotalPaid[ts.userId]) { userTotalPaid[ts.userId] = 0; userTotalMins[ts.userId] = 0; }
+                userTotalPaid[ts.userId] += amount;
+                userTotalMins[ts.userId] += duration;
             });
-            
-            const sortedHistory = Object.keys(paidHistory).sort((a,b) => new Date(b) - new Date(a));
-            const sortedWeeks = Object.keys(weeklyStats).sort().reverse(); 
+
+            // Sort batches newest-first; compute work-date range per batch
+            const sortedBatches = Object.keys(paymentBatches).sort((a, b) => new Date(b) - new Date(a));
+            sortedBatches.forEach(key => {
+                const batch = paymentBatches[key];
+                const workDates = batch.sheets.map(s => getPSTDay(s.date, s.startTime) || s.date).sort();
+                batch.workDateMin = workDates[0];
+                batch.workDateMax = workDates[workDates.length - 1];
+                // Per-user totals within batch
+                batch.byUser = {};
+                batch.sheets.forEach(s => {
+                    if (!batch.byUser[s.userId]) batch.byUser[s.userId] = { total: 0, mins: 0, sheets: [] };
+                    batch.byUser[s.userId].total += getAmount(s);
+                    batch.byUser[s.userId].mins += parseInt(s.duration || 0);
+                    batch.byUser[s.userId].sheets.push(s);
+                });
+            });
             
             const handleMarkPaid = async (sheetIds) => { 
                 onConfirmAction(t.timesheet.confirmPaid, async () => { 
@@ -1718,6 +1705,24 @@
                         setLoading(false); 
                     } 
                 }); 
+            };
+
+            const handleMarkUnpaid = async (sheetId) => {
+                const msg = lang === 'id' ? 'Kembalikan timesheet ini ke Pending?' : 'Move this timesheet back to Pending?';
+                onConfirmAction(msg, async () => {
+                    setLoading(true);
+                    try {
+                        const batch = window.fs.writeBatch(window.db);
+                        const docRef = window.fs.doc(window.db, "timesheets", sheetId);
+                        batch.update(docRef, { status: 'pending', paidAt: null });
+                        await batch.commit();
+                        showNotify(lang === 'id' ? 'Dikembalikan ke Pending' : 'Moved back to Pending');
+                    } catch(e) {
+                        showNotify(t.common.error, "error");
+                    } finally {
+                        setLoading(false);
+                    }
+                });
             };
             
             return (
@@ -1999,144 +2004,180 @@
                     })()}
 
                     {viewMode === 'history' && ( 
-                        <div className="space-y-4">
-                            <div className="bg-gradient-to-r from-green-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
-                                <h2 className="text-xl font-bold mb-1">{t.admin.totalPaidTitle}</h2>
-                                <div className="flex items-end gap-2">
-                                    <p className="text-3xl font-bold">{formatCurrency(totalAllTimePaid, lang)}</p>
-                                    <p className="text-sm text-green-200 mb-1 font-medium">({(totalAllTimePaidMins/60).toFixed(1)}{t.common.unitShort})</p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-3 mb-4 mt-8">
-                                <div className="h-px bg-slate-200 flex-1"></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-trophy mr-1 text-yellow-500"></i> {t.admin.sectionAllTime}</span>
-                                <div className="h-px bg-slate-200 flex-1"></div>
+                        <div className="space-y-3">
+                            {/* ── All-time total header ── */}
+                            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t.admin.totalPaidTitle}</p>
+                                <p className="text-3xl font-black">{formatCurrency(totalAllTimePaid, lang)}</p>
+                                <p className="text-sm text-slate-400 mt-0.5">{(totalAllTimePaidMins/60).toFixed(1)}{t.common.unitShort} · {paidSheets.length} timesheet</p>
                             </div>
 
-                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                                <div className="space-y-2">
-                                    {Object.keys(userTotalPaid).sort((a,b) => userTotalPaid[b] - userTotalPaid[a]).map(uid => {
-                                        const u = users.find(user => String(user.id) === String(uid));
-                                        const uColor = getUserColor(uid) || '#cbd5e1';
-                                        return (
-                                            <div key={uid} className="group flex justify-between items-center p-2 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm group-hover:scale-110 transition-transform" style={{backgroundColor: uColor}}>
-                                                        {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
+                            {/* ── Per-user all-time leaderboard ── */}
+                            {Object.keys(userTotalPaid).length > 0 && (
+                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                    <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
+                                        <i className="fas fa-trophy text-yellow-400 text-xs"></i>
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.admin.sectionAllTime}</span>
+                                    </div>
+                                    <div className="divide-y divide-slate-50">
+                                        {Object.keys(userTotalPaid).sort((a,b) => userTotalPaid[b] - userTotalPaid[a]).map((uid, rank) => {
+                                            const u = users.find(user => String(user.id) === String(uid));
+                                            const uColor = getUserColor(uid) || '#cbd5e1';
+                                            const pct = totalAllTimePaid > 0 ? (userTotalPaid[uid] / totalAllTimePaid * 100) : 0;
+                                            return (
+                                                <div key={uid} className="px-4 py-3">
+                                                    <div className="flex items-center gap-3 mb-1.5">
+                                                        <span className="text-[10px] font-black text-slate-300 w-4 text-center flex-shrink-0">#{rank+1}</span>
+                                                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-[10px] flex-shrink-0" style={{backgroundColor: uColor}}>
+                                                            {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
+                                                        </div>
+                                                        <span className="font-bold text-slate-700 text-sm flex-1">{u?.name || t.common.unknown}</span>
+                                                        <span className="font-black text-slate-800 text-sm">{formatCurrency(userTotalPaid[uid], lang)}</span>
+                                                        <span className="text-[10px] text-slate-400 w-12 text-right">{(userTotalMins[uid]/60).toFixed(1)}{t.common.unitShort}</span>
                                                     </div>
-                                                    <span className="font-bold text-slate-700 text-sm group-hover:text-slate-900 transition-colors">{u?.name || t.common.unknown}</span>
+                                                    <div className="ml-7 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div className="h-full rounded-full transition-all" style={{width:`${pct}%`, backgroundColor: uColor}}></div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="block font-bold text-green-600 group-hover:scale-105 transition-transform origin-right">{formatCurrency(userTotalPaid[uid], lang)}</span>
-                                                    <span className="text-[10px] text-slate-400 bg-white border border-slate-100 px-1.5 py-0.5 rounded mt-1 inline-block shadow-sm">{(userTotalMins[uid]/60).toFixed(1)}{t.common.unitShort}</span>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Payment Batches ── */}
+                            {sortedBatches.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <i className="fas fa-layer-group text-emerald-400 text-xs"></i>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            {lang === 'id' ? 'Riwayat Pembayaran' : 'Payment History'}
+                                        </span>
+                                        <span className="text-[9px] text-slate-300 ml-1">
+                                            {lang === 'id' ? '(dikelompokkan per tanggal bayar)' : '(grouped by payment date)'}
+                                        </span>
+                                    </div>
+                                    {sortedBatches.map(batchKey => {
+                                        const batch = paymentBatches[batchKey];
+                                        const isBatchExpanded = expandedUsers['batch_' + batchKey] !== false;
+                                        const batchDate = (() => {
+                                            const [y,m,d] = batchKey.split('-').map(Number);
+                                            return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US', {day:'numeric', month:'long', year:'numeric'});
+                                        })();
+                                        const workRange = batch.workDateMin === batch.workDateMax
+                                            ? formatDate(batch.workDateMin, lang)
+                                            : `${formatDate(batch.workDateMin, lang)} – ${formatDate(batch.workDateMax, lang)}`;
+                                        const batchUserCount = Object.keys(batch.byUser).length;
+                                        return (
+                                            <div key={batchKey} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                                {/* Batch header */}
+                                                <div onClick={() => setExpandedUsers(prev => ({...prev, ['batch_'+batchKey]: !isBatchExpanded}))}
+                                                    className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors">
+                                                    {/* Payment date icon */}
+                                                    <div className="w-9 h-9 rounded-xl bg-emerald-100 flex-shrink-0 flex flex-col items-center justify-center leading-none mt-0.5">
+                                                        <span className="text-[8px] font-bold text-emerald-500 uppercase">
+                                                            {new Date(batchKey+'T00:00:00').toLocaleDateString(lang==='id'?'id-ID':'en-US',{month:'short'})}
+                                                        </span>
+                                                        <span className="text-sm font-black text-emerald-700 leading-tight">
+                                                            {batchKey.substring(8)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-black text-slate-700 leading-tight">
+                                                            {lang==='id'?'Dibayar':'Paid'} {batchDate}
+                                                        </p>
+                                                        <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 flex-wrap">
+                                                            <i className="fas fa-briefcase text-[8px]"></i>
+                                                            <span>{lang==='id'?'Pekerjaan:':'Work:'} {workRange}</span>
+                                                            <span className="w-px h-2.5 bg-slate-200 mx-0.5"></span>
+                                                            <span>{batchUserCount} {lang==='id'?'orang':'person'}</span>
+                                                            <span className="w-px h-2.5 bg-slate-200 mx-0.5"></span>
+                                                            <span>{batch.sheets.length} timesheet</span>
+                                                            <span className="w-px h-2.5 bg-slate-200 mx-0.5"></span>
+                                                            <span>{(batch.totalMins/60).toFixed(1)}{t.common.unitShort}</span>
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <p className="font-black text-emerald-600 text-base">{formatCurrency(batch.total, lang)}</p>
+                                                        <i className={`fas fa-chevron-${isBatchExpanded?'up':'down'} text-slate-300 text-xs`}></i>
+                                                    </div>
                                                 </div>
+
+                                                {/* Batch detail: per-user then per-timesheet */}
+                                                {isBatchExpanded && (
+                                                    <div className="border-t border-slate-50">
+                                                        {Object.keys(batch.byUser)
+                                                            .sort((a,b) => batch.byUser[b].total - batch.byUser[a].total)
+                                                            .map(uid => {
+                                                                const uData = batch.byUser[uid];
+                                                                const u = users.find(user => String(user.id) === String(uid));
+                                                                const uColor = getUserColor(uid) || '#cbd5e1';
+                                                                const uPct = batch.total > 0 ? (uData.total / batch.total * 100) : 0;
+                                                                return (
+                                                                    <div key={uid} className="border-b border-slate-50 last:border-0">
+                                                                        {/* User sub-header */}
+                                                                        <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60">
+                                                                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white font-black text-[9px] flex-shrink-0" style={{backgroundColor: uColor}}>
+                                                                                {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
+                                                                            </div>
+                                                                            <span className="text-xs font-bold text-slate-700 flex-1">{u?.name || t.common.unknown}</span>
+                                                                            <span className="text-[10px] text-slate-400">{(uData.mins/60).toFixed(1)}{t.common.unitShort}</span>
+                                                                            <span className="text-xs font-black text-slate-700 min-w-[60px] text-right">{formatCurrency(uData.total, lang)}</span>
+                                                                        </div>
+                                                                        {/* Timesheet rows */}
+                                                                        {uData.sheets.sort((a,b) => new Date(a.date) - new Date(b.date)).map(item => {
+                                                                            const uiStart = getDisplayTime(item.startTime, item.date, timezone);
+                                                                            let endStr = '...';
+                                                                            if (item.endTime) {
+                                                                                endStr = getDisplayTime(item.endTime, item.endDate || item.date, timezone).time;
+                                                                            } else if (item.duration) {
+                                                                                const eEpoch = getEpochFromWIB(item.date, item.startTime) + item.duration * 60000;
+                                                                                const dObj = new Date(eEpoch + TZ_CONFIG[timezone].offsetUTC * 3600000);
+                                                                                endStr = `${String(dObj.getUTCHours()).padStart(2,'0')}:${String(dObj.getUTCMinutes()).padStart(2,'0')}`;
+                                                                            }
+                                                                            const workDay = getPSTDay(item.date, item.startTime) || item.date;
+                                                                            return (
+                                                                                <div key={item.id} className="flex items-center gap-3 px-4 py-2.5 group hover:bg-slate-50 transition-colors border-t border-slate-50">
+                                                                                    <div className="w-1 h-8 rounded-full flex-shrink-0" style={{backgroundColor: uColor+'55'}}></div>
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <p className="text-[10px] font-bold text-slate-600">{formatDate(workDay, lang)}</p>
+                                                                                        <p className="text-[9px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                                                                            <span className="font-mono">{uiStart.time}–{endStr}</span>
+                                                                                            <span className="opacity-40">·</span>
+                                                                                            <span>{(parseInt(item.duration||0)/60).toFixed(1)}h</span>
+                                                                                            <span className="bg-slate-100 text-slate-400 px-1 rounded text-[8px]">{TZ_CONFIG[timezone].label}</span>
+                                                                                            {item.scheduleId === 'adhoc' && <span className="bg-orange-100 text-orange-400 px-1 rounded text-[8px] font-bold">AD-HOC</span>}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                                                        <p className="text-xs font-black text-emerald-600">{formatCurrency(getAmount(item), lang)}</p>
+                                                                                        <button onClick={(e) => { e.stopPropagation(); handleMarkUnpaid(item.id); }}
+                                                                                            className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg border border-slate-200 hover:border-orange-300 hover:bg-orange-50 flex items-center justify-center text-slate-300 hover:text-orange-500 flex-shrink-0"
+                                                                                            title={lang==='id'?'Kembalikan ke Pending':'Move back to Pending'}>
+                                                                                            <i className="fas fa-undo text-[9px]"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        }
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}
                                 </div>
-                            </div>
+                            )}
 
-                            <div className="flex items-center gap-3 mt-10 mb-4">
-                                <div className="h-px bg-slate-200 flex-1"></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-calendar-week mr-1 text-blue-500"></i> {t.admin.sectionWeekly}</span>
-                                <div className="h-px bg-slate-200 flex-1"></div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {sortedWeeks.slice(0, 4).map((week, idx) => (
-                                    <div key={week} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow animate-slide-up" style={{animationDelay: `${idx * 0.1}s`}}>
-                                        <div className="bg-slate-50 flex justify-between items-center p-3 border-b border-slate-100">
-                                            <div>
-                                                <p className="text-xs uppercase text-slate-700 font-bold">{week}</p>
-                                                <p className="text-[9px] text-slate-500 mt-0.5 flex items-center gap-1"><i className="far fa-calendar-alt"></i> {weeklyDateRanges[week]}</p>
-                                            </div>
-                                            <div className="text-right bg-white px-2 py-1 rounded-lg border border-slate-100 shadow-sm">
-                                                <p className="text-sm font-black text-slate-800">{formatCurrency(weeklyStats[week], lang)}</p>
-                                                <p className="text-[9px] text-slate-400 font-medium">{(weeklyMins[week]/60).toFixed(1)}{t.common.unitShort}</p>
-                                            </div>
-                                        </div>
-                                        <div className="p-3 space-y-2">
-                                            {userWeeklyPaid[week] && Object.keys(userWeeklyPaid[week]).sort((a,b) => userWeeklyPaid[week][b] - userWeeklyPaid[week][a]).map(uid => {
-                                                const u = users.find(user => String(user.id) === String(uid));
-                                                const uColor = getUserColor(uid) || '#cbd5e1';
-                                                return (
-                                                    <div key={uid} className="flex justify-between items-center text-xs group p-1.5 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold text-[8px] shadow-sm group-hover:scale-110 transition-transform" style={{backgroundColor: uColor}}>
-                                                                {u?.name ? u.name.substring(0,1).toUpperCase() : '?'}
-                                                            </div>
-                                                            <span className="font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">{u?.name || t.common.unknown}</span>
-                                                        </div>
-                                                        <div className="text-right flex items-center gap-3">
-                                                            <span className="text-[9px] font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-100 shadow-sm">{(userWeeklyMins[week][uid]/60).toFixed(1)}{t.common.unitShort}</span>
-                                                            <span className="font-bold text-slate-700 min-w-[70px] group-hover:text-green-600 transition-colors">{formatCurrency(userWeeklyPaid[week][uid], lang)}</span>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex items-center gap-3 mt-10 mb-4">
-                                <div className="h-px bg-slate-200 flex-1"></div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i className="fas fa-calendar-day mr-1 text-emerald-500"></i> {t.admin.sectionDaily}</span>
-                                <div className="h-px bg-slate-200 flex-1"></div>
-                            </div>
-
-                            <div className="space-y-6">
-                                {sortedHistory.map((d, index) => (
-                                    <div key={d} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-                                        <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                                            <div className="bg-green-100 text-green-600 p-1.5 rounded-lg">
-                                                <i className="fas fa-calendar-day"></i>
-                                            </div>
-                                            <h4 className="text-sm font-bold text-slate-700 tracking-wide">{formatFullDate(d, lang)} ({t.common.pst})</h4>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {paidHistory[d].sort((a,b) => getAmount(b) - getAmount(a)).map((item, idx) => { 
-                                                const u = users.find(u => String(u.id) === String(item.userId)); 
-                                                const uColor = getUserColor(item.userId) || '#cbd5e1';
-                                                
-                                                const uiStart = getDisplayTime(item.startTime, item.date, timezone);
-                                                let endTimeStr = '...';
-                                                if (item.endTime) {
-                                                    endTimeStr = getDisplayTime(item.endTime, item.endDate || item.date, timezone).time;
-                                                } else if (item.duration) {
-                                                    const startEpoch = getEpochFromWIB(item.date, item.startTime);
-                                                    const endEpoch = startEpoch + (item.duration * 60000);
-                                                    const targetOffset = TZ_CONFIG[timezone].offsetUTC;
-                                                    const dObj = new Date(endEpoch + targetOffset * 3600000);
-                                                    endTimeStr = `${String(dObj.getUTCHours()).padStart(2, '0')}:${String(dObj.getUTCMinutes()).padStart(2, '0')}`;
-                                                }
-
-                                                return (
-                                                    <div key={item.id} className="group relative flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all duration-200">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm transition-transform group-hover:scale-110" style={{backgroundColor: uColor}}>
-                                                                {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
-                                                            </div>
-                                                            <div>
-                                                                <span className="font-bold text-slate-700 text-sm block group-hover:text-slate-900 transition-colors">{u?.name || t.common.unknown}</span>
-                                                                <span className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                                                                    <i className="far fa-clock text-slate-400"></i>
-                                                                    {uiStart.time} - {endTimeStr} <span className="bg-slate-200 px-1 rounded text-[8px] text-slate-600">{TZ_CONFIG[timezone].label}</span>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <span className="font-bold text-green-600 block text-sm group-hover:scale-105 transition-transform origin-right">{formatCurrency(getAmount(item), lang)}</span>
-                                                            <span className="text-[10px] text-slate-400 bg-white border border-slate-100 px-1.5 py-0.5 rounded mt-1 inline-block shadow-sm">{(item.duration/60).toFixed(1)}h</span>
-                                                        </div>
-                                                    </div> 
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            {paidSheets.length === 0 && (
+                                <div className="bg-white p-10 rounded-2xl text-center border border-dashed border-slate-200">
+                                    <i className="fas fa-history text-3xl text-slate-200 mb-3 block"></i>
+                                    <p className="text-slate-400 text-sm">{lang==='id'?'Belum ada riwayat pembayaran':'No payment history yet'}</p>
+                                </div>
+                            )}
                         </div> 
                     )}
 
