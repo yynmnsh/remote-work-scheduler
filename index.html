@@ -286,6 +286,55 @@
         };
 
         /* --- UI COMPONENTS --- */
+        /* --- PAY PERIOD & CUTOFF HELPERS --- */
+
+        // Returns pay period info based on PT (Pacific Time) day
+        // Pay cycle: every Wednesday. Period = Tue (8 days before payday) → Mon (day before payday). Wed included in NEXT period.
+        const getPayPeriodInfo = () => {
+            const ptOffset = TZ_CONFIG['PST'].offsetUTC * 3600000;
+            const ptNow = new Date(Date.now() + ptOffset);
+            const ptDow = ptNow.getUTCDay(); // 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
+            // If today IS Wednesday: payday is today. Period being paid = Tue 8d ago → Mon yesterday.
+            // Otherwise: find next Wednesday.
+            const daysUntilWed = ptDow === 3 ? 0 : (3 - ptDow + 7) % 7;
+            const isPaydayToday = ptDow === 3;
+            const paydayEpoch = Date.now() + daysUntilWed * 86400000;
+            const paydayPt = new Date(paydayEpoch + ptOffset);
+            // Period being paid on that payday: Mon (day before) back 6 days to Tue
+            const periodEndEpoch   = paydayEpoch - 2 * 86400000; // Mon before Wed
+            const periodStartEpoch = periodEndEpoch - 6 * 86400000; // Tue before that Mon
+            // NEXT payday & period (what you're currently WORKING toward)
+            const nextPaydayEpoch   = paydayEpoch + (isPaydayToday ? 7 : 0) * 86400000;
+            const nextPaydayPt      = new Date(nextPaydayEpoch + ptOffset);
+            const nextPeriodEndEpoch   = nextPaydayEpoch - 2 * 86400000;
+            const nextPeriodStartEpoch = nextPeriodEndEpoch - 6 * 86400000;
+            const fmt = ep => {
+                const d = new Date(ep + ptOffset);
+                return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+            };
+            return {
+                isPaydayToday,
+                // Current active period (what you're working now → paid on upcoming/today Wed)
+                currentPeriodStart: fmt(isPaydayToday ? nextPeriodStartEpoch : periodStartEpoch),
+                currentPeriodEnd:   fmt(isPaydayToday ? nextPeriodEndEpoch   : periodEndEpoch),
+                upcomingPayday:     fmt(isPaydayToday ? nextPaydayEpoch       : paydayEpoch),
+                // If today is payday, also show what's being paid today
+                todayPeriodStart: isPaydayToday ? fmt(periodStartEpoch) : null,
+                todayPeriodEnd:   isPaydayToday ? fmt(periodEndEpoch)   : null,
+            };
+        };
+
+        // Returns PT-day cutoff window expressed in the given local timezone
+        const getPtCutoffInTz = (tzCode) => {
+            if (tzCode === 'PST') return { startStr:'00:00', endStr:'23:59', crossMidnight: false };
+            const diff = TZ_CONFIG[tzCode].offsetUTC - TZ_CONFIG['PST'].offsetUTC; // e.g. WIB: 7-(-8)=15
+            const startH = diff % 24;
+            const endRaw = startH - 1; // 23:59 PT = startH + 23h59m local → equivalent to startH - 1 (next minute before start)
+            const endH = ((endRaw % 24) + 24) % 24;
+            const pad = n => String(n).padStart(2,'0');
+            return { startStr:`${pad(startH)}:00`, endStr:`${pad(endH)}:59`, crossMidnight: startH > 0 };
+        };
+
         const Spinner = () => {
             return <i className="fas fa-circle-notch fa-spin text-white"></i>;
         };
@@ -702,6 +751,30 @@
                                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t.analytics.pendingStats}</h3>
                                     <p className="text-xl font-bold text-orange-600 mt-1">{formatCurrency(myPendingEarnings, lang)}</p>
                                     <p className="text-[10px] text-slate-400 mt-1">{(myPendingMinutes/60).toFixed(1)} {t.common.unitHour} {t.analytics.totalUnpaid}</p>
+                                    {/* Next payday hint */}
+                                    {(() => {
+                                        const pp = getPayPeriodInfo();
+                                        const fmtShort = (ds) => {
+                                            if (!ds) return '';
+                                            const [,m,d] = ds.split('-');
+                                            const months = lang === 'id'
+                                                ? ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des']
+                                                : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                                            return `${parseInt(d)} ${months[parseInt(m)-1]}`;
+                                        };
+                                        return (
+                                            <div className="mt-2 pt-2 border-t border-orange-100 flex items-center gap-1.5">
+                                                <i className="fas fa-calendar-check text-orange-300 text-[9px]"></i>
+                                                <span className="text-[9px] text-orange-500 font-medium">
+                                                    {pp.isPaydayToday
+                                                        ? (lang === 'id' ? '🎉 Hari ini hari bayar!' : '🎉 Payday today!')
+                                                        : (lang === 'id'
+                                                            ? `Bayar Rabu ${fmtShort(pp.upcomingPayday)} · ${fmtShort(pp.currentPeriodStart)}–${fmtShort(pp.currentPeriodEnd)}`
+                                                            : `Paid Wed ${fmtShort(pp.upcomingPayday)} · ${fmtShort(pp.currentPeriodStart)}–${fmtShort(pp.currentPeriodEnd)}`)}
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                             
@@ -1140,7 +1213,27 @@
                                         <i className={`fas fa-bolt text-xs ${isCritical ? 'text-red-500' : 'text-amber-500'}`}></i>
                                         <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${isCritical ? 'text-red-600' : 'text-slate-600'}`}>
                                             {t.schedule.teamQuota}
-                                            <span className="bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] normal-case tracking-normal border border-slate-300/50 shadow-sm">{formatDate(targetPstDate, lang)} PST</span>
+                                            {/* Badge with tooltip showing local cutoff */}
+                                            {(() => {
+                                                const co = getPtCutoffInTz(timezone);
+                                                const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
+                                                const tip = timezone === 'PST'
+                                                    ? `00:00 – 23:59 ${tzLabel}`
+                                                    : co.crossMidnight
+                                                        ? `${co.startStr} – ${co.endStr} ${tzLabel} ${lang==='id'?'(esok)':'(next day)'}`
+                                                        : `${co.startStr} – ${co.endStr} ${tzLabel}`;
+                                                return (
+                                                    <span className="group relative cursor-help">
+                                                        <span className="bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] normal-case tracking-normal border border-slate-300/50 shadow-sm hover:bg-blue-100 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                                            {formatDate(targetPstDate, lang)} PT ⓘ
+                                                        </span>
+                                                        <span className="hidden group-hover:block absolute left-0 top-full mt-1.5 z-50 bg-slate-800 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/50">
+                                                            <span className="text-slate-400 text-[9px] block mb-0.5">{lang==='id'?'Hari PT ini = lokal:':'This PT day in local:'}</span>
+                                                            {tip}
+                                                        </span>
+                                                    </span>
+                                                );
+                                            })()}
                                         </span>
                                     </div>
                                     <div className="text-[10px] font-medium text-slate-500">
@@ -1150,7 +1243,19 @@
                                 <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
                                     <div className={`h-1.5 rounded-full transition-all duration-700 ease-out ${isCritical ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${usedPercentage}%` }}></div>
                                 </div>
-                                <div className="mt-1.5 text-right">
+                                {/* Bottom row: cutoff window (left) + remaining (right) — same line, zero extra height */}
+                                <div className="mt-1.5 flex justify-between items-center">
+                                    {timezone !== 'PST' ? (() => {
+                                        const co = getPtCutoffInTz(timezone);
+                                        const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
+                                        return (
+                                            <span className="text-[9px] text-slate-400 font-medium flex items-center gap-1">
+                                                <i className="fas fa-clock text-[8px] opacity-60"></i>
+                                                {co.startStr}–{co.endStr} {tzLabel}
+                                                {co.crossMidnight && <span className="text-[8px] opacity-70">+1</span>}
+                                            </span>
+                                        );
+                                    })() : <span></span>}
                                     <span className={`text-[9px] font-bold uppercase ${isCritical ? 'text-red-500' : 'text-blue-600'}`}>
                                         {t.schedule.remaining}: {(remainingMinutes/60).toFixed(1)}{t.common.unitShort}
                                     </span>
@@ -1737,6 +1842,57 @@
                             </div>
                             <button onClick={() => setShowHistory(!showHistory)} className="text-xs text-blue-500 hover:underline">{showHistory ? t.timesheet.historyHide : t.timesheet.historyAll}</button>
                         </div>
+
+                        {/* Pay period info — only shown in pending view */}
+                        {!showHistory && (() => {
+                            const pp = getPayPeriodInfo();
+                            const fmtShort = (dateStr) => {
+                                if (!dateStr) return '';
+                                const [,m,d] = dateStr.split('-');
+                                const months = lang === 'id'
+                                    ? ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des']
+                                    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                                return `${parseInt(d)} ${months[parseInt(m)-1]}`;
+                            };
+                            return (
+                                <div className="mb-3">
+                                    {/* Payday today banner — subtle celebration */}
+                                    {pp.isPaydayToday && (
+                                        <div className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/80 rounded-xl px-3 py-2 mb-2 slide-down">
+                                            <span className="text-base leading-none">🎉</span>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-green-700">
+                                                    {lang === 'id' ? 'Hari ini hari pembayaran!' : 'Today is payday!'}
+                                                </p>
+                                                <p className="text-[9px] text-green-600/80">
+                                                    {lang === 'id' ? `Periode: ${fmtShort(pp.todayPeriodStart)} – ${fmtShort(pp.todayPeriodEnd)}` : `Period: ${fmtShort(pp.todayPeriodStart)} – ${fmtShort(pp.todayPeriodEnd)}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Next payday chip */}
+                                    <div className="flex items-center gap-2 bg-white/70 border border-slate-200/80 rounded-xl px-3 py-2">
+                                        <i className="fas fa-calendar-check text-indigo-400 text-xs flex-shrink-0"></i>
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-[9px] text-slate-400 font-medium block">
+                                                {lang === 'id' ? 'Periode berjalan (PT)' : 'Current period (PT)'}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-600">
+                                                {fmtShort(pp.currentPeriodStart)} – {fmtShort(pp.currentPeriodEnd)}
+                                            </span>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <span className="text-[9px] text-slate-400 font-medium block">
+                                                {lang === 'id' ? 'Dibayar' : 'Payday'}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-indigo-600">
+                                                {lang === 'id' ? `Rabu, ${fmtShort(pp.upcomingPayday)}` : `Wed, ${fmtShort(pp.upcomingPayday)}`}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                         
                         <div className="flex gap-2 mb-4 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
                             <button onClick={() => setFilterMine(false)} className={`flex-1 text-[10px] py-1.5 rounded transition font-medium ${!filterMine ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>{t.schedule.allUsers}</button>
@@ -2432,20 +2588,37 @@
                                 </div>
                                 
                                 <div className="card p-5 border border-slate-200">
-                                    <h4 className="font-bold text-xs text-slate-700 uppercase mb-4 flex items-center"><i className="fas fa-globe text-blue-500 mr-2"></i>{t.admin.tzSettings}</h4>
+                                    <h4 className="font-bold text-xs text-slate-700 uppercase mb-1 flex items-center"><i className="fas fa-globe text-blue-500 mr-2"></i>{t.admin.tzSettings}</h4>
+                                    <p className="text-[10px] text-slate-400 mb-4">{lang==='id'?'Ubah saat Daylight Saving berubah. Preview cutoff dihitung otomatis.':'Update when Daylight Saving changes. Cutoff preview is calculated live.'}</p>
                                     <div className="space-y-3">
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.admin.tzWIB}</label>
-                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.offsetWIB} onChange={e => setSettingsForm({...settingsForm, offsetWIB: Number(e.target.value)})} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.admin.tzAEDT}</label>
-                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.offsetAEDT} onChange={e => setSettingsForm({...settingsForm, offsetAEDT: Number(e.target.value)})} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.admin.tzPST}</label>
-                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.offsetPST} onChange={e => setSettingsForm({...settingsForm, offsetPST: Number(e.target.value)})} />
-                                        </div>
+                                        {[
+                                            { key:'offsetWIB',  label: t.admin.tzWIB,  tzCode:'WIB'  },
+                                            { key:'offsetAEDT', label: t.admin.tzAEDT, tzCode:'AEDT' },
+                                            { key:'offsetPST',  label: t.admin.tzPST,  tzCode:'PST'  },
+                                        ].map(({key, label, tzCode}) => {
+                                            // Live preview using draft values (before save)
+                                            const draftPt  = settingsForm.offsetPST;
+                                            const draftLocal = settingsForm[key];
+                                            const diff = draftLocal - draftPt;
+                                            const startH = ((diff % 24) + 24) % 24;
+                                            const endH   = ((startH - 1 + 24)) % 24;
+                                            const pad = n => String(n).padStart(2,'0');
+                                            const isSelf = tzCode === 'PST';
+                                            const preview = isSelf
+                                                ? '00:00 – 23:59'
+                                                : `${pad(startH)}:00 – ${pad(endH)}:59${startH > 0 ? (lang==='id'?' (esok)':' (+1d)') : ''}`;
+                                            return (
+                                                <div key={key}>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <label className="text-[10px] font-bold text-slate-500 uppercase">{label}</label>
+                                                        <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                                                            ⏰ {preview}
+                                                        </span>
+                                                    </div>
+                                                    <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm[key]} onChange={e => setSettingsForm({...settingsForm, [key]: Number(e.target.value)})} />
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                                 
