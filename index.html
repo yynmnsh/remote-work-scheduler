@@ -48,23 +48,106 @@
                 extend: {
                     colors: { primary: '#2563eb', secondary: '#475569', success: '#22c55e', danger: '#ef4444', warning: '#f59e0b' },
                     animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        'fade-in':    'fadeIn  0.3s ease-out',
+                        'slide-up':   'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)',
+                        'slide-down': 'slideDown 0.35s cubic-bezier(0.16,1,0.3,1)',
+                        'pop-in':     'popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite'
                     },
                     keyframes: {
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-                        slideUp: { '0%': { transform: 'translateY(15px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                        fadeIn:    { '0%':{ opacity:'0' },                                          '100%':{ opacity:'1' } },
+                        slideUp:   { '0%':{ transform:'translateY(16px)', opacity:'0' },            '100%':{ transform:'translateY(0)', opacity:'1' } },
+                        slideDown: { '0%':{ transform:'translateY(-16px)', opacity:'0' },           '100%':{ transform:'translateY(0)', opacity:'1' } },
+                        popIn:     { '0%':{ transform:'scale(0.88)', opacity:'0' },                 '100%':{ transform:'scale(1)', opacity:'1' } },
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(145deg, #eef2ff 0%, #f8fafc 45%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+
+        /* ── Glassmorphism ── */
+        .glass {
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+        }
+        .glass-strong {
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+        }
+        .glass-dark {
+            background: rgba(15,23,42,0.60);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        /* ── Card hover lift ── */
+        .lift {
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            will-change: transform;
+        }
+        .lift:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,99,235,0.10); }
+
+        /* ── Shimmer on primary buttons ── */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%);
+            transform: translateX(-100%);
+            transition: transform 0.55s ease;
+        }
+        .btn-primary:hover::after { transform: translateX(100%); }
+
+        /* ── Nav active dot ── */
+        .nav-active-dot::after {
+            content: '';
+            display: block;
+            width: 4px; height: 4px;
+            border-radius: 99px;
+            background: currentColor;
+            margin: 2px auto 0;
+            opacity: 0.7;
+        }
+
+        /* ── Animations (used as className) ── */
+        .fade-in    { animation: fadeIn    0.3s  ease-out; }
+        .slide-up   { animation: slideUp   0.35s cubic-bezier(0.16,1,0.3,1); }
+        .slide-down { animation: slideDown 0.35s cubic-bezier(0.16,1,0.3,1); }
+        .pop-in     { animation: popIn     0.3s  cubic-bezier(0.34,1.56,0.64,1); }
+
+        /* ── Input focus ring ── */
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.14);
+        }
+
+        /* ── Card default ── */
+        .card {
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+            border-radius: 1rem;
+        }
+
         .bar-fill { transition: height 1s ease-out; }
     </style>
 </head>
@@ -92,24 +175,24 @@
                 common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', clear: 'Bersihkan', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'j', unitMin: 'm', reminder: 'Periksa zona waktu & bahasa.', saved: 'Tersimpan!', error: 'Terjadi Kesalahan', unknown: 'Tidak diketahui', you: 'ANDA', new: 'BARU', est: 'Perkiraan', pst: 'PT', requiredField: 'Mohon lengkapi semua kolom.', selectDate: 'Pilih Tanggal', selectTime: 'Pilih Waktu', logout: 'Keluar Akun', logoutSuccess: 'Berhasil keluar.' },
                 dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada aktivitas.', until: 'hingga' },
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian', used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
-                timesheet: { title: 'Input Laporan', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun', confirmSubmit: 'Data laporan akurat?', accessRestricted: 'Akses Terbatas', selectSchedule: 'Pilih Jadwal', adhoc: 'Ad-Hoc (Tanpa Jadwal)', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan jadwal ini sudah ada!', requireSchedule: 'Pilih Jadwal dulu!', earlySubmitError: 'Jadwal belum selesai!' },
-                analytics: { myStats: 'Kinerja (7 Hari)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', tagAdhoc: 'Dadakan', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' },
+                timesheet: { title: 'Input Laporan', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun', confirmSubmit: 'Data laporan akurat?', accessRestricted: 'Akses Terbatas', selectSchedule: 'Pilih Jadwal', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan jadwal ini sudah ada!', earlySubmitError: 'Jadwal belum selesai!' },
+                analytics: { myStats: 'Kinerja (7 Hari)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Set Sandi/PIN', passPlaceholder: 'Ketik sandi baru untuk user ini', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'Isi HANYA untuk mengubah password.', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzAEDT: 'Offset AEDT', tzPST: 'Offset PT', perUserRates: 'Rate per User (Override)', perUserRatesHelper: 'Kosongkan atau 0 = pakai rate global', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Rate per user disimpan!' },
                 profile: { title: 'Pengaturan Akun', bankTitle: 'Info Rekening', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' },
                 auth: { createTitle: 'Buat Password Baru', loginTitle: 'Login Keamanan', passLabel: 'Password', newPassLabel: 'Password Baru', createBtn: 'Simpan Sandi Baru', loginBtn: 'Buka Akses', successCreate: 'Password dibuat!', successChange: 'Password diubah!', errorPass: 'Password salah!', errorSame: 'Password baru tidak boleh sama!', changeTitle: 'Ubah Password', changeBtn: 'Simpan', confirmChange: 'Yakin ubah password?', errorSavePass: 'Gagal simpan password', errorUpdatePass: 'Gagal update password', successLogin: 'Verifikasi Berhasil!', firstTimeHint: 'Buat sandi/PIN untuk mengunci akun Anda.' },
-                tooltips: { tzToggle: 'Pilih Zona Waktu', langToggle: 'Ganti Bahasa', sortToggle: 'Urutkan Jadwal', settings: 'Pengaturan Akun', userSelect: 'Pilih Akun Pengguna', tzInfo: 'Waktu menyesuaikan otomatis.', estInfo: 'Estimasi pendapatan dari PENDING.', quotaInfo: 'Kuota dihitung berdasar 00:00-23:59 PT.', reportInfo: 'Pilih jadwal. Gunakan Ad-Hoc jika dadakan.', disciplineInfo: 'Perbandingan Rencana vs Aktual.', adminInfo: 'Kelola tim, kuota, mata uang, dll.' }
+                tooltips: { tzToggle: 'Pilih Zona Waktu', langToggle: 'Ganti Bahasa', sortToggle: 'Urutkan Jadwal', settings: 'Pengaturan Akun', userSelect: 'Pilih Akun Pengguna', tzInfo: 'Waktu menyesuaikan otomatis.', estInfo: 'Estimasi pendapatan dari PENDING.', quotaInfo: 'Kuota dihitung berdasar 00:00-23:59 PT.', reportInfo: 'Pilih jadwal dan masukkan waktu aktual kerja.', disciplineInfo: 'Perbandingan Rencana vs Aktual.', adminInfo: 'Kelola tim, kuota, mata uang, dll.' }
             },
             en: {
                 nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
                 common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', clear: 'Clear', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h', unitMin: 'm', reminder: 'Check timezone & language.', saved: 'Saved!', error: 'Error occurred', unknown: 'Unknown', you: 'YOU', new: 'NEW', est: 'Est.', pst: 'PT', requiredField: 'Please fill out all required fields.', selectDate: 'Select Date', selectTime: 'Select Time', logout: 'Logout', logoutSuccess: 'Logged out successfully.' },
                 dashboard: { hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.', until: 'until' },
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota', used: 'Used', remaining: 'Left', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only', confirmBooking: 'Is the schedule data correct?', pastError: 'Cannot book schedules in the past!', deleteLinkedError: 'Cannot delete schedule with linked timesheet!', visualTitle: 'Daily Schedule Map', dailyLimit: 'Daily Limit' },
-                timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account', confirmSubmit: 'Is the work report accurate?', accessRestricted: 'Access Restricted', selectSchedule: 'Select Schedule', adhoc: 'Ad-Hoc (Unscheduled)', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet already exists!', requireSchedule: 'Please select a schedule first!', earlySubmitError: 'Cannot report yet! Scheduled work is not finished.' },
-                analytics: { myStats: 'Performance (7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)', statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', tagAdhoc: 'Ad-hoc', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings', changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history.', reportTime: 'Report Time' },
+                timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account', confirmSubmit: 'Is the work report accurate?', accessRestricted: 'Access Restricted', selectSchedule: 'Select Schedule', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet already exists!', earlySubmitError: 'Cannot report yet! Scheduled work is not finished.' },
+                analytics: { myStats: 'Performance (7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)', statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings', changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history.', reportTime: 'Report Time' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', editUser: 'Edit User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive', passHeader: 'Set User Password', passPlaceholder: 'Type new password to reset', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Fill ONLY to overwrite user password.', settings: 'System Settings', dailyQuota: 'Daily Team Quota', quotaHelper: 'Total daily booking duration.', quotaError: 'Invalid configuration values!', sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted', currencySettings: 'Currency Settings', tzSettings: 'Timezone Settings', workSettings: 'Work Settings', rateUSD: 'Hourly Rate (USD)', rateIDR: '1 USD to IDR Rate', tzWIB: 'WIB Offset', tzAEDT: 'AEDT Offset', tzPST: 'PT Offset', perUserRates: 'Per-User Rate Override', perUserRatesHelper: 'Leave blank or 0 to use global rate', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Per-user rates saved!' },
                 profile: { title: 'Account Settings', bankTitle: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' },
                 auth: { createTitle: 'Create New Password', loginTitle: 'Security Login', passLabel: 'Password', newPassLabel: 'New Password', createBtn: 'Save Password', loginBtn: 'Verify Access', successCreate: 'Password created!', successChange: 'Password updated successfully!', errorPass: 'Wrong password!', errorSame: 'New password cannot be the same!', changeTitle: 'Change Password', changeBtn: 'Save', confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', errorUpdatePass: 'Error updating password', successLogin: 'Verification Success!', firstTimeHint: 'Create a password/PIN to lock your account.' },
-                tooltips: { tzToggle: 'Select Timezone', langToggle: 'Change Language', sortToggle: 'Sort Schedules', settings: 'Account Settings', userSelect: 'Select User Account', tzInfo: 'Times adjust automatically.', estInfo: 'Estimated earnings from PENDING reports.', quotaInfo: 'Daily quota calculated based on 00:00 - 23:59 PT.', reportInfo: 'Select a schedule. Use Ad-Hoc for unscheduled tasks.', disciplineInfo: 'Compares planned Schedule vs actual Timesheet.', adminInfo: 'Manage team, quota, currency rates, etc.' }
+                tooltips: { tzToggle: 'Select Timezone', langToggle: 'Change Language', sortToggle: 'Sort Schedules', settings: 'Account Settings', userSelect: 'Select User Account', tzInfo: 'Times adjust automatically.', estInfo: 'Estimated earnings from PENDING reports.', quotaInfo: 'Daily quota calculated based on 00:00 - 23:59 PT.', reportInfo: 'Select a schedule and enter your actual work times.', disciplineInfo: 'Compares planned Schedule vs actual Timesheet.', adminInfo: 'Manage team, quota, currency rates, etc.' }
             }
         };
 
@@ -208,18 +291,26 @@
         };
 
         const Notification = ({ msg, type, onClose }) => {
-            let containerClass = `fixed top-4 right-4 left-4 md:left-auto z-[100] p-4 rounded-xl shadow-2xl text-white flex justify-between items-center animate-slide-up border-2 ${type === 'error' ? 'bg-red-600 border-red-700' : 'bg-green-600 border-green-700'}`;
-            let iconClass = `fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-lg`;
-            
+            const isErr = type === 'error';
             return (
-                <div className={containerClass}>
-                    <div className="flex items-center gap-3">
-                        <i className={iconClass}></i>
-                        <span className="text-sm font-bold tracking-wide drop-shadow-md">{msg}</span>
+                <div className={`fixed top-4 right-4 left-4 md:left-auto md:max-w-sm z-[100] animate-slide-down`}>
+                    <div className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl shadow-xl border
+                        ${isErr
+                            ? 'bg-red-500/90 border-red-400/60 text-white'
+                            : 'bg-white/90 border-white/80 text-slate-800'}
+                        backdrop-filter backdrop-blur-xl`}>
+                        <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0
+                                ${isErr ? 'bg-white/20' : 'bg-green-100'}`}>
+                                <i className={`fas text-sm ${isErr ? 'fa-exclamation-circle text-white' : 'fa-check-circle text-green-600'}`}></i>
+                            </div>
+                            <span className={`text-sm font-semibold leading-tight ${isErr ? 'text-white' : 'text-slate-700'}`}>{msg}</span>
+                        </div>
+                        <button onClick={onClose} className={`p-1 rounded-lg flex-shrink-0 transition
+                            ${isErr ? 'hover:bg-white/20 text-white/80 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'}`}>
+                            <i className="fas fa-times text-xs"></i>
+                        </button>
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-white/20 rounded transition-colors ml-4">
-                        <i className="fas fa-times opacity-90 hover:opacity-100"></i>
-                    </button>
                 </div>
             );
         };
@@ -227,11 +318,13 @@
         const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel, t }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl transform transition-all scale-100 border border-gray-100">
-                        <div className="flex items-center gap-3 mb-3 text-orange-500">
-                            <i className="fas fa-exclamation-triangle text-xl"></i>
-                            <h3 className="text-lg font-bold text-slate-800">{t.common.confirmTitle}</h3>
+                <div className="fixed inset-0 glass-dark z-[70] flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl w-full max-w-sm p-6 shadow-2xl pop-in border border-white/80">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i className="fas fa-exclamation-triangle text-orange-500"></i>
+                            </div>
+                            <h3 className="text-base font-bold text-slate-800">{t.common.confirmTitle}</h3>
                         </div>
                         <p className="text-slate-600 mb-6 font-medium leading-relaxed">{message}</p>
                         <div className="flex gap-2">
@@ -264,7 +357,7 @@
             let isChangeMode = mode === 'change' || mode === 'create';
 
             return (
-                 <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+                 <div className="fixed inset-0 glass-dark z-[60] flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-slate-800">
@@ -308,8 +401,8 @@
             };
 
             return (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+                <div className="fixed inset-0 glass-dark z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl w-full max-w-sm p-6 shadow-2xl pop-in border border-white/80 relative">
                         <button type="button" onClick={onClose} className="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition">
                             <i className="fas fa-times text-lg"></i>
                         </button>
@@ -378,8 +471,8 @@
             };
 
             return (
-                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                 <div className="fixed inset-0 glass-dark z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white/95 backdrop-blur-xl rounded-2xl w-full max-w-sm p-6 shadow-2xl pop-in border border-white/80 max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-bold text-slate-800 mb-4">{user ? t.admin.editUser : t.admin.addUser}</h3>
                         
                         <form onSubmit={onSubmitInternal} className="space-y-4" noValidate>
@@ -460,7 +553,7 @@
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone }) => {
             if (!currentUser) {
                 return (
-                    <div className="space-y-4 fade-in">
+                    <div className="space-y-4 slide-up">
                         <div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center">
                             <div className="flex flex-col items-center gap-3 mb-3">
                                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
@@ -612,7 +705,7 @@
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="card p-5 border border-slate-100 hover:shadow-md transition-shadow">
                                 <div className="mb-4">
                                     <div className="flex justify-between items-center mb-1">
                                         <div className="flex items-center gap-1.5">
@@ -659,7 +752,6 @@
                                                         <div className="mt-2">
                                                             <div className="flex justify-between items-center text-xs mb-1">
                                                                 <span className="font-medium text-indigo-600 italic">{t.analytics.statusUnplanned}</span>
-                                                                <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-indigo-100 text-indigo-700">{t.analytics.tagAdhoc}</span>
                                                             </div>
                                                             {d.unplanned.map((u, i) => (
                                                                 <div key={i} className="flex justify-between text-[10px] text-slate-500 pl-2 border-l-2 border-indigo-200 mb-1">
@@ -751,7 +843,7 @@
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative">
+                            <div className="card p-5 border border-slate-100 relative">
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
                                         <h3 className="font-bold text-slate-700 text-sm">{t.analytics.teamActivity}</h3>
@@ -782,7 +874,7 @@
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                            <div className="card p-5 border border-slate-100">
                                 <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                                     <i className="fas fa-trophy text-yellow-500"></i> {t.analytics.topContrib}
                                 </h3>
@@ -870,7 +962,7 @@
                         <i className="fas fa-coins absolute -right-6 -bottom-8 text-9xl text-white opacity-5 animate-pulse-slow"></i>
                     </div>
                     
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100 hover:shadow-md transition-shadow">
+                    <div className="card p-4 border border-green-100 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
                             <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide flex items-center gap-2">
                                 <span className="relative flex h-3 w-3">
@@ -896,7 +988,7 @@
                         )}
                     </div>
                     
-                     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                     <div className="card p-5 border border-slate-100 hover:shadow-md transition-shadow">
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center text-sm uppercase tracking-wide">
                             <i className="fas fa-calendar-alt text-blue-500 mr-2"></i> {t.dashboard.upcoming}
                         </h3>
@@ -1413,7 +1505,7 @@
         const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, users, getUserName, getUserColor, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify, sysSettings }) => {
             if (!currentUser) {
                 return (
-                    <div className="space-y-4 fade-in">
+                    <div className="space-y-4 slide-up">
                         <div className="bg-blue-50 border-l-4 border-blue-400 p-8 rounded-xl shadow-sm text-center">
                             <div className="flex flex-col items-center gap-3 mb-3">
                                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
@@ -1429,7 +1521,7 @@
 
             if (!hasPaymentInfo) {
                 return (
-                    <div className="space-y-4 fade-in">
+                    <div className="space-y-4 slide-up">
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-5 rounded-xl shadow-sm">
                             <div className="flex items-center gap-3 mb-2">
                                 <i className="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
@@ -1478,7 +1570,7 @@
             const teamActualIsCritical = teamActualMins >= teamQuotaMins * 0.9;
 
             return (
-                <div className="space-y-4 fade-in">
+                <div className="space-y-4 slide-up">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="font-bold text-slate-700 flex items-center">
@@ -2060,7 +2152,7 @@
                                                                             <span className="font-mono">{uiStart.time}{uiEnd ? '–'+uiEnd.time : ''}</span>
                                                                             <span className="w-px h-2.5 bg-slate-200"></span>
                                                                             <span>{(sheetMins/60).toFixed(1)}{t.common.unitShort}</span>
-                                                                            {sheet.scheduleId === 'adhoc' && <span className="bg-orange-100 text-orange-500 px-1 py-px rounded text-[8px] font-bold">AD-HOC</span>}
+                                                                            
                                                                         </p>
                                                                     </div>
 
@@ -2236,7 +2328,7 @@
                                                                                                     <span className="opacity-40">·</span>
                                                                                                     <span>{(parseInt(item.duration||0)/60).toFixed(1)}h</span>
                                                                                                     <span className="bg-slate-200 text-slate-400 px-1 rounded text-[8px]">{TZ_CONFIG[timezone].label}</span>
-                                                                                                    {item.scheduleId === 'adhoc' && <span className="bg-orange-100 text-orange-400 px-1 rounded text-[8px] font-bold">AD-HOC</span>}
+                                                                                                    
                                                                                                 </p>
                                                                                             </div>
                                                                                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -2274,9 +2366,9 @@
                     )}
 
                     {viewMode === 'settings' && (
-                        <div className="space-y-4 fade-in">
+                        <div className="space-y-4 slide-up">
                             <div className="grid grid-cols-1 gap-4">
-                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                                <div className="card p-5 border border-slate-200">
                                     <h4 className="font-bold text-xs text-slate-700 uppercase mb-1 flex items-center"><i className="fas fa-money-bill-wave text-green-500 mr-2"></i>{t.admin.currencySettings}</h4>
                                     <p className="text-[10px] text-slate-400 mb-4">{lang === 'id' ? 'Rate & kurs global (default untuk semua user)' : 'Global rate & exchange (default for all users)'}</p>
                                     <div className="space-y-3">
@@ -2292,7 +2384,7 @@
                                 </div>
 
                                 {/* Per-user rate overrides */}
-                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                                <div className="card p-5 border border-slate-200">
                                     <h4 className="font-bold text-xs text-slate-700 uppercase mb-1 flex items-center"><i className="fas fa-user-tag text-indigo-500 mr-2"></i>{t.admin.perUserRates}</h4>
                                     <p className="text-[10px] text-slate-400 mb-4">{t.admin.perUserRatesHelper}</p>
                                     <div className="space-y-2">
@@ -2339,7 +2431,7 @@
                                     </div>
                                 </div>
                                 
-                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                                <div className="card p-5 border border-slate-200">
                                     <h4 className="font-bold text-xs text-slate-700 uppercase mb-4 flex items-center"><i className="fas fa-globe text-blue-500 mr-2"></i>{t.admin.tzSettings}</h4>
                                     <div className="space-y-3">
                                         <div>
@@ -2357,7 +2449,7 @@
                                     </div>
                                 </div>
                                 
-                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                                <div className="card p-5 border border-slate-200">
                                     <h4 className="font-bold text-xs text-slate-700 uppercase mb-4 flex items-center"><i className="fas fa-briefcase text-purple-500 mr-2"></i>{t.admin.workSettings}</h4>
                                     <div className="space-y-3">
                                         <div>
@@ -2817,7 +2909,7 @@
             const hasPaymentInfo = activeUser && activeUser.bankName && activeUser.accountNumber;
 
             return (
-                <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+                <div className="max-w-md mx-auto min-h-screen flex flex-col font-sans text-slate-800" style={{background:'transparent'}}>
                     {notify && (
                         <Notification 
                             msg={notify.msg} 
@@ -2872,66 +2964,75 @@
                         />
                     )}
 
-                    <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-100">
+                    <header className="glass-strong sticky top-0 z-20 border-b border-white/70 shadow-sm">
                         <div className="px-4 pt-3 pb-2 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                            {/* Logo */}
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
                                     <i className="fas fa-layer-group text-sm"></i>
                                 </div>
                                 <div>
-                                    <h1 className="font-bold text-lg text-slate-800 leading-tight tracking-tight">Scheduler</h1>
-                                    <p className="text-[10px] text-slate-400 font-medium tracking-wide flex items-center">REMOTE WORK</p>
+                                    <h1 className="font-black text-base text-slate-800 leading-none tracking-tight">Scheduler</h1>
+                                    <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase mt-0.5">Remote Work</p>
                                 </div>
                             </div>
-                            
-                            <div className="relative group flex items-center gap-2">
+
+                            {/* Right side: logout + user picker */}
+                            <div className="flex items-center gap-2">
                                 {currentUser && (
-                                    <button onClick={handleLogout} title={t.common.logout} className="text-slate-400 hover:text-red-500 transition p-1.5 rounded-full hover:bg-red-50">
-                                        <i className="fas fa-sign-out-alt"></i>
+                                    <button onClick={handleLogout}
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-red-100 bg-red-50/70 text-red-500 hover:bg-red-100 hover:border-red-200 transition-all duration-200 active:scale-95 text-[11px] font-bold">
+                                        <i className="fas fa-sign-out-alt text-xs"></i>
+                                        <span>{t.common.logout}</span>
                                     </button>
                                 )}
-                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full pl-1 pr-3 py-1 shadow-sm group-hover:border-blue-300 transition-all cursor-pointer" title={t.tooltips.userSelect}>
-                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm" style={{backgroundColor: activeUser ? activeUser.color : '#94a3b8'}}>
-                                        {activeUser ? activeUser.name.substring(0,1) : <i className="fas fa-user"></i>}
+                                <div className="relative group">
+                                    <div className="flex items-center gap-2 glass border border-white/90 hover:border-blue-200/80 rounded-full pl-1 pr-3 py-1 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer" title={t.tooltips.userSelect}>
+                                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-white shadow-sm" style={{backgroundColor: activeUser ? activeUser.color : '#94a3b8'}}>
+                                            {activeUser ? activeUser.name.substring(0,1).toUpperCase() : <i className="fas fa-user text-[9px]"></i>}
+                                        </div>
+                                        <span className="text-xs font-semibold text-slate-600 max-w-[72px] truncate">
+                                            {activeUser ? activeUser.name : t.timesheet.selectUser}
+                                        </span>
+                                        <i className="fas fa-chevron-down text-[9px] text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                                        <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || passwordModal.userId || ''} onChange={handleUserChange}>
+                                            <option value="" disabled>{t.timesheet.selectUser}</option>
+                                            {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                        </select>
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-600 max-w-[80px] truncate">
-                                        {activeUser ? activeUser.name : t.timesheet.selectUser}
-                                    </span>
-                                    <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
-                                    <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={currentUser || passwordModal.userId || ''} onChange={handleUserChange}>
-                                        <option value="" disabled>{t.timesheet.selectUser}</option>
-                                        {users.filter(u => !u.hidden).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                    </select>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div className="px-4 pb-3 flex flex-col gap-2">
-                             <div className="flex gap-2 mt-1">
-                                 <button onClick={() => setLang(l => l === 'id' ? 'en' : 'id')} title={t.tooltips.langToggle} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all active:scale-95">
-                                    <div className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-600">{lang === 'id' ? 'ID' : 'EN'}</div>
-                                    <span className="text-[10px] font-semibold text-slate-600">{lang === 'id' ? 'Bahasa Indonesia' : 'English'}</span>
-                                 </button>
 
-                                 <div className="relative flex-1">
+                        {/* Lang + TZ bar */}
+                        <div className="px-4 pb-3">
+                            <div className="flex gap-2 mt-1">
+                                <button onClick={() => setLang(l => l === 'id' ? 'en' : 'id')} title={t.tooltips.langToggle}
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 glass border border-white/80 hover:border-blue-200 rounded-xl transition-all duration-200 active:scale-95 shadow-sm">
+                                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-[7px] font-black text-white shadow-sm">
+                                        {lang === 'id' ? 'ID' : 'EN'}
+                                    </div>
+                                    <span className="text-[10px] font-semibold text-slate-600">{lang === 'id' ? 'Bahasa Indonesia' : 'English'}</span>
+                                </button>
+                                <div className="relative flex-1">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
                                         <i className="far fa-clock text-slate-400 text-xs"></i>
                                     </div>
-                                    <select className="appearance-none w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer" value={timezone} title={t.tooltips.tzToggle} onChange={e => setTimezone(e.target.value)}>
+                                    <select className="appearance-none w-full glass border border-white/80 hover:border-blue-200 rounded-xl pl-8 pr-8 py-1.5 text-[10px] font-semibold text-slate-600 outline-none transition-all duration-200 cursor-pointer shadow-sm" value={timezone} title={t.tooltips.tzToggle} onChange={e => setTimezone(e.target.value)}>
                                         {Object.keys(TZ_CONFIG).map(k => <option key={k} value={k}>{TZ_CONFIG[k].label}</option>)}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 flex items-center px-2.5 pointer-events-none">
-                                        <i className="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                                        <i className="fas fa-chevron-down text-[9px] text-slate-400"></i>
                                     </div>
-                                 </div>
-                                 
-                                 <div className="flex items-center justify-center bg-slate-50 border border-slate-200 px-2 rounded-lg">
-                                     <InfoTooltip text={t.tooltips.tzInfo} align="right" />
-                                 </div>
-                             </div>
+                                </div>
+                                <div className="flex items-center justify-center glass border border-white/80 px-2.5 rounded-xl shadow-sm">
+                                    <InfoTooltip text={t.tooltips.tzInfo} align="right" />
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="bg-amber-50 border-y border-amber-100 px-4 py-2 flex items-center gap-2">
+                        {/* Reminder banner */}
+                        <div className="bg-amber-50/90 border-t border-amber-100/80 px-4 py-2 flex items-center gap-2">
                             <i className="fas fa-exclamation-circle text-amber-500 text-xs flex-shrink-0"></i>
                             <p className="text-[10px] text-amber-700 font-medium leading-tight">{t.common.reminder}</p>
                         </div>
@@ -3049,30 +3150,21 @@
                         )}
                     </main>
 
-                    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 z-30 max-w-md mx-auto">
-                        <div className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} gap-1 px-2`}>
-                            <button onClick={() => setView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                <i className="fas fa-home text-lg mb-1"></i> 
-                                <span className="text-[10px] font-medium">{t.nav.home}</span>
-                            </button>
-                            <button onClick={() => setView('schedule')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'schedule' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                <i className="fas fa-calendar-alt text-lg mb-1"></i> 
-                                <span className="text-[10px] font-medium">{t.nav.schedule}</span>
-                            </button>
-                            <button onClick={() => setView('timesheet')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'timesheet' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                <i className="fas fa-file-invoice-dollar text-lg mb-1"></i> 
-                                <span className="text-[10px] font-medium">{t.nav.timesheet}</span>
-                            </button>
-                            <button onClick={() => setView('analytics')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'analytics' ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                <i className="fas fa-chart-pie text-lg mb-1"></i> 
-                                <span className="text-[10px] font-medium">{t.nav.analytics}</span>
-                            </button>
-                            {isAdmin && (
-                                <button onClick={() => setView('admin')} className={`flex flex-col items-center p-2 rounded-xl transition ${view === 'admin' ? 'text-purple-600 bg-purple-50' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                    <i className="fas fa-user-shield text-lg mb-1"></i> 
-                                    <span className="text-[10px] font-medium">{t.nav.admin}</span>
+                    <nav className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/80 shadow-lg z-30 max-w-md mx-auto">
+                        <div className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} px-1 py-1`}>
+                            {[
+                                {id:'dashboard', icon:'fa-home',              label:t.nav.home,      active:'text-blue-600 bg-blue-50/80'},
+                                {id:'schedule',  icon:'fa-calendar-alt',      label:t.nav.schedule,  active:'text-blue-600 bg-blue-50/80'},
+                                {id:'timesheet', icon:'fa-file-invoice-dollar',label:t.nav.timesheet,active:'text-green-600 bg-green-50/80'},
+                                {id:'analytics', icon:'fa-chart-pie',         label:t.nav.analytics, active:'text-indigo-600 bg-indigo-50/80'},
+                                ...(isAdmin ? [{id:'admin', icon:'fa-user-shield', label:t.nav.admin, active:'text-purple-600 bg-purple-50/80'}] : [])
+                            ].map(tab => (
+                                <button key={tab.id} onClick={() => setView(tab.id)}
+                                    className={`flex flex-col items-center py-2 px-1 rounded-xl transition-all duration-200 active:scale-90 ${view === tab.id ? tab.active + ' nav-active-dot' : 'text-slate-400 hover:text-slate-600 hover:bg-white/60'}`}>
+                                    <i className={`fas ${tab.icon} text-[18px] transition-transform duration-200 ${view === tab.id ? 'scale-110' : ''}`}></i>
+                                    <span className="text-[9px] font-bold mt-0.5 tracking-tight">{tab.label}</span>
                                 </button>
-                            )}
+                            ))}
                         </div>
                     </nav>
                 </div>
