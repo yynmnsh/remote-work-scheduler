@@ -1470,6 +1470,13 @@
             const [filterMine, setFilterMine] = React.useState(false);
             const isFormDirty = timesheetForm.scheduleId !== '' || timesheetForm.date !== '' || timesheetForm.startTime !== '' || timesheetForm.endDate !== '' || timesheetForm.endTime !== '';
 
+            // Team actual quota bar data
+            const todayPst = getPSTDayFromEpoch(Date.now());
+            const teamQuotaMins = (sysSettings?.dailyQuotaHours || 10) * 60;
+            const teamActualMins = timesheets.reduce((acc, ts) => getPSTDay(ts.date, ts.startTime) === todayPst ? acc + parseInt(ts.duration || 0) : acc, 0);
+            const teamActualPct = Math.min(100, teamActualMins / teamQuotaMins * 100);
+            const teamActualIsCritical = teamActualMins >= teamQuotaMins * 0.9;
+
             return (
                 <div className="space-y-4 fade-in">
                     <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editTimesheetId ? 'border-orange-500' : 'border-green-500'}`}>
@@ -1488,6 +1495,32 @@
                                         <i className="fas fa-undo"></i> {t.common.clear}
                                     </button>
                                 ) : null}
+                            </div>
+                        </div>
+
+                        {/* Team Daily Actual Quota bar — mirrors the style from Schedule tab */}
+                        <div className={`rounded-xl p-3 border mb-4 transition-all duration-300 ${teamActualIsCritical ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className="flex justify-between items-center mb-2">
+                                <div className="flex items-center gap-1.5">
+                                    <i className={`fas fa-check-circle text-xs ${teamActualIsCritical ? 'text-green-600' : 'text-green-500'}`}></i>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${teamActualIsCritical ? 'text-green-700' : 'text-slate-600'}`}>
+                                        {lang === 'id' ? 'Aktual Tim Harian' : 'Daily Team Actual'}
+                                        <span className="bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] normal-case tracking-normal border border-slate-300/50 shadow-sm">{formatDate(todayPst, lang)} PT</span>
+                                    </span>
+                                </div>
+                                <div className="text-[10px] font-medium text-slate-500">
+                                    {lang === 'id' ? 'Dilaporkan' : 'Reported'}: <span className="font-bold text-slate-700">{(teamActualMins/60).toFixed(1)}{t.common.unitShort}</span> / <span className="font-bold text-slate-700">{(teamQuotaMins/60).toFixed(0)}{t.common.unitShort}</span>
+                                </div>
+                            </div>
+                            <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
+                                <div className={`h-1.5 rounded-full transition-all duration-700 ease-out ${teamActualIsCritical ? 'bg-green-500' : 'bg-green-400'}`} style={{ width: `${teamActualPct}%` }}></div>
+                            </div>
+                            <div className="mt-1.5 text-right">
+                                <span className={`text-[9px] font-bold uppercase ${teamActualIsCritical ? 'text-green-600' : 'text-slate-400'}`}>
+                                    {teamActualPct >= 100
+                                        ? (lang === 'id' ? '✓ Kuota Terpenuhi!' : '✓ Quota Met!')
+                                        : `${(100 - teamActualPct).toFixed(0)}% ${lang === 'id' ? 'belum terlaporkan' : 'remaining'}`}
+                                </span>
                             </div>
                         </div>
                         
@@ -1586,34 +1619,6 @@
                             <button disabled={loading || currentDur === 0} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${editTimesheetId ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}`}>
                                 {loading ? <Spinner/> : (editTimesheetId ? t.common.save : t.timesheet.submit)}
                             </button>
-
-                            {/* Today's actual reported duration bar */}
-                            {(() => {
-                                const todayPst = getPSTDayFromEpoch(Date.now());
-                                const todaySheets = timesheets.filter(ts => String(ts.userId) === String(currentUser) && getPSTDay(ts.date, ts.startTime) === todayPst);
-                                const reportedMins = todaySheets.reduce((acc, ts) => acc + parseInt(ts.duration || 0), 0);
-                                if (reportedMins === 0) return null;
-                                const quotaMins = (sysSettings?.dailyQuotaHours || 10) * 60;
-                                const pct = Math.min(100, reportedMins / quotaMins * 100);
-                                const isOver = reportedMins > quotaMins;
-                                return (
-                                    <div className="mt-3 pt-3 border-t border-slate-100">
-                                        <div className="flex justify-between items-center mb-1.5">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
-                                                <i className="fas fa-stopwatch text-green-500 text-xs"></i>
-                                                {lang === 'id' ? 'Dilaporkan Hari Ini (PT)' : 'Reported Today (PT)'}
-                                            </span>
-                                            <span className={`text-[10px] font-bold ${isOver ? 'text-amber-600' : 'text-green-600'}`}>
-                                                {(reportedMins/60).toFixed(1)}{t.common.unitShort} / {(quotaMins/60).toFixed(0)}{t.common.unitShort}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                            <div className={`h-1.5 rounded-full transition-all duration-700 ${isOver ? 'bg-amber-400' : 'bg-green-500'}`} style={{ width: `${pct}%` }}></div>
-                                        </div>
-                                        <p className="text-right text-[9px] text-slate-400 mt-0.5">{formatCurrency((reportedMins/60)*RATES[lang], lang)}</p>
-                                    </div>
-                                );
-                            })()}
                         </form>
                     </div>
                     
