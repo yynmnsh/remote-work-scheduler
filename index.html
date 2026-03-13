@@ -160,6 +160,7 @@
         const RATES = { id: 240000, en: 15 };
         const TZ_CONFIG = {
             'WIB':  { label: 'WIB (Jakarta)',    offsetUTC: 7  },
+            'WITA': { label: 'WITA (Makassar)',  offsetUTC: 8  },
             'AEDT': { label: 'AEDT (Melbourne)', offsetUTC: 11 },
             'PST':  { label: 'PT (Pacific)',     offsetUTC: -8 }
         };
@@ -177,7 +178,7 @@
                 schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian', used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
                 timesheet: { title: 'Input Laporan', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun', confirmSubmit: 'Data laporan akurat?', accessRestricted: 'Akses Terbatas', selectSchedule: 'Pilih Jadwal', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan jadwal ini sudah ada!', earlySubmitError: 'Jadwal belum selesai!' },
                 analytics: { myStats: 'Kinerja (7 Hari)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' },
-                admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Set Sandi/PIN', passPlaceholder: 'Ketik sandi baru untuk user ini', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'Isi HANYA untuk mengubah password.', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzAEDT: 'Offset AEDT', tzPST: 'Offset PT', perUserRates: 'Rate per User (Override)', perUserRatesHelper: 'Kosongkan atau 0 = pakai rate global', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Rate per user disimpan!' },
+                admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Set Sandi/PIN', passPlaceholder: 'Ketik sandi baru untuk user ini', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'Isi HANYA untuk mengubah password.', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzWITA: 'Offset WITA', tzAEDT: 'Offset AEDT', tzPST: 'Offset PT', perUserRates: 'Rate per User (Override)', perUserRatesHelper: 'Kosongkan atau 0 = pakai rate global', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Rate per user disimpan!' },
                 profile: { title: 'Pengaturan Akun', bankTitle: 'Info Rekening', bankLabel: 'Nama Bank / E-Wallet', accLabel: 'Nomor Rekening', saved: 'Info disimpan!' },
                 auth: { createTitle: 'Buat Password Baru', loginTitle: 'Login Keamanan', passLabel: 'Password', newPassLabel: 'Password Baru', createBtn: 'Simpan Sandi Baru', loginBtn: 'Buka Akses', successCreate: 'Password dibuat!', successChange: 'Password diubah!', errorPass: 'Password salah!', errorSame: 'Password baru tidak boleh sama!', changeTitle: 'Ubah Password', changeBtn: 'Simpan', confirmChange: 'Yakin ubah password?', errorSavePass: 'Gagal simpan password', errorUpdatePass: 'Gagal update password', successLogin: 'Verifikasi Berhasil!', firstTimeHint: 'Buat sandi/PIN untuk mengunci akun Anda.' },
                 tooltips: { tzToggle: 'Pilih Zona Waktu', langToggle: 'Ganti Bahasa', sortToggle: 'Urutkan Jadwal', settings: 'Pengaturan Akun', userSelect: 'Pilih Akun Pengguna', tzInfo: 'Waktu menyesuaikan otomatis.', estInfo: 'Estimasi pendapatan dari PENDING.', quotaInfo: 'Kuota dihitung berdasar 00:00-23:59 PT.', reportInfo: 'Pilih jadwal dan masukkan waktu aktual kerja.', disciplineInfo: 'Perbandingan Rencana vs Aktual.', adminInfo: 'Kelola tim, kuota, mata uang, dll.' }
@@ -189,7 +190,7 @@
                 schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota', used: 'Used', remaining: 'Left', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only', confirmBooking: 'Is the schedule data correct?', pastError: 'Cannot book schedules in the past!', deleteLinkedError: 'Cannot delete schedule with linked timesheet!', visualTitle: 'Daily Schedule Map', dailyLimit: 'Daily Limit' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account', confirmSubmit: 'Is the work report accurate?', accessRestricted: 'Access Restricted', selectSchedule: 'Select Schedule', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet already exists!', earlySubmitError: 'Cannot report yet! Scheduled work is not finished.' },
                 analytics: { myStats: 'Performance (7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)', statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings', changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history.', reportTime: 'Report Time' },
-                admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', editUser: 'Edit User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive', passHeader: 'Set User Password', passPlaceholder: 'Type new password to reset', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Fill ONLY to overwrite user password.', settings: 'System Settings', dailyQuota: 'Daily Team Quota', quotaHelper: 'Total daily booking duration.', quotaError: 'Invalid configuration values!', sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted', currencySettings: 'Currency Settings', tzSettings: 'Timezone Settings', workSettings: 'Work Settings', rateUSD: 'Hourly Rate (USD)', rateIDR: '1 USD to IDR Rate', tzWIB: 'WIB Offset', tzAEDT: 'AEDT Offset', tzPST: 'PT Offset', perUserRates: 'Per-User Rate Override', perUserRatesHelper: 'Leave blank or 0 to use global rate', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Per-user rates saved!' },
+                admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', editUser: 'Edit User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive', passHeader: 'Set User Password', passPlaceholder: 'Type new password to reset', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Fill ONLY to overwrite user password.', settings: 'System Settings', dailyQuota: 'Daily Team Quota', quotaHelper: 'Total daily booking duration.', quotaError: 'Invalid configuration values!', sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted', currencySettings: 'Currency Settings', tzSettings: 'Timezone Settings', workSettings: 'Work Settings', rateUSD: 'Hourly Rate (USD)', rateIDR: '1 USD to IDR Rate', tzWIB: 'WIB Offset', tzWITA: 'WITA Offset', tzAEDT: 'AEDT Offset', tzPST: 'PT Offset', perUserRates: 'Per-User Rate Override', perUserRatesHelper: 'Leave blank or 0 to use global rate', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Per-user rates saved!' },
                 profile: { title: 'Account Settings', bankTitle: 'Payment Info', bankLabel: 'Bank Name', accLabel: 'PayID / Account Number', saved: 'Info saved!' },
                 auth: { createTitle: 'Create New Password', loginTitle: 'Security Login', passLabel: 'Password', newPassLabel: 'New Password', createBtn: 'Save Password', loginBtn: 'Verify Access', successCreate: 'Password created!', successChange: 'Password updated successfully!', errorPass: 'Wrong password!', errorSame: 'New password cannot be the same!', changeTitle: 'Change Password', changeBtn: 'Save', confirmChange: 'Are you sure you want to change password?', errorSavePass: 'Error saving password', errorUpdatePass: 'Error updating password', successLogin: 'Verification Success!', firstTimeHint: 'Create a password/PIN to lock your account.' },
                 tooltips: { tzToggle: 'Select Timezone', langToggle: 'Change Language', sortToggle: 'Sort Schedules', settings: 'Account Settings', userSelect: 'Select User Account', tzInfo: 'Times adjust automatically.', estInfo: 'Estimated earnings from PENDING reports.', quotaInfo: 'Daily quota calculated based on 00:00 - 23:59 PT.', reportInfo: 'Select a schedule and enter your actual work times.', disciplineInfo: 'Compares planned Schedule vs actual Timesheet.', adminInfo: 'Manage team, quota, currency rates, etc.' }
@@ -1289,6 +1290,9 @@
                                         const blockStyle = { left: `${b.startPct}%`, width: `${b.widthPct}%`, borderColor: getUserColor(b.userId), backgroundColor: `${getUserColor(b.userId)}15` };
                                         const bgStyle = { backgroundColor: getUserColor(b.userId) };
                                         const tooltipClass = `hidden group-hover:flex absolute ${b.startPct > 50 ? 'right-0' : 'left-0'} bottom-full mb-1 bg-slate-800 text-white text-[10px] p-2 rounded-lg whitespace-nowrap shadow-xl flex-col gap-1 z-50 border border-slate-700 animate-fade-in`;
+                                        const durMins = Math.round(b.widthPct / 100 * 1440);
+                                        const dh = Math.floor(durMins/60), dm = durMins%60;
+                                        const durLabel = dh > 0 ? `${dh}${t.common.unitShort}${dm>0?` ${dm}m`:''}` : `${dm}m`;
                                         
                                         return (
                                             <div key={b.id} className="absolute h-full top-0 group cursor-pointer border-l-2 hover:z-30 transition-all duration-200 hover:-translate-y-1" style={blockStyle}>
@@ -1299,6 +1303,7 @@
                                                         <span className="font-bold">{getUserName(b.userId)}</span>
                                                     </div>
                                                     <span className="text-slate-300 font-mono"><i className="far fa-clock"></i> {b.uiStart.time} - {b.uiEnd.time}</span>
+                                                    <span className="text-slate-400 text-[9px]"><i className="fas fa-stopwatch mr-1"></i>{durLabel}</span>
                                                 </div>
                                             </div>
                                         );
@@ -1403,6 +1408,15 @@
                                             <div className="text-xs text-slate-500 mt-1">
                                                 {dateDisp} • {startObj.time} - {endObj.time} <span className="text-[8px] bg-slate-200 px-1 rounded">{TZ_CONFIG[timezone].label}</span>
                                             </div>
+                                            {(() => {
+                                                const sEpoch = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                                                const eEpoch = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                                                const durMins = Math.round((eEpoch - sEpoch) / 60000);
+                                                if (durMins <= 0) return null;
+                                                const h = Math.floor(durMins / 60), m = durMins % 60;
+                                                const label = h > 0 ? `${h}${t.common.unitShort}${m > 0 ? ` ${m}m` : ''}` : `${m}m`;
+                                                return <span className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1"><i className="far fa-clock text-[9px]"></i>{label}</span>;
+                                            })()}
                                         </div>
                                     </div>
                                     {isMine && (
@@ -1495,7 +1509,7 @@
                         }
                         <div className={`hidden group-hover:flex absolute bottom-full mb-1 ${tipSide} bg-slate-800 text-white text-[9px] p-1.5 rounded-lg shadow-xl z-50 whitespace-nowrap flex-col gap-0.5 border border-slate-700`}>
                             <span className="font-bold flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
-                            <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PT</span></span>
+                            <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PT</span>{(() => { const dm = eM-sM; const dh=Math.floor(dm/60),dr=dm%60; return <span className="text-slate-400 ml-1">({dh>0?`${dh}h${dr>0?` ${dr}m`:''}`:dr+'m'})</span>; })()}</span>
                             {b.isPlan
                                 ? <span className="text-slate-400 text-[8px] flex items-center gap-1"><i className="far fa-calendar"></i>{lang==='id'?'Dijadwalkan':'Scheduled'}</span>
                                 : <span className="flex flex-col gap-0.5">
@@ -1911,7 +1925,12 @@
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-green-600 text-sm">{formatCurrency(getDisplayAmount(item), lang)}</p>
-                                            <p className="text-xs text-slate-400">{item.duration}{t.common.unitMin}</p>
+                                            {(() => {
+                                                const mins = parseInt(item.duration) || 0;
+                                                const h = Math.floor(mins / 60), m = mins % 60;
+                                                const label = h > 0 ? `${h}${t.common.unitShort}${m > 0 ? ` ${m}m` : ''}` : `${m}m`;
+                                                return <p className="text-xs text-slate-400">{label}</p>;
+                                            })()}
                                         </div>
                                     </div>
                                     <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
@@ -1938,7 +1957,7 @@
 
         const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, getUserColor, timezone, sysSettings, updateSettings, onAddUser, onEditUser, onDeleteUser, onConfirmAction }) => {
              const [viewMode, setViewMode] = React.useState('pending');
-             const [settingsForm, setSettingsForm] = React.useState({ dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, offsetWIB: 7, offsetAEDT: 11, offsetPST: -8 });
+             const [settingsForm, setSettingsForm] = React.useState({ dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, offsetWIB: 7, offsetWITA: 8, offsetAEDT: 11, offsetPST: -8 });
              const [selectedSheets, setSelectedSheets] = React.useState({});
              const [transferAmounts, setTransferAmounts] = React.useState({});
              const [expandedUsers, setExpandedUsers] = React.useState({});
@@ -1955,6 +1974,7 @@
                      baseHourlyRateUSD: sysSettings?.baseHourlyRateUSD || 15, 
                      usdToIdr: sysSettings?.usdToIdr || 16000, 
                      offsetWIB: sysSettings?.offsetWIB !== undefined ? sysSettings.offsetWIB : 7, 
+                     offsetWITA: sysSettings?.offsetWITA !== undefined ? sysSettings.offsetWITA : 8,
                      offsetAEDT: sysSettings?.offsetAEDT !== undefined ? sysSettings.offsetAEDT : 11, 
                      offsetPST: sysSettings?.offsetPST !== undefined ? sysSettings.offsetPST : -8,
                      ...userRateEntries
@@ -2154,10 +2174,12 @@
                                 {hasAnySelection && (
                                     <div className="px-4 pb-4 space-y-3 border-t border-white/10 pt-3">
                                         <div>
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 flex items-center gap-1.5">
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 flex items-center gap-1.5">
                                                 <i className="fas fa-paper-plane text-green-400"></i>
                                                 {lang === 'id' ? 'Jumlah Transfer' : 'Transfer Amount'}
-                                                <span className="text-[9px] font-normal text-slate-500 normal-case tracking-normal">(default: {formatCurrency(globalSelectedTotal, lang)})</span>
+                                                <span className="text-[9px] font-normal text-slate-500 normal-case tracking-normal">
+                                                    {lang === 'id' ? '(kosong = otomatis pakai estimasi)' : '(leave blank to use estimated total)'}
+                                                </span>
                                             </label>
                                             <div className="flex gap-2 items-center">
                                                 <div className="relative flex-1">
@@ -2195,7 +2217,7 @@
                                 {!hasAnySelection && pendingSheets.length > 0 && (
                                     <div className="px-4 pb-4 pt-1">
                                         <p className="text-center text-[11px] text-slate-500 italic">
-                                            <i className="fas fa-hand-pointer mr-1 text-slate-600"></i>
+                                            <i className="fas fa-hand-point-down mr-1 text-slate-600"></i>
                                             {lang === 'id' ? 'Centang timesheet di bawah untuk memilih yang ingin dibayar' : 'Check timesheets below to select which to pay'}
                                         </p>
                                     </div>
@@ -2593,6 +2615,7 @@
                                     <div className="space-y-3">
                                         {[
                                             { key:'offsetWIB',  label: t.admin.tzWIB,  tzCode:'WIB'  },
+                                            { key:'offsetWITA', label: t.admin.tzWITA, tzCode:'WITA' },
                                             { key:'offsetAEDT', label: t.admin.tzAEDT, tzCode:'AEDT' },
                                             { key:'offsetPST',  label: t.admin.tzPST,  tzCode:'PST'  },
                                         ].map(({key, label, tzCode}) => {
@@ -2753,13 +2776,14 @@
                             setSysSettings(data);
                             if (data.baseHourlyRateUSD !== undefined) RATES.en = data.baseHourlyRateUSD;
                             if (data.baseHourlyRateUSD !== undefined && data.usdToIdr !== undefined) RATES.id = data.baseHourlyRateUSD * data.usdToIdr;
-                            if (data.offsetWIB !== undefined) TZ_CONFIG['WIB'].offsetUTC = data.offsetWIB;
+                            if (data.offsetWIB  !== undefined) TZ_CONFIG['WIB'].offsetUTC  = data.offsetWIB;
+                            if (data.offsetWITA !== undefined) TZ_CONFIG['WITA'].offsetUTC = data.offsetWITA;
                             if (data.offsetAEDT !== undefined) TZ_CONFIG['AEDT'].offsetUTC = data.offsetAEDT;
-                            if (data.offsetPST !== undefined) TZ_CONFIG['PST'].offsetUTC = data.offsetPST;
+                            if (data.offsetPST  !== undefined) TZ_CONFIG['PST'].offsetUTC  = data.offsetPST;
                         } else {
                             window.fs.setDoc(window.fs.doc(window.db, 'settings', 'global'), { 
                                 dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, 
-                                offsetWIB: 7, offsetAEDT: 11, offsetPST: -8 
+                                offsetWIB: 7, offsetWITA: 8, offsetAEDT: 11, offsetPST: -8 
                             }).catch(e => {});
                         }
                     }, (err) => console.error(err));
@@ -3137,7 +3161,7 @@
                         />
                     )}
 
-                    <header className="glass-strong sticky top-0 z-20 border-b border-white/70 shadow-sm">
+                    <header className="glass-strong sticky top-0 z-[60] border-b border-white/70 shadow-sm">
                         <div className="px-4 pt-3 pb-2 flex justify-between items-center">
                             {/* Logo */}
                             <div className="flex items-center gap-2.5">
@@ -3323,7 +3347,7 @@
                         )}
                     </main>
 
-                    <nav className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/80 shadow-lg z-30 max-w-md mx-auto">
+                    <nav className="fixed bottom-0 left-0 right-0 glass-strong border-t border-white/80 shadow-lg z-[60] max-w-md mx-auto">
                         <div className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} px-1 py-1`}>
                             {[
                                 {id:'dashboard', icon:'fa-home',              label:t.nav.home,      active:'text-blue-600 bg-blue-50/80'},
