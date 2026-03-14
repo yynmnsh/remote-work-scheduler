@@ -962,7 +962,7 @@
                                                 <span className="text-sm font-medium text-slate-700">{u.name}</span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-sm font-bold text-indigo-600">{(u.minutes/60).toFixed(1)}h</span>
+                                                <span className="text-sm font-bold text-indigo-600">{(u.minutes/60).toFixed(1)}{t.common.unitShort}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -1448,20 +1448,28 @@
                 return h * 60 + m;
             };
 
-            // Filter by START PT day only. A session belongs to the PT day it begins on,
-            // even if it crosses PT midnight (00:00). The block renderer clips it at 1440 mins.
-            const planBlocks = schedules.filter(s =>
-                getPSTDay(s.startDate || s.date, s.startTime) === mapPstDate
-            ).map(s => ({
+            // Previous PT day (for detecting cross-midnight overflow blocks)
+            const prevPstDate = (() => {
+                const [y,mo,d] = mapPstDate.split('-').map(Number);
+                const dt = new Date(y,mo-1,d);
+                dt.setDate(dt.getDate()-1);
+                return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+            })();
+
+            // Build plan blocks: (a) start on mapPstDate + (b) started prev day but overflow into mapPstDate
+            const buildPlanB = (s) => ({
                 ...s,
                 uiS: getDisplayTime(s.startTime, s.startDate || s.date, 'PST'),
                 uiE: getDisplayTime(s.endTime, s.endDate || s.date, 'PST'),
                 isPlan: true
-            }));
+            });
+            const planBlocksMain     = schedules.filter(s => getPSTDay(s.startDate || s.date, s.startTime) === mapPstDate).map(buildPlanB);
+            const planBlocksOverflow = schedules.filter(s => getPSTDay(s.startDate || s.date, s.startTime) === prevPstDate)
+                .map(buildPlanB).filter(b => b.uiE.date > b.uiS.date).map(b => ({...b, isOverflow: true}));
+            const planBlocks = [...planBlocksMain, ...planBlocksOverflow];
 
-            const actualBlocks = timesheets.filter(ts =>
-                getPSTDay(ts.date, ts.startTime) === mapPstDate
-            ).map(ts => {
+            // Build actual blocks: same logic
+            const buildActualB = (ts) => {
                 const uiS = getDisplayTime(ts.startTime, ts.date, 'PST');
                 let uiE;
                 if (ts.endTime) {
@@ -1469,14 +1477,19 @@
                 } else if (ts.duration) {
                     const eEpoch = getEpochFromWIB(ts.date, ts.startTime) + ts.duration * 60000;
                     const eD = new Date(eEpoch + TZ_CONFIG['PST'].offsetUTC * 3600000);
-                    uiE = { time: `${String(eD.getUTCHours()).padStart(2,'0')}:${String(eD.getUTCMinutes()).padStart(2,'0')}`, date: mapPstDate };
+                    uiE = { time: `${String(eD.getUTCHours()).padStart(2,'0')}:${String(eD.getUTCMinutes()).padStart(2,'0')}`, date: getPSTDayFromEpoch(eEpoch) };
                 } else {
                     uiE = { time: '23:59', date: mapPstDate };
                 }
                 return { ...ts, uiS, uiE, isPlan: false };
-            });
+            };
+            const actualBlocksMain     = timesheets.filter(ts => getPSTDay(ts.date, ts.startTime) === mapPstDate).map(buildActualB);
+            const actualBlocksOverflow = timesheets.filter(ts => getPSTDay(ts.date, ts.startTime) === prevPstDate)
+                .map(buildActualB).filter(b => b.uiE.date > b.uiS.date).map(b => ({...b, isOverflow: true}));
+            const actualBlocks = [...actualBlocksMain, ...actualBlocksOverflow];
 
             const totalActualMins = actualBlocks.reduce((acc, b) => {
+                if (b.isOverflow) return acc + Math.max(0, toMins(b.uiE.time));
                 const sM = toMins(b.uiS.time), eM0 = toMins(b.uiE.time);
                 return acc + Math.max(0, (eM0 <= sM ? 1440 : eM0) - sM);
             }, 0);
@@ -1486,30 +1499,51 @@
             const rowMap = {};
             userIds.forEach((uid, i) => { rowMap[uid] = i; });
             const mapHeight = Math.max(1, userIds.length) * 28 + 20;
+            const uShort = t.common.unitShort;
+            const fmtDur = (mins) => { const dh=Math.floor(mins/60),dm=mins%60; return dh>0?`${dh}${uShort}${dm>0?` ${dm}m`:''}`:dm+'m'; };
 
             const renderBlock = (b, idx) => {
                 const rowOffset = rowMap[b.userId] || 0;
-                const sM = toMins(b.uiS.time);
-                let eM = toMins(b.uiE.time);
-                if (eM < sM) eM = 1440;
-                if (eM <= sM) return null;
+                let sM, eM;
+                if (b.isOverflow) {
+                    sM = 0;
+                    eM = toMins(b.uiE.time);
+                    if (eM <= 0) return null;
+                } else {
+                    sM = toMins(b.uiS.time);
+                    eM = toMins(b.uiE.time);
+                    if (eM < sM) eM = 1440; // cross-midnight: clip at end of this day
+                    if (eM <= sM) return null;
+                }
+                const origSM = toMins(b.uiS.time), origEM = toMins(b.uiE.time);
+                const totalDurMins = origEM < origSM ? 1440 - origSM + origEM : origEM - origSM;
                 const startPct = sM / 1440 * 100;
                 const widthPct = Math.max(0.5, (eM - sM) / 1440 * 100);
                 const color = getUserColor(b.userId) || '#94a3b8';
                 const name = getUserName(b.userId);
                 const tipSide = startPct > 55 ? 'right-0' : 'left-0';
                 const topPx = b.isPlan ? rowOffset * 28 + 2 : rowOffset * 28 + 15;
+                const crossesNext = !b.isOverflow && eM === 1440 && origEM < origSM;
                 return (
                     <div key={`${b.isPlan?'pl':'ac'}-${b.id}-${idx}`}
                         className="absolute group cursor-pointer hover:z-30"
                         style={{ left: `${startPct}%`, width: `${widthPct}%`, top: `${topPx}px`, height: '12px' }}>
                         {b.isPlan
-                            ? <div className="w-full h-full rounded-sm border-2" style={{ borderColor: color, backgroundColor: `${color}20` }}></div>
-                            : <div className="w-full h-full rounded-sm shadow-sm" style={{ backgroundColor: color, opacity: 0.85 }}></div>
+                            ? <div className={`w-full h-full rounded-sm border-2 ${b.isOverflow?'opacity-60':''}`} style={{ borderColor: color, backgroundColor: `${color}20`, borderStyle: b.isOverflow?'dashed':'solid' }}></div>
+                            : <div className={`w-full h-full rounded-sm shadow-sm ${b.isOverflow?'opacity-60':''}`} style={{ backgroundColor: color, opacity: b.isOverflow ? 0.5 : 0.85 }}></div>
                         }
                         <div className={`hidden group-hover:flex absolute bottom-full mb-1 ${tipSide} bg-slate-800 text-white text-[9px] p-1.5 rounded-lg shadow-xl z-50 whitespace-nowrap flex-col gap-0.5 border border-slate-700`}>
-                            <span className="font-bold flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full" style={{backgroundColor:color}}></div>{name}</span>
-                            <span className="text-slate-300 font-mono">{b.uiS.time}–{b.uiE.time} <span className="opacity-60">PT</span>{(() => { const dm = eM-sM; const dh=Math.floor(dm/60),dr=dm%60; return <span className="text-slate-400 ml-1">({dh>0?`${dh}h${dr>0?` ${dr}m`:''}`:dr+'m'})</span>; })()}</span>
+                            <span className="font-bold flex items-center gap-1.5 flex-wrap">
+                                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{backgroundColor:color}}></div>
+                                {name}
+                                {b.isOverflow && <span className="text-[8px] text-indigo-300 font-normal">{lang==='id'?'(lanjutan)':'(cont.)'}</span>}
+                            </span>
+                            <span className="text-slate-300 font-mono">
+                                {b.uiS.time}–{b.uiE.time} PT
+                                <span className="text-slate-400 ml-1">({fmtDur(totalDurMins)})</span>
+                            </span>
+                            {crossesNext && <span className="text-amber-400 text-[8px]">→ {lang==='id'?'berlanjut ke hari berikutnya':'continues to next day'}</span>}
+                            {b.isOverflow && <span className="text-amber-400 text-[8px]">← {lang==='id'?'dimulai hari sebelumnya':'started previous day'}</span>}
                             {b.isPlan
                                 ? <span className="text-slate-400 text-[8px] flex items-center gap-1"><i className="far fa-calendar"></i>{lang==='id'?'Dijadwalkan':'Scheduled'}</span>
                                 : <span className="flex flex-col gap-0.5">
@@ -1571,7 +1605,7 @@
                         </div>
                         <div className="flex-1 px-3 py-2 text-center">
                             <p className="text-[9px] font-bold text-slate-400 uppercase">{lang==='id'?'Jam Aktual':'Actual Hrs'}</p>
-                            <p className="text-sm font-black text-cyan-600">{(totalActualMins/60).toFixed(1)}h</p>
+                            <p className="text-sm font-black text-cyan-600">{(totalActualMins/60).toFixed(1)}{t.common.unitShort}</p>
                         </div>
                     </div>
 
@@ -2504,7 +2538,7 @@
                                                                                                 <p className="text-[9px] text-slate-400 flex items-center gap-1 mt-0.5">
                                                                                                     <span className="font-mono">{uiStart.time}–{endStr}</span>
                                                                                                     <span className="opacity-40">·</span>
-                                                                                                    <span>{(parseInt(item.duration||0)/60).toFixed(1)}h</span>
+                                                                                                    <span>{(() => { const mins=parseInt(item.duration||0); const dh=Math.floor(mins/60),dm=mins%60; return dh>0?`${dh}${t.common.unitShort}${dm>0?` ${dm}m`:''}`:dm+'m'; })()}</span>
                                                                                                     <span className="bg-slate-200 text-slate-400 px-1 rounded text-[8px]">{TZ_CONFIG[timezone].label}</span>
                                                                                                     
                                                                                                 </p>
