@@ -137,6 +137,9 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(59,130,246,0.14);
         }
+        input[type="date"], input[type="time"] {
+            color-scheme: light;
+        }
 
         /* ── Card default ── */
         .card {
@@ -146,6 +149,48 @@
             border: 1px solid rgba(255,255,255,0.7);
             box-shadow: 0 2px 12px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
             border-radius: 1rem;
+        }
+        .card-elevated {
+            background: #fff;
+            border: 1px solid rgba(148,163,184,0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+            border-radius: 1rem;
+        }
+
+        /* ── Section label ── */
+        .section-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+        }
+
+        /* ── Form input base ── */
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .form-input::placeholder { color: #94a3b8; }
+
+        /* ── Select arrow ── */
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
         }
 
         .bar-fill { transition: height 1s ease-out; }
@@ -1192,32 +1237,50 @@
 
             return (
                 <div className="space-y-4 animate-slide-up">
-                    <div className={`bg-white p-5 rounded-2xl shadow-sm border-l-4 ${editScheduleId ? 'border-orange-500' : 'border-blue-500'}`}>
-                        <div className="flex flex-col gap-3 mb-5 border-b border-slate-100 pb-4">
-                            <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-slate-800 text-lg flex items-center">
-                                    {editScheduleId ? t.schedule.edit : t.schedule.booking}
-                                    <InfoTooltip text={t.tooltips.quotaInfo} />
-                                </h3>
-                                <div className="flex items-center gap-2">
-                                    {editScheduleId ? (
-                                        <button type="button" title={t.common.cancel} onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'14:00', endDate: '', endTime:'15:00'})}} className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg hover:bg-red-100 transition shadow-sm uppercase flex items-center gap-1.5">
-                                            <i className="fas fa-times"></i> {t.common.cancel}
-                                        </button>
-                                    ) : isFormDirty ? (
-                                        <button type="button" title={t.common.clear} onClick={() => {setScheduleForm({startDate:'', startTime:'14:00', endDate: '', endTime:'15:00'})}} className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition shadow-sm uppercase flex items-center gap-1.5">
-                                            <i className="fas fa-undo"></i> {t.common.clear}
-                                        </button>
-                                    ) : null}
-                                </div>
+                    <div className={`bg-white rounded-2xl shadow-sm overflow-hidden border-t-4 ${editScheduleId ? 'border-orange-400' : 'border-blue-500'}`}>
+                        <div className="px-5 pt-4 pb-3 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${editScheduleId ? 'bg-orange-100' : 'bg-blue-100'}`}>
+                                    <i className={`fas ${editScheduleId ? 'fa-pen' : 'fa-calendar-plus'} text-xs ${editScheduleId ? 'text-orange-600' : 'text-blue-600'}`}></i>
+                                </span>
+                                {editScheduleId ? t.schedule.edit : t.schedule.booking}
+                                <InfoTooltip text={t.tooltips.quotaInfo} />
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                {editScheduleId ? (
+                                    <button type="button" title={t.common.cancel} onClick={() => {setEditScheduleId(null); setScheduleForm({startDate:'', startTime:'14:00', endDate: '', endTime:'15:00'})}} className="text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg hover:bg-red-100 transition-all uppercase flex items-center gap-1.5">
+                                        <i className="fas fa-times text-[9px]"></i> {t.common.cancel}
+                                    </button>
+                                ) : isFormDirty ? (
+                                    <button type="button" title={t.common.clear} onClick={() => {setScheduleForm({startDate:'', startTime:'14:00', endDate: '', endTime:'15:00'})}} className="text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-all uppercase flex items-center gap-1.5">
+                                        <i className="fas fa-undo text-[9px]"></i> {t.common.clear}
+                                    </button>
+                                ) : null}
                             </div>
-                            <div className={`rounded-xl p-3 border transition-all duration-300 ${isOverQuota ? 'bg-red-50 border-red-200' : isCritical ? 'bg-orange-50 border-orange-100' : 'bg-slate-50 border-slate-200'}`}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-1.5">
-                                        <i className={`fas ${isOverQuota ? 'fa-exclamation-triangle animate-pulse' : 'fa-bolt'} text-xs ${isOverQuota ? 'text-red-500' : isCritical ? 'text-orange-500' : 'text-amber-500'}`}></i>
-                                        <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${isOverQuota ? 'text-red-700' : isCritical ? 'text-orange-600' : 'text-slate-600'}`}>
-                                            {t.schedule.teamQuota}
-                                            {/* Badge with tooltip showing local cutoff */}
+                        </div>
+                        <div className="p-5 space-y-4">
+                            {/* ── DAILY TEAM QUOTA BAR ── */}
+                            <div className={`rounded-xl overflow-hidden border transition-all duration-300 ${isOverQuota ? 'border-red-200' : isCritical ? 'border-orange-100' : 'border-slate-200'}`}>
+                                {/* Over-quota alert banner — only shows when already exceeded */}
+                                {isOverQuota && (
+                                    <div className="bg-red-500 px-3 py-1.5 flex items-center gap-2">
+                                        <i className="fas fa-exclamation-triangle text-white text-[10px] flex-shrink-0"></i>
+                                        <span className="text-white text-[10px] font-bold flex-1">
+                                            {lang==='id'
+                                                ? `Kuota harian terlampaui +${(overByMins/60).toFixed(1)}${t.common.unitShort} — booking baru diblokir`
+                                                : `Daily quota exceeded by +${(overByMins/60).toFixed(1)}${t.common.unitShort} — new bookings blocked`}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className={`p-3 ${isOverQuota ? 'bg-red-50' : isCritical ? 'bg-orange-50' : 'bg-slate-50'}`}>
+                                    {/* Row 1: label + date badge  |  used / max */}
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <i className={`fas fa-bolt text-xs flex-shrink-0 ${isOverQuota ? 'text-red-500' : isCritical ? 'text-orange-500' : 'text-amber-500'}`}></i>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wide ${isOverQuota ? 'text-red-700' : isCritical ? 'text-orange-600' : 'text-slate-600'}`}>
+                                                {t.schedule.teamQuota}
+                                            </span>
+                                            {/* Date badge with cutoff tooltip */}
                                             {(() => {
                                                 const co = getPtCutoffInTz(timezone);
                                                 const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
@@ -1227,63 +1290,58 @@
                                                         ? `${co.startStr} – ${co.endStr} ${tzLabel} ${lang==='id'?'(esok)':'(next day)'}`
                                                         : `${co.startStr} – ${co.endStr} ${tzLabel}`;
                                                 return (
-                                                    <span className="group relative cursor-help">
-                                                        <span className="bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] normal-case tracking-normal border border-slate-300/50 shadow-sm hover:bg-blue-100 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                                    <span className="group relative cursor-help flex-shrink-0">
+                                                        <span className="bg-slate-200/80 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] border border-slate-300/40 hover:bg-blue-100 hover:text-blue-600 hover:border-blue-200 transition-colors">
                                                             {formatDate(targetPstDate, lang)} PT ⓘ
                                                         </span>
-                                                        <span className="hidden group-hover:block absolute left-0 top-full mt-1.5 z-50 bg-slate-800 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/50">
+                                                        <span className="hidden group-hover:block absolute left-0 top-full mt-1.5 z-50 bg-slate-800 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/50 pointer-events-none">
                                                             <span className="text-slate-400 text-[9px] block mb-0.5">{lang==='id'?'Hari PT ini = lokal:':'This PT day in local:'}</span>
                                                             {tip}
                                                         </span>
                                                     </span>
                                                 );
                                             })()}
-                                            {isOverQuota && (
-                                                <span className="bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded text-[8px] font-bold normal-case tracking-normal">
-                                                    +{(overByMins/60).toFixed(1)}{t.common.unitShort} {t.schedule.overQuota}
+                                        </div>
+                                        <div className="text-[10px] font-medium text-slate-500 flex-shrink-0">
+                                            <span className={`font-bold text-sm ${isOverQuota ? 'text-red-600' : 'text-slate-800'}`}>{(dailyUsedMinutes/60).toFixed(1)}</span>
+                                            <span className="text-slate-400 mx-0.5">/</span>
+                                            <span className="font-bold text-slate-500">{sysSettings?.dailyQuotaHours || 10}{t.common.unitShort}</span>
+                                        </div>
+                                    </div>
+                                    {/* Row 2: progress bar */}
+                                    <div className="w-full bg-slate-200/70 rounded-full h-2 overflow-hidden flex">
+                                        <div className={`h-2 transition-all duration-700 ease-out flex-shrink-0 rounded-l-full ${isOverQuota ? 'bg-red-400' : isCritical ? 'bg-orange-400' : 'bg-blue-500'}`}
+                                            style={{ width: `${usedPercentage}%`, borderRadius: isOverQuota ? '9999px 0 0 9999px' : '9999px' }}></div>
+                                        {isOverQuota && (
+                                            <div className="h-2 flex-1 rounded-r-full"
+                                                style={{ background: 'repeating-linear-gradient(45deg,#f87171,#f87171 2px,#fecaca 2px,#fecaca 5px)' }}></div>
+                                        )}
+                                    </div>
+                                    {/* Row 3: cutoff window | remaining / over status */}
+                                    <div className="mt-1.5 flex justify-between items-center">
+                                        {timezone !== 'PST' ? (() => {
+                                            const co = getPtCutoffInTz(timezone);
+                                            const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
+                                            return (
+                                                <span className="text-[9px] text-slate-400 font-medium flex items-center gap-1">
+                                                    <i className="fas fa-clock text-[8px] opacity-50"></i>
+                                                    {co.startStr}–{co.endStr} {tzLabel}
+                                                    {co.crossMidnight && <span className="text-[8px] opacity-60 ml-0.5">+1</span>}
                                                 </span>
-                                            )}
-                                        </span>
-                                    </div>
-                                    <div className="text-[10px] font-medium text-slate-500">
-                                        {t.schedule.used}: <span className={`font-bold ${isOverQuota ? 'text-red-600' : 'text-slate-700'}`}>{(dailyUsedMinutes/60).toFixed(1)}{t.common.unitShort}</span> / <span className="font-bold text-slate-700">{sysSettings?.dailyQuotaHours || 10}{t.common.unitShort}</span>
-                                    </div>
-                                </div>
-                                {/* Progress bar — over-quota shows striped overflow segment */}
-                                <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden flex">
-                                    <div className={`h-1.5 transition-all duration-700 ease-out flex-shrink-0 ${isOverQuota ? 'bg-red-400' : isCritical ? 'bg-orange-500' : 'bg-blue-500'}`}
-                                        style={{ width: `${usedPercentage}%` }}></div>
-                                    {isOverQuota && (
-                                        <div className="h-1.5 flex-1 rounded-r-full"
-                                            style={{ background: 'repeating-linear-gradient(45deg, #ef4444, #ef4444 2px, #fca5a5 2px, #fca5a5 4px)' }}></div>
-                                    )}
-                                </div>
-                                {/* Bottom row */}
-                                <div className="mt-1.5 flex justify-between items-center">
-                                    {timezone !== 'PST' ? (() => {
-                                        const co = getPtCutoffInTz(timezone);
-                                        const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
-                                        return (
-                                            <span className="text-[9px] text-slate-400 font-medium flex items-center gap-1">
-                                                <i className="fas fa-clock text-[8px] opacity-60"></i>
-                                                {co.startStr}–{co.endStr} {tzLabel}
-                                                {co.crossMidnight && <span className="text-[8px] opacity-70">+1</span>}
+                                            );
+                                        })() : <span></span>}
+                                        {isOverQuota ? (
+                                            <span className="text-[9px] font-bold text-red-500 uppercase tracking-wide">
+                                                {t.schedule.overQuota}
                                             </span>
-                                        );
-                                    })() : <span></span>}
-                                    {isOverQuota ? (
-                                        <span className="text-[9px] font-bold text-red-600 flex items-center gap-1">
-                                            <i className="fas fa-exclamation-circle text-[9px]"></i>
-                                            −{(overByMins/60).toFixed(1)}{t.common.unitShort} {t.schedule.overQuota}
-                                        </span>
-                                    ) : (
-                                        <span className={`text-[9px] font-bold uppercase ${isCritical ? 'text-orange-500' : 'text-blue-600'}`}>
-                                            {t.schedule.remaining}: {(remainingClamped/60).toFixed(1)}{t.common.unitShort}
-                                        </span>
-                                    )}
+                                        ) : (
+                                            <span className={`text-[9px] font-bold uppercase tracking-wide ${isCritical ? 'text-orange-500' : remainingClamped === 0 ? 'text-slate-400' : 'text-blue-600'}`}>
+                                                {t.schedule.remaining}: {(remainingClamped/60).toFixed(1)}{t.common.unitShort}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
                         <div className="mt-4 mb-6">
                             <div className="flex justify-between items-center mb-3">
@@ -1359,36 +1417,56 @@
                         </div>
 
                         <form onSubmit={(e) => saveSchedule(e, showNotify)} className="space-y-3" noValidate>
-                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5">
-                                    <i className="fas fa-play-circle text-blue-500 text-sm"></i> {t.common.start} <span className="font-medium text-slate-400 normal-case ml-1">({TZ_CONFIG[timezone].label})</span>
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <input type="date" required title={t.common.selectDate} className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.startDate} onChange={e => {if(!scheduleForm.endDate) setScheduleForm({...scheduleForm, startDate: e.target.value, endDate: e.target.value});else setScheduleForm({...scheduleForm, startDate: e.target.value});}} />
-                                    </div>
-                                    <div>
-                                        <input type="time" required title={t.common.selectTime} className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.startTime} onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} />
-                                    </div>
+                            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <div className="col-span-2">
+                                    <label className="section-label flex items-center gap-1.5 mb-2">
+                                        <i className="fas fa-play-circle text-blue-500 text-sm"></i>
+                                        {t.common.start} <span className="font-medium text-slate-400 normal-case opacity-70">({TZ_CONFIG[timezone].label})</span>
+                                    </label>
                                 </div>
+                                <input type="date" required title={t.common.selectDate}
+                                    className="form-input text-sm"
+                                    value={scheduleForm.startDate}
+                                    onChange={e => {if(!scheduleForm.endDate) setScheduleForm({...scheduleForm, startDate: e.target.value, endDate: e.target.value});else setScheduleForm({...scheduleForm, startDate: e.target.value});}} />
+                                <input type="time" required title={t.common.selectTime}
+                                    className="form-input text-sm"
+                                    value={scheduleForm.startTime}
+                                    onChange={e => setScheduleForm({...scheduleForm, startTime: e.target.value})} />
                             </div>
-                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 flex items-center gap-1.5">
-                                    <i className="fas fa-stop-circle text-red-500 text-sm"></i> {t.common.end} <span className="font-medium text-slate-400 normal-case ml-1">({TZ_CONFIG[timezone].label})</span>
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <input type="date" required title={t.common.selectDate} className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.endDate} onChange={e => setScheduleForm({...scheduleForm, endDate: e.target.value})} />
-                                    </div>
-                                    <div>
-                                        <input type="time" required title={t.common.selectTime} className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500" value={scheduleForm.endTime} onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} />
-                                    </div>
+                            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <div className="col-span-2">
+                                    <label className="section-label flex items-center gap-1.5 mb-2">
+                                        <i className="fas fa-stop-circle text-red-500 text-sm"></i>
+                                        {t.common.end} <span className="font-medium text-slate-400 normal-case opacity-70">({TZ_CONFIG[timezone].label})</span>
+                                    </label>
                                 </div>
+                                <input type="date" required title={t.common.selectDate}
+                                    className="form-input text-sm"
+                                    value={scheduleForm.endDate}
+                                    onChange={e => setScheduleForm({...scheduleForm, endDate: e.target.value})} />
+                                <input type="time" required title={t.common.selectTime}
+                                    className="form-input text-sm"
+                                    value={scheduleForm.endTime}
+                                    onChange={e => setScheduleForm({...scheduleForm, endTime: e.target.value})} />
                             </div>
-                            <button disabled={loading || (remainingClamped <= 0 && !editScheduleId) || wouldExceedQuota} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${wouldExceedQuota ? 'bg-red-500' : isOverQuota && !editScheduleId ? 'bg-red-600' : editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                {loading ? <Spinner/> : (wouldExceedQuota ? (lang === 'id' ? '⚠ Kuota Terlampaui!' : '⚠ Quota Exceeded!') : editScheduleId ? t.common.save : (remainingClamped <= 0 ? t.schedule.full : t.schedule.booking))}
+                            <button
+                                disabled={loading || wouldExceedQuota || (!editScheduleId && (remainingClamped <= 0 || isOverQuota))}
+                                className={`w-full py-3 rounded-xl text-white font-bold text-sm shadow-md transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2
+                                    ${wouldExceedQuota || (!editScheduleId && (remainingClamped <= 0 || isOverQuota))
+                                        ? 'bg-red-500 shadow-red-200'
+                                        : editScheduleId
+                                            ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'
+                                            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 btn-primary'}`}>
+                                {loading ? <Spinner/> : wouldExceedQuota
+                                    ? <><i className="fas fa-exclamation-triangle text-xs"></i>{lang==='id'?'Kuota Terlampaui!':'Quota Exceeded!'}</>
+                                    : (!editScheduleId && (remainingClamped <= 0 || isOverQuota))
+                                        ? <><i className="fas fa-ban text-xs"></i>{t.schedule.full}</>
+                                        : editScheduleId
+                                            ? <><i className="fas fa-check text-xs"></i>{t.common.save}</>
+                                            : <><i className="fas fa-calendar-plus text-xs"></i>{t.schedule.booking}</>}
                             </button>
                         </form>
+                        </div>
                     </div>
                     
                     <div className="space-y-3 pb-20">
@@ -2996,6 +3074,16 @@
                 e.preventDefault(); 
                 if (!currentUser) return showNotify(t.timesheet.selectUser, "error");
                 if (!scheduleForm.startDate || !scheduleForm.startTime || !scheduleForm.endDate || !scheduleForm.endTime) return showNotify(t.common.requiredField, "error");
+
+                // Hard block: if quota already exceeded (from stale data), reject immediately
+                if (!editScheduleId && isOverQuota) {
+                    return showNotify(
+                        lang === 'id'
+                            ? `Kuota harian sudah terlampaui (${(dailyUsedMinutes/60).toFixed(1)}${t.common.unitShort}/${sysSettings?.dailyQuotaHours||10}${t.common.unitShort}). Booking baru tidak diizinkan.`
+                            : `Daily quota already exceeded (${(dailyUsedMinutes/60).toFixed(1)}${t.common.unitShort}/${sysSettings?.dailyQuotaHours||10}${t.common.unitShort}). No new bookings allowed.`,
+                        "error", 5000
+                    );
+                }
                 
                 const startStr = `${scheduleForm.startDate}T${scheduleForm.startTime}`;
                 const endStr = `${scheduleForm.endDate}T${scheduleForm.endTime}`;
