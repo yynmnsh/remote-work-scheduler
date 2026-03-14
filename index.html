@@ -17,7 +17,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { 
             getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, 
-            onSnapshot, query, orderBy, setDoc, where, writeBatch, getDoc 
+            onSnapshot, query, orderBy, setDoc, where, writeBatch, getDoc, runTransaction
         } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         // Mengembalikan modul Auth untuk Opsi Keamanan
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
@@ -38,7 +38,7 @@
         
         window.db = db;
         window.auth = auth;
-        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch };
+        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch, runTransaction };
         window.fa = { signInAnonymously }; // Menyediakan fungsi untuk dipanggil di React
     </script>
 
@@ -175,7 +175,7 @@
                 nav: { home: 'Beranda', schedule: 'Jadwal', timesheet: 'Laporan', analytics: 'Analitik', admin: 'Admin' },
                 common: { loading: 'Memuat...', save: 'Simpan', cancel: 'Batal', clear: 'Bersihkan', edit: 'Ubah', delete: 'Hapus', date: 'Tanggal', start: 'Mulai', end: 'Selesai', duration: 'Durasi', confirmTitle: 'Konfirmasi', yes: 'Ya, Lanjutkan', unitHour: 'Jam', unitShort: 'j', unitMin: 'm', reminder: 'Periksa zona waktu & bahasa.', saved: 'Tersimpan!', error: 'Terjadi Kesalahan', unknown: 'Tidak diketahui', you: 'ANDA', new: 'BARU', est: 'Perkiraan', pst: 'PT', requiredField: 'Mohon lengkapi semua kolom.', selectDate: 'Pilih Tanggal', selectTime: 'Pilih Waktu', logout: 'Keluar Akun', logoutSuccess: 'Berhasil keluar.' },
                 dashboard: { hello: 'Halo', team: 'Tim', estEarned: 'Estimasi Gaji', period: 'Periode', hours: 'Jam', upcoming: 'Jadwal Mendatang', noSchedule: 'Tidak ada jadwal.', workingNow: 'Sedang Bekerja', noActive: 'Tidak ada aktivitas.', until: 'hingga' },
-                schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian', used: 'Terpakai', remaining: 'Sisa', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
+                schedule: { booking: 'Booking Jadwal', edit: 'Edit Jadwal', teamQuota: 'Kuota Tim Harian', used: 'Terpakai', remaining: 'Sisa', overQuota: 'Melebihi Kuota', bookedBy: 'Dipesan oleh', conflict: 'Bentrok dengan', full: 'Kuota Penuh', success: 'Jadwal dibuat!', update: 'Update Berhasil', deleteConfirm: 'Hapus jadwal ini?', allSchedules: 'Lihat Jadwal Lengkap', upcomingSchedules: 'Jadwal Mendatang', onlyMe: 'Hanya Saya', allUsers: 'Semua User', showAll: 'Semua', showUpcoming: 'Mendatang', confirmBooking: 'Data sudah benar?', pastError: 'Tidak bisa membuat jadwal masa lalu!', deleteLinkedError: 'Hapus Laporan terkait dulu!', visualTitle: 'Peta Jadwal', dailyLimit: 'Batas Harian' },
                 timesheet: { title: 'Input Laporan', editTitle: 'Edit Laporan', submit: 'Kirim Laporan', update: 'Update Laporan', history: 'Riwayat', historyAll: 'Riwayat Lengkap', historyHide: 'Sembunyikan Lunas', pending: 'PENDING', paid: 'LUNAS', confirmPaid: 'Tandai LUNAS?', payInfo: 'Info Pembayaran Belum Lengkap', fillPayInfo: 'Lengkapi Sekarang', noData: 'Tidak ada laporan.', timeError: 'Waktu selesai harus setelah mulai', overlapError: 'Waktu bentrok!', selectUser: 'Pilih Akun', confirmSubmit: 'Data laporan akurat?', accessRestricted: 'Akses Terbatas', selectSchedule: 'Pilih Jadwal', actualStart: 'Mulai Aktual', actualEnd: 'Selesai Aktual', duplicateError: 'Laporan jadwal ini sudah ada!', earlySubmitError: 'Jadwal belum selesai!' },
                 analytics: { myStats: 'Kinerja (7 Hari)', pendingStats: 'Saldo Pending', teamOverview: 'Overview Tim', teamActivity: 'Aktivitas Tim', topContrib: 'Top Kontributor', discipline: 'Disiplin', workHours: 'Jam Kerja', estIncome: 'Estimasi', burnRate: 'Total Estimasi Biaya', prodHours: 'Total Jam', totalHours: 'Total Jam', personal: 'Personal', team: 'Tim Global', planDesc: 'Rencana', actDesc: 'Aktual', paymentHistory: 'Riwayat Pembayaran', paidOn: 'Dibayar pada', totalUnpaid: 'Belum Dibayar', viewMode: 'Mode Tampilan', modeLocal: 'Waktu Lokal', modeOp: 'Jam Operasional (US)', statusOnTrack: 'Sesuai Jadwal', statusUnder: 'Kurang Waktu', statusOver: 'Melebihi Waktu', statusMissed: 'Belum Lapor', statusUnplanned: 'Luar Jadwal', logicPacific: 'Logika Waktu Pasifik', labelAct: 'Aktual', legendTip: 'Bar Abu = Rencana, Bar Warna = Aktual', totalPaid: 'Total Diterima', lifetime: 'Akumulasi Pendapatan', changePass: 'Ubah Password', passTitle: 'Keamanan Akun', noPayHistory: 'Tidak ada riwayat.', reportTime: 'Waktu Lapor' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Tagihan Pending', payHistory: 'Riwayat Pembayaran', manageUsers: 'Kelola User', totalBill: 'Total Tagihan', totalHours: 'Total Jam', markPaid: 'Tandai Lunas', userList: 'Daftar User', addUser: 'Tambah User', editUser: 'Ubah User', name: 'Nama', color: 'Warna', role: 'Role', activeWorkers: 'Sedang Bekerja', totalUserIncome: 'Total Pendapatan User', hideUser: 'Sembunyikan User', active: 'Aktif', inactive: 'Nonaktif', passHeader: 'Set Sandi/PIN', passPlaceholder: 'Ketik sandi baru untuk user ini', totalPaidTitle: 'Total Terbayar', totalPerUserAllTime: 'Total per User', noPendingBills: 'Tidak ada tagihan.', adminView: 'Tampilan Admin', updatePassHint: 'Isi HANYA untuk mengubah password.', settings: 'Pengaturan Sistem', dailyQuota: 'Batas Kuota Harian', quotaHelper: 'Batas total durasi seluruh tim.', quotaError: 'Nilai tidak valid!', sectionAllTime: 'Akumulasi Semua Waktu', sectionWeekly: 'Rekap Mingguan', sectionDaily: 'Rincian Harian', markedPaid: 'Berhasil ditandai Lunas!', userUpdated: 'User Diperbarui', userAdded: 'User Ditambahkan', deleteUserConfirm: 'Hapus user ini?', userDeleted: 'User Dihapus', currencySettings: 'Pengaturan Mata Uang', tzSettings: 'Pengaturan Zona Waktu', workSettings: 'Pengaturan Pekerjaan', rateUSD: 'Rate per Jam (USD)', rateIDR: 'Kurs 1 USD ke IDR', tzWIB: 'Offset WIB', tzWITA: 'Offset WITA', tzAEDT: 'Offset AEDT', tzPST: 'Offset PT', perUserRates: 'Rate per User (Override)', perUserRatesHelper: 'Kosongkan atau 0 = pakai rate global', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Rate per user disimpan!' },
@@ -187,7 +187,7 @@
                 nav: { home: 'Home', schedule: 'Schedule', timesheet: 'Timesheet', analytics: 'Analytics', admin: 'Admin' },
                 common: { loading: 'Loading...', save: 'Save', cancel: 'Cancel', clear: 'Clear', edit: 'Edit', delete: 'Delete', date: 'Date', start: 'Start', end: 'End', duration: 'Duration', confirmTitle: 'Confirmation', yes: 'Yes, Proceed', unitHour: 'Hours', unitShort: 'h', unitMin: 'm', reminder: 'Check timezone & language.', saved: 'Saved!', error: 'Error occurred', unknown: 'Unknown', you: 'YOU', new: 'NEW', est: 'Est.', pst: 'PT', requiredField: 'Please fill out all required fields.', selectDate: 'Select Date', selectTime: 'Select Time', logout: 'Logout', logoutSuccess: 'Logged out successfully.' },
                 dashboard: { hello: 'Hello', team: 'Team', estEarned: 'Est. Earnings', period: 'Period', hours: 'Hours', upcoming: 'Upcoming Schedule', noSchedule: 'No upcoming schedules.', workingNow: 'Working Now', noActive: 'No one is working right now.', until: 'until' },
-                schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota', used: 'Used', remaining: 'Left', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only', confirmBooking: 'Is the schedule data correct?', pastError: 'Cannot book schedules in the past!', deleteLinkedError: 'Cannot delete schedule with linked timesheet!', visualTitle: 'Daily Schedule Map', dailyLimit: 'Daily Limit' },
+                schedule: { booking: 'Book Schedule', edit: 'Edit Schedule', teamQuota: 'Daily Team Quota', used: 'Used', remaining: 'Left', overQuota: 'Over Quota', bookedBy: 'Booked by', conflict: 'Time conflict with', full: 'Quota Full', success: 'Schedule created!', update: 'Update Success', deleteConfirm: 'Delete this schedule?', allSchedules: 'View Full Schedule', upcomingSchedules: 'Upcoming Schedules', onlyMe: 'Only Me', allUsers: 'All Users', showAll: 'Show All', showUpcoming: 'Upcoming Only', confirmBooking: 'Is the schedule data correct?', pastError: 'Cannot book schedules in the past!', deleteLinkedError: 'Cannot delete schedule with linked timesheet!', visualTitle: 'Daily Schedule Map', dailyLimit: 'Daily Limit' },
                 timesheet: { title: 'Submit Timesheet', editTitle: 'Edit Timesheet', submit: 'Submit', update: 'Update', history: 'History', historyAll: 'View Full History', historyHide: 'Hide Paid', pending: 'PENDING', paid: 'PAID', confirmPaid: 'Mark as PAID?', payInfo: 'Payment Info Incomplete', fillPayInfo: 'Complete Now', noData: 'No reports.', timeError: 'End time must be after start', overlapError: 'Time overlap!', selectUser: 'Select Account', confirmSubmit: 'Is the work report accurate?', accessRestricted: 'Access Restricted', selectSchedule: 'Select Schedule', actualStart: 'Actual Start', actualEnd: 'Actual End', duplicateError: 'Timesheet already exists!', earlySubmitError: 'Cannot report yet! Scheduled work is not finished.' },
                 analytics: { myStats: 'Performance (7 Days)', pendingStats: 'Pending Balance', teamOverview: 'Team Overview', teamActivity: 'Team Activity', topContrib: 'Top Contributors', discipline: 'Discipline', workHours: 'Work Hours', estIncome: 'Est. Income', burnRate: 'Est. Total Cost', prodHours: 'Total Hours', totalHours: 'Total Hours', personal: 'Personal', team: 'Global Team', planDesc: 'Planned', actDesc: 'Actual', paymentHistory: 'Payment History', paidOn: 'Paid on', totalUnpaid: 'Unpaid', viewMode: 'View Mode', modeLocal: 'Local Time', modeOp: 'Op Hours (US)', statusOnTrack: 'On Schedule', statusUnder: 'Under Time', statusOver: 'Over Time', statusMissed: 'Not Reported', statusUnplanned: 'Unscheduled', logicPacific: 'Pacific Time Logic', labelAct: 'Act', legendTip: 'Gray Bar = Plan, Color Bar = Actual', totalPaid: 'Total Received', lifetime: 'Lifetime Earnings', changePass: 'Change Password', passTitle: 'Account Security', noPayHistory: 'No payment history.', reportTime: 'Report Time' },
                 admin: { panel: 'Admin Panel', pendingBill: 'Pending Bills', payHistory: 'Payment History', manageUsers: 'Manage Users', totalBill: 'Total Bill', totalHours: 'Total Hours', markPaid: 'Mark Paid', userList: 'User List', addUser: 'Add User', editUser: 'Edit User', name: 'Name', color: 'Color', role: 'Role', activeWorkers: 'Working Now', totalUserIncome: 'Total User Income', hideUser: 'Hide User', active: 'Active', inactive: 'Inactive', passHeader: 'Set User Password', passPlaceholder: 'Type new password to reset', totalPaidTitle: 'Total Paid', totalPerUserAllTime: 'Total per User (All Time)', noPendingBills: 'No pending bills.', adminView: 'Admin View', updatePassHint: 'Fill ONLY to overwrite user password.', settings: 'System Settings', dailyQuota: 'Daily Team Quota', quotaHelper: 'Total daily booking duration.', quotaError: 'Invalid configuration values!', sectionAllTime: 'All-Time Accumulation', sectionWeekly: 'Weekly Summary', sectionDaily: 'Daily Details', markedPaid: 'Marked as Paid!', userUpdated: 'User Updated', userAdded: 'User Added', deleteUserConfirm: 'Delete this user?', userDeleted: 'User Deleted', currencySettings: 'Currency Settings', tzSettings: 'Timezone Settings', workSettings: 'Work Settings', rateUSD: 'Hourly Rate (USD)', rateIDR: '1 USD to IDR Rate', tzWIB: 'WIB Offset', tzWITA: 'WITA Offset', tzAEDT: 'AEDT Offset', tzPST: 'PT Offset', perUserRates: 'Per-User Rate Override', perUserRatesHelper: 'Leave blank or 0 to use global rate', perUserRatesGlobal: 'Global', perUserRatesSaved: 'Per-user rates saved!' },
@@ -1124,7 +1124,10 @@
                     }, 0);
             }, [schedules, targetPstDate, editScheduleId]);
 
-            const remainingMinutes = Math.max(0, MAX_MINUTES - dailyUsedMinutes);
+            const remainingMinutes = MAX_MINUTES - dailyUsedMinutes; // intentionally can be negative
+            const remainingClamped = Math.max(0, remainingMinutes);
+            const isOverQuota = dailyUsedMinutes > MAX_MINUTES;
+            const overByMins = isOverQuota ? dailyUsedMinutes - MAX_MINUTES : 0;
             const usedPercentage = Math.min(100, (dailyUsedMinutes / MAX_MINUTES) * 100);
             const newScheduleDurationMins = React.useMemo(() => {
                 if (!scheduleForm.startDate || !scheduleForm.startTime || !scheduleForm.endDate || !scheduleForm.endTime) return 0;
@@ -1133,7 +1136,7 @@
                 return Math.max(0, Math.floor((getEpochFromWIB(dbE.date, dbE.time) - getEpochFromWIB(dbS.date, dbS.time)) / 60000));
             }, [scheduleForm, timezone]);
             const wouldExceedQuota = newScheduleDurationMins > 0 && (dailyUsedMinutes + newScheduleDurationMins > MAX_MINUTES);
-            const isCritical = remainingMinutes < 60;
+            const isCritical = remainingMinutes < 60; // includes over-quota (negative)
             const isFormDirty = scheduleForm.startDate !== '' || scheduleForm.startTime !== '14:00' || scheduleForm.endDate !== '' || scheduleForm.endTime !== '15:00';
 
             const filteredSchedules = React.useMemo(() => {
@@ -1208,11 +1211,11 @@
                                     ) : null}
                                 </div>
                             </div>
-                            <div className={`rounded-xl p-3 border transition-all duration-300 ${isCritical ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className={`rounded-xl p-3 border transition-all duration-300 ${isOverQuota ? 'bg-red-50 border-red-200' : isCritical ? 'bg-orange-50 border-orange-100' : 'bg-slate-50 border-slate-200'}`}>
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-1.5">
-                                        <i className={`fas fa-bolt text-xs ${isCritical ? 'text-red-500' : 'text-amber-500'}`}></i>
-                                        <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${isCritical ? 'text-red-600' : 'text-slate-600'}`}>
+                                        <i className={`fas ${isOverQuota ? 'fa-exclamation-triangle animate-pulse' : 'fa-bolt'} text-xs ${isOverQuota ? 'text-red-500' : isCritical ? 'text-orange-500' : 'text-amber-500'}`}></i>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${isOverQuota ? 'text-red-700' : isCritical ? 'text-orange-600' : 'text-slate-600'}`}>
                                             {t.schedule.teamQuota}
                                             {/* Badge with tooltip showing local cutoff */}
                                             {(() => {
@@ -1235,16 +1238,27 @@
                                                     </span>
                                                 );
                                             })()}
+                                            {isOverQuota && (
+                                                <span className="bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded text-[8px] font-bold normal-case tracking-normal">
+                                                    +{(overByMins/60).toFixed(1)}{t.common.unitShort} {t.schedule.overQuota}
+                                                </span>
+                                            )}
                                         </span>
                                     </div>
                                     <div className="text-[10px] font-medium text-slate-500">
-                                        {t.schedule.used}: <span className="font-bold text-slate-700">{(dailyUsedMinutes/60).toFixed(1)}{t.common.unitShort}</span> / <span className="font-bold text-slate-700">{sysSettings?.dailyQuotaHours || 10}{t.common.unitShort}</span>
+                                        {t.schedule.used}: <span className={`font-bold ${isOverQuota ? 'text-red-600' : 'text-slate-700'}`}>{(dailyUsedMinutes/60).toFixed(1)}{t.common.unitShort}</span> / <span className="font-bold text-slate-700">{sysSettings?.dailyQuotaHours || 10}{t.common.unitShort}</span>
                                     </div>
                                 </div>
-                                <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
-                                    <div className={`h-1.5 rounded-full transition-all duration-700 ease-out ${isCritical ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${usedPercentage}%` }}></div>
+                                {/* Progress bar — over-quota shows striped overflow segment */}
+                                <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden flex">
+                                    <div className={`h-1.5 transition-all duration-700 ease-out flex-shrink-0 ${isOverQuota ? 'bg-red-400' : isCritical ? 'bg-orange-500' : 'bg-blue-500'}`}
+                                        style={{ width: `${usedPercentage}%` }}></div>
+                                    {isOverQuota && (
+                                        <div className="h-1.5 flex-1 rounded-r-full"
+                                            style={{ background: 'repeating-linear-gradient(45deg, #ef4444, #ef4444 2px, #fca5a5 2px, #fca5a5 4px)' }}></div>
+                                    )}
                                 </div>
-                                {/* Bottom row: cutoff window (left) + remaining (right) — same line, zero extra height */}
+                                {/* Bottom row */}
                                 <div className="mt-1.5 flex justify-between items-center">
                                     {timezone !== 'PST' ? (() => {
                                         const co = getPtCutoffInTz(timezone);
@@ -1257,9 +1271,16 @@
                                             </span>
                                         );
                                     })() : <span></span>}
-                                    <span className={`text-[9px] font-bold uppercase ${isCritical ? 'text-red-500' : 'text-blue-600'}`}>
-                                        {t.schedule.remaining}: {(remainingMinutes/60).toFixed(1)}{t.common.unitShort}
-                                    </span>
+                                    {isOverQuota ? (
+                                        <span className="text-[9px] font-bold text-red-600 flex items-center gap-1">
+                                            <i className="fas fa-exclamation-circle text-[9px]"></i>
+                                            −{(overByMins/60).toFixed(1)}{t.common.unitShort} {t.schedule.overQuota}
+                                        </span>
+                                    ) : (
+                                        <span className={`text-[9px] font-bold uppercase ${isCritical ? 'text-orange-500' : 'text-blue-600'}`}>
+                                            {t.schedule.remaining}: {(remainingClamped/60).toFixed(1)}{t.common.unitShort}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1364,8 +1385,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <button disabled={loading || (remainingMinutes <= 0 && !editScheduleId) || wouldExceedQuota} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${wouldExceedQuota ? 'bg-red-500' : editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                                {loading ? <Spinner/> : (wouldExceedQuota ? (lang === 'id' ? '⚠ Kuota Terlampaui!' : '⚠ Quota Exceeded!') : editScheduleId ? t.common.save : (remainingMinutes <= 0 ? t.schedule.full : t.schedule.booking))}
+                            <button disabled={loading || (remainingClamped <= 0 && !editScheduleId) || wouldExceedQuota} className={`w-full py-2.5 rounded-lg text-white font-medium text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${wouldExceedQuota ? 'bg-red-500' : isOverQuota && !editScheduleId ? 'bg-red-600' : editScheduleId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                {loading ? <Spinner/> : (wouldExceedQuota ? (lang === 'id' ? '⚠ Kuota Terlampaui!' : '⚠ Quota Exceeded!') : editScheduleId ? t.common.save : (remainingClamped <= 0 ? t.schedule.full : t.schedule.booking))}
                             </button>
                         </form>
                     </div>
@@ -3033,9 +3054,61 @@
                 triggerConfirm(t.schedule.confirmBooking, async () => {
                     setLoading(true);
                     try {
+                        // ── FRESH READ from Firestore immediately before write ──
+                        // This prevents race conditions where two users submit concurrently
+                        // against stale React state snapshots.
+                        const freshSnap = await window.fs.getDocs(window.fs.collection(window.db, 'schedules'));
+                        const freshSchedules = freshSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                        // Re-validate conflict against fresh data
+                        let freshConflictUser = null;
+                        const hasFreshConflict = freshSchedules.some(s => {
+                            if (editScheduleId && s.id === editScheduleId) return false;
+                            const eS = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                            let eE = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                            if (!s.endDate && eE <= eS) eE += 86400000;
+                            if (newStartEpoch < eE && newEndEpoch > eS) { freshConflictUser = getUserName(s.userId); return true; }
+                            return false;
+                        });
+                        if (hasFreshConflict) {
+                            setLoading(false);
+                            return showNotify(`${t.schedule.conflict} ${freshConflictUser}!`, "error");
+                        }
+
+                        // Re-validate quota against fresh data
+                        const freshPstDay = getPSTDayFromEpoch(newStartEpoch);
+                        const freshExistingMins = freshSchedules.reduce((acc, s) => {
+                            if (editScheduleId && s.id === editScheduleId) return acc;
+                            if (getPSTDay(s.startDate || s.date, s.startTime) !== freshPstDay) return acc;
+                            const sE = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                            let eE = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                            if (!s.endDate && eE <= sE) eE += 86400000;
+                            return acc + Math.floor((eE - sE) / 60000);
+                        }, 0);
+                        const freshNewDurMins = Math.floor((newEndEpoch - newStartEpoch) / 60000);
+                        const freshMaxMins = (sysSettings?.dailyQuotaHours || 10) * 60;
+                        if (freshExistingMins + freshNewDurMins > freshMaxMins) {
+                            const freshOver = freshExistingMins + freshNewDurMins - freshMaxMins;
+                            const freshRemaining = freshMaxMins - freshExistingMins;
+                            setLoading(false);
+                            return showNotify(
+                                lang === 'id'
+                                    ? `Kuota penuh! Sisa ${freshRemaining < 0 ? 0 : freshRemaining} menit, jadwal ini ${freshNewDurMins} menit (lebih ${freshOver} menit).`
+                                    : `Quota full! ${freshRemaining < 0 ? 0 : freshRemaining} min left, this schedule is ${freshNewDurMins} min (over by ${freshOver} min).`,
+                                "error", 6000
+                            );
+                        }
+
+                        // ── WRITE ──
                         const payload = { userId: currentUser, startDate: dbStart.date, startTime: dbStart.time, endDate: dbEnd.date, endTime: dbEnd.time, updatedAt: new Date().toISOString() };
-                        if (editScheduleId) { await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload); } else { await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload); }
-                        showNotify(t.schedule.success); setScheduleForm({ startDate: '', startTime: '14:00', endDate: '', endTime: '15:00' }); setEditScheduleId(null);
+                        if (editScheduleId) {
+                            await window.fs.updateDoc(window.fs.doc(window.db, 'schedules', editScheduleId), payload);
+                        } else {
+                            await window.fs.addDoc(window.fs.collection(window.db, 'schedules'), payload);
+                        }
+                        showNotify(editScheduleId ? t.schedule.update : t.schedule.success);
+                        setScheduleForm({ startDate: '', startTime: '14:00', endDate: '', endTime: '15:00' });
+                        setEditScheduleId(null);
                     } catch(err) { showNotify(err.message || t.common.error, "error"); } finally { setLoading(false); }
                 });
             };
