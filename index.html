@@ -1503,7 +1503,7 @@
                                         </div>
                                     )}
 
-                                    {/* "Now" red line — Schedule tab: line always visible, label on hover below dot */}
+                                    {/* "Now" red line — label inside chart at top, hover-only, never exits card bounds */}
                                     {(() => {
                                         const nowObj = new Date(Date.now() + TZ_CONFIG[timezone].offsetUTC * 3600000);
                                         const todayStr = `${nowObj.getUTCFullYear()}-${String(nowObj.getUTCMonth()+1).padStart(2,'0')}-${String(nowObj.getUTCDate()).padStart(2,'0')}`;
@@ -1511,17 +1511,21 @@
                                         const nowMins = nowObj.getUTCHours() * 60 + nowObj.getUTCMinutes();
                                         const nowPct = nowMins / 1440 * 100;
                                         const nowLabel = `${String(nowObj.getUTCHours()).padStart(2,'0')}:${String(nowObj.getUTCMinutes()).padStart(2,'0')}`;
-                                        const labelSide = nowPct > 82 ? 'right-0' : nowPct < 15 ? 'left-0' : '-translate-x-1/2 left-1/2';
                                         return (
-                                            <div className="absolute top-0 bottom-0 z-30 group cursor-default" style={{ left: `${nowPct}%` }}>
-                                                <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 shadow-sm pointer-events-none"></div>
-                                                <div className="absolute -top-0.5 w-2.5 h-2.5 bg-red-500 rounded-full -translate-x-1 shadow"></div>
-                                                {/* Hover label — below dot, z-[200] to float above ALL elements including header/nav */}
-                                                <div className={`hidden group-hover:flex absolute top-full mt-1 ${labelSide} bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-lg whitespace-nowrap shadow-lg z-[200] items-center gap-1`}>
-                                                    <i className="fas fa-clock text-[7px]"></i>
-                                                    {nowLabel} {TZ_CONFIG[timezone].label.split(' ')[0]}
+                                            <>
+                                                {/* The line + dot */}
+                                                <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: `${nowPct}%` }}>
+                                                    <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 shadow-sm"></div>
+                                                    <div className="absolute -top-0.5 w-2.5 h-2.5 bg-red-500 rounded-full -translate-x-1 shadow"></div>
                                                 </div>
-                                            </div>
+                                                {/* Hover trigger + label — label anchored to TOP of inner div, stays inside card */}
+                                                <div className="absolute top-0 bottom-0 z-30 group cursor-default" style={{ left: `${nowPct}%`, width: '12px', transform: 'translateX(-6px)' }}>
+                                                    <div className={`hidden group-hover:flex absolute top-0 ${nowPct > 82 ? 'right-0' : nowPct < 15 ? 'left-0' : 'left-1'} bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap shadow items-center gap-1`}>
+                                                        <i className="fas fa-clock text-[7px]"></i>
+                                                        {nowLabel} {TZ_CONFIG[timezone].label.split(' ')[0]}
+                                                    </div>
+                                                </div>
+                                            </>
                                         );
                                     })()}
                                 </div>
@@ -1847,16 +1851,25 @@
                                 const nowPst = new Date(Date.now() + TZ_CONFIG['PST'].offsetUTC * 3600000);
                                 const nowMins = nowPst.getUTCHours() * 60 + nowPst.getUTCMinutes();
                                 const nowHHMM = `${String(nowPst.getUTCHours()).padStart(2,'0')}:${String(nowPst.getUTCMinutes()).padStart(2,'0')}`;
-                                const labelSide = nowMins > 1200 ? 'right-0' : 'left-0';
+                                // Label anchored to left edge of line, clamped so it stays inside chart
+                                const leftPct = nowMins / 1440 * 100;
+                                const labelStyle = leftPct > 75
+                                    ? { right: `${100 - leftPct}%`, left: 'auto' }
+                                    : { left: `${leftPct}%` };
                                 return (
-                                    <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-30 group cursor-default" style={{left:`${nowMins/1440*100}%`}}>
-                                        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full bg-red-400 shadow"></div>
-                                        {/* Hover-only label below line — z-[200] floats above all elements */}
-                                        <div className={`hidden group-hover:flex absolute top-full mt-1 ${labelSide} bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-md whitespace-nowrap items-center gap-1 z-[200]`}>
-                                            <i className="fas fa-circle text-[6px] text-red-200"></i>
-                                            {lang==='id'?'Sekarang':'Now'} · {nowHHMM} PT
+                                    <>
+                                        {/* The line itself */}
+                                        <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-20 pointer-events-none" style={{left:`${leftPct}%`}}>
+                                            <div className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full bg-red-400 shadow"></div>
                                         </div>
-                                    </div>
+                                        {/* Hover label — rendered as sibling, positioned at top of chart, z-30, always inside bounds */}
+                                        <div className="absolute top-0 z-30 group" style={{left:`${leftPct}%`, width:'1px', height:'100%', cursor:'default'}}>
+                                            <div className={`hidden group-hover:flex absolute top-0 ${leftPct > 75 ? 'right-0' : 'left-1'} bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-lg whitespace-nowrap items-center gap-1`}>
+                                                <i className="fas fa-circle text-[6px] text-red-200"></i>
+                                                {lang==='id'?'Sekarang':'Now'} · {nowHHMM} PT
+                                            </div>
+                                        </div>
+                                    </>
                                 );
                             })()}
                             {planBlocks.length === 0 && actualBlocks.length === 0 && (
@@ -2852,9 +2865,9 @@
                                                         <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{entry.detail}</p>
                                                     </div>
                                                     <div className="text-right flex-shrink-0">
-                                                        <p className="text-[10px] font-bold text-slate-500">{timeStr}</p>
+                                                        <p className="text-[10px] font-bold text-slate-600">{timeStr}</p>
                                                         <p className="text-[9px] text-slate-400">{dateStr}</p>
-                                                        <p className="text-[8px] text-slate-300 font-mono font-bold tracking-wide">{tzLabel}</p>
+                                                        <span className="inline-block text-[8px] font-bold text-blue-400 bg-blue-50 px-1 rounded tracking-wide">{tzLabel}</span>
                                                     </div>
                                                 </div>
                                             );
