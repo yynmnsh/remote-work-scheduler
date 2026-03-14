@@ -17,7 +17,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { 
             getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, 
-            onSnapshot, query, orderBy, setDoc, where, writeBatch, getDoc, runTransaction
+            onSnapshot, query, orderBy, setDoc, where, writeBatch, getDoc, runTransaction, limit
         } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         // Mengembalikan modul Auth untuk Opsi Keamanan
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
@@ -38,7 +38,7 @@
         
         window.db = db;
         window.auth = auth;
-        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch, runTransaction };
+        window.fs = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, onSnapshot, query, orderBy, setDoc, where, writeBatch, runTransaction, limit };
         window.fa = { signInAnonymously }; // Menyediakan fungsi untuk dipanggil di React
     </script>
 
@@ -380,6 +380,37 @@
             const pad = n => String(n).padStart(2,'0');
             return { startStr:`${pad(startH)}:00`, endStr:`${pad(endH)}:59`, crossMidnight: startH > 0 };
         };
+
+        /* ── Quick User Picker Modal — triggered when Access Restricted is tapped ── */
+        const QuickUserPickerModal = ({ users, onPick, onClose, lang, t }) => (
+            <div className="fixed inset-0 glass-dark z-[80] flex items-end justify-center p-0 animate-fade-in" onClick={onClose}>
+                <div className="w-full max-w-md bg-white rounded-t-3xl shadow-2xl pop-in" onClick={e => e.stopPropagation()}>
+                    {/* Handle bar */}
+                    <div className="flex justify-center pt-3 pb-2">
+                        <div className="w-10 h-1 bg-slate-200 rounded-full"></div>
+                    </div>
+                    <div className="px-5 pb-2">
+                        <h3 className="font-black text-slate-800 text-base">{t.timesheet.selectUser}</h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{lang==='id'?'Pilih akun untuk melanjutkan':'Select an account to continue'}</p>
+                    </div>
+                    <div className="px-3 pb-6 space-y-1.5 max-h-72 overflow-y-auto">
+                        {users.filter(u => !u.hidden).map(u => (
+                            <button key={u.id} onClick={() => onPick(u.id)}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-50 active:bg-slate-100 transition-all text-left">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-sm flex-shrink-0" style={{backgroundColor: u.color}}>
+                                    {u.name.substring(0,2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                                    {u.bankName && <p className="text-[11px] text-slate-400">{u.bankName}</p>}
+                                </div>
+                                <i className="fas fa-chevron-right text-slate-300 text-xs ml-auto flex-shrink-0"></i>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
 
         const Spinner = () => {
             return <i className="fas fa-circle-notch fa-spin text-white"></i>;
@@ -1401,7 +1432,7 @@
                                         </div>
                                     )}
 
-                                    {/* "Now" red line — label below so it doesn't overlap hover tooltips */}
+                                    {/* "Now" red line — label stays inside the chart at bottom edge */}
                                     {(() => {
                                         const nowObj = new Date(Date.now() + TZ_CONFIG[timezone].offsetUTC * 3600000);
                                         const todayStr = `${nowObj.getUTCFullYear()}-${String(nowObj.getUTCMonth()+1).padStart(2,'0')}-${String(nowObj.getUTCDate()).padStart(2,'0')}`;
@@ -1409,12 +1440,13 @@
                                         const nowMins = nowObj.getUTCHours() * 60 + nowObj.getUTCMinutes();
                                         const nowPct = nowMins / 1440 * 100;
                                         const nowLabel = `${String(nowObj.getUTCHours()).padStart(2,'0')}:${String(nowObj.getUTCMinutes()).padStart(2,'0')}`;
-                                        const labelSide = nowPct > 80 ? 'right-0' : '-translate-x-1/2 left-1/2';
+                                        const labelSide = nowPct > 80 ? 'right-0' : nowPct < 20 ? 'left-0' : '-translate-x-1/2 left-1/2';
                                         return (
-                                            <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: `${nowPct}%` }}>
+                                            <div className="absolute top-0 bottom-0 z-30 pointer-events-none" style={{ left: `${nowPct}%` }}>
                                                 <div className="absolute top-0 bottom-0 w-px bg-red-500 shadow-sm"></div>
                                                 <div className="absolute -top-0.5 w-2 h-2 bg-red-500 rounded-full -translate-x-[3px]"></div>
-                                                <div className={`absolute top-full mt-0.5 ${labelSide} bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap shadow`}>
+                                                {/* Label anchored to bottom of the line, inside the chart container */}
+                                                <div className={`absolute bottom-0 ${labelSide} bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap shadow`}>
                                                     {nowLabel} {TZ_CONFIG[timezone].label.split(' ')[0]}
                                                 </div>
                                             </div>
@@ -2032,27 +2064,17 @@
                                             </div>
                                         </div>
                                     )}
-                                    {/* Next payday chip — redesigned for clarity */}
-                                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-3 flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                            <i className="fas fa-calendar-check text-indigo-500 text-sm"></i>
+                                    {/* Next payday chip — clean minimal two-column */}
+                                    <div className="flex items-center gap-0 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                        <div className="flex-1 px-3 py-2.5 border-r border-slate-100">
+                                            <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">{lang==='id'?'Periode Berjalan':'Current Period'}</p>
+                                            <p className="text-sm font-black text-slate-800 mt-0.5 leading-none">{fmtShort(pp.currentPeriodStart)} <span className="text-slate-400 font-normal">–</span> {fmtShort(pp.currentPeriodEnd)}</p>
+                                            <p className="text-[9px] text-slate-400 mt-0.5">PT timezone</p>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[9px] text-indigo-400 font-bold uppercase tracking-wide mb-0.5">
-                                                {lang === 'id' ? 'Periode Berjalan (PT)' : 'Current Period (PT)'}
-                                            </p>
-                                            <p className="text-sm font-black text-indigo-800 leading-none">
-                                                {fmtShort(pp.currentPeriodStart)} – {fmtShort(pp.currentPeriodEnd)}
-                                            </p>
-                                        </div>
-                                        <div className="text-right flex-shrink-0 border-l border-indigo-100 pl-3">
-                                            <p className="text-[9px] text-indigo-400 font-bold uppercase tracking-wide mb-0.5">
-                                                {lang === 'id' ? 'Dibayar' : 'Payday'}
-                                            </p>
-                                            <p className="text-sm font-black text-indigo-700 leading-none">
-                                                {lang === 'id' ? `Rabu` : `Wed`}
-                                            </p>
-                                            <p className="text-xs font-bold text-indigo-500 mt-0.5">{fmtShort(pp.upcomingPayday)}</p>
+                                        <div className="px-3 py-2.5 text-center flex-shrink-0">
+                                            <p className="text-[9px] text-indigo-400 font-semibold uppercase tracking-wide">{lang==='id'?'Dibayar':'Payday'}</p>
+                                            <p className="text-sm font-black text-indigo-700 mt-0.5 leading-none">{fmtShort(pp.upcomingPayday)}</p>
+                                            <p className="text-[9px] text-indigo-400 mt-0.5">{lang==='id'?'Rabu':'Wednesday'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -3023,15 +3045,32 @@
             const [editTimesheetId, setEditTimesheetId] = React.useState(null);
             const [confirmModal, setConfirmModal] = React.useState({ show: false, message: '', action: null });
             const userSelectRef = React.useRef(null);
+            const [showUserPicker, setShowUserPicker] = React.useState(false);
             const [activityLog, setActivityLog] = React.useState([]);
-            const logActivity = React.useCallback((action, detail, userId) => {
-                setActivityLog(prev => [{
-                    id: Date.now() + Math.random(),
-                    ts: new Date().toISOString(),
-                    action,   // e.g. 'schedule_create'
-                    detail,   // human-readable string
-                    userId,   // who did it
-                }].concat(prev).slice(0, 200)); // keep latest 200
+            // logActivity: writes to Firestore activityLog collection (persists across devices)
+            // Strategy: keep max 150 entries, delete oldest when over limit — cheap on Firestore
+            const logActivity = React.useCallback(async (action, detail, userId) => {
+                if (!window.db) return;
+                try {
+                    await window.fs.addDoc(window.fs.collection(window.db, 'activityLog'), {
+                        ts: new Date().toISOString(),
+                        action, detail, userId
+                    });
+                    // Async cleanup: if over 150, trim oldest 50 (fire-and-forget)
+                    window.fs.getDocs(window.fs.query(
+                        window.fs.collection(window.db, 'activityLog'),
+                        window.fs.orderBy('ts', 'desc'),
+                        window.fs.limit(200)
+                    )).then(snap => {
+                        if (snap.docs.length > 150) {
+                            const batch = window.fs.writeBatch(window.db);
+                            snap.docs.slice(150).forEach(d => batch.delete(window.fs.doc(window.db, 'activityLog', d.id)));
+                            batch.commit().catch(()=>{});
+                        }
+                    }).catch(()=>{});
+                } catch(e) {
+                    console.warn('Activity log write failed:', e);
+                }
             }, []);
 
             React.useEffect(() => {
@@ -3077,6 +3116,17 @@
                             }).catch(e => {});
                         }
                     }, (err) => console.error(err));
+
+                    // activityLog: last 100 entries, sorted newest-first, synced across devices
+                    window.fs.onSnapshot(
+                        window.fs.query(
+                            window.fs.collection(window.db, 'activityLog'),
+                            window.fs.orderBy('ts', 'desc'),
+                            window.fs.limit(100)
+                        ),
+                        (snapshot) => { setActivityLog(snapshot.docs.map(d => ({id: d.id, ...d.data()}))); },
+                        (err) => console.warn('activityLog listener error:', err)
+                    );
                 };
                 
                 // Implementasi Opsi 2: Ambil Karcis Anonymous sebelum menarik data
@@ -3532,6 +3582,26 @@
                         />
                     )}
 
+                    {showUserPicker && (
+                        <QuickUserPickerModal
+                            users={users}
+                            lang={lang}
+                            t={t}
+                            onClose={() => setShowUserPicker(false)}
+                            onPick={(userId) => {
+                                setShowUserPicker(false);
+                                // Simulate handleUserChange
+                                const selectedUser = users.find(u => String(u.id) === String(userId));
+                                if (!selectedUser) return;
+                                if (!selectedUser.password) {
+                                    setPasswordModal({ show: true, mode: 'create', userId });
+                                } else {
+                                    setPasswordModal({ show: true, mode: 'login', userId });
+                                }
+                            }}
+                        />
+                    )}
+
                     <header className="glass-strong sticky top-0 z-[60] border-b border-white/70 shadow-sm">
                         <div className="px-4 pt-3 pb-2 flex justify-between items-center">
                             {/* Logo */}
@@ -3677,7 +3747,7 @@
                                         timezone={timezone} 
                                         showNotify={showNotify}
                                         sysSettings={sysSettings} 
-                                        onSelectAccount={() => userSelectRef.current?.click()}
+                                        onSelectAccount={() => setShowUserPicker(true)}
                                     />
                                 )}
                                 {view === 'analytics' && (
@@ -3692,7 +3762,7 @@
                                         t={t} 
                                         formatCurrency={formatCurrency} 
                                         timezone={timezone}
-                                        onSelectAccount={() => userSelectRef.current?.click()}
+                                        onSelectAccount={() => setShowUserPicker(true)}
                                     />
                                 )}
                                 {view === 'admin' && isAdmin && (
