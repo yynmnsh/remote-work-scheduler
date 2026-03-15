@@ -608,38 +608,40 @@
             );
         };
 
-        /* ── Book Schedule Confirmation — styled with quota + etiquette reminders ── */
+        /* ── Book Schedule Confirmation — same identity as TimesheetConfirmModal ── */
         const BookScheduleConfirmModal = ({ onConfirm, onCancel, lang, t }) => {
             const items = lang === 'id' ? [
-                { icon: 'fa-check', color: 'text-blue-600', bg: 'bg-blue-50', text: 'Data jadwal sudah benar' },
-                { icon: 'fa-clock', color: 'text-amber-600', bg: 'bg-amber-50', text: 'Kuota harian bisa habis sebelum 24 jam — booking lebih awal di hari PT lebih aman' },
-                { icon: 'fa-edit', color: 'text-indigo-600', bg: 'bg-indigo-50', text: 'Segera edit atau hapus jadwal jika ada perubahan, agar kontributor lain bisa merencanakan booking' },
+                { icon: 'fa-check-double', color: 'text-blue-600',   bg: 'bg-blue-50',   text: 'Data jadwal sudah benar dan akurat' },
+                { icon: 'fa-clock',        color: 'text-amber-600',  bg: 'bg-amber-50',  text: 'Kuota harian bisa habis sebelum 24 jam — booking lebih awal di hari PT lebih aman' },
+                { icon: 'fa-edit',         color: 'text-indigo-600', bg: 'bg-indigo-50', text: 'Segera edit atau hapus jadwal jika ada perubahan, agar kontributor lain bisa merencanakan booking' },
             ] : [
-                { icon: 'fa-check', color: 'text-blue-600', bg: 'bg-blue-50', text: 'Schedule data is correct' },
-                { icon: 'fa-clock', color: 'text-amber-600', bg: 'bg-amber-50', text: 'Daily quota may run out before midnight PT — book early in the PT day to be safe' },
-                { icon: 'fa-edit', color: 'text-indigo-600', bg: 'bg-indigo-50', text: 'Edit or delete your schedule promptly if plans change, so others can plan their bookings' },
+                { icon: 'fa-check-double', color: 'text-blue-600',   bg: 'bg-blue-50',   text: 'Schedule data is correct and accurate' },
+                { icon: 'fa-clock',        color: 'text-amber-600',  bg: 'bg-amber-50',  text: 'Daily quota may run out before midnight PT — book early in the PT day to be safe' },
+                { icon: 'fa-edit',         color: 'text-indigo-600', bg: 'bg-indigo-50', text: 'Edit or delete your schedule promptly if plans change, so others can plan their bookings' },
             ];
             return (
                 <div className="fixed inset-0 glass-dark z-[70] flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl pop-in overflow-hidden">
+                        {/* Same header style as TimesheetConfirmModal */}
                         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-5 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                                     <i className="fas fa-calendar-check text-white text-lg"></i>
                                 </div>
                                 <div>
-                                    <h3 className="text-white font-black text-sm">{lang==='id'?'Konfirmasi Booking':'Confirm Booking'}</h3>
-                                    <p className="text-blue-200 text-[11px] mt-0.5">{lang==='id'?'Pastikan sebelum menyimpan':'Please review before saving'}</p>
+                                    <h3 className="text-white font-black text-sm leading-tight">{lang==='id'?'Konfirmasi Booking':'Booking Confirmation'}</h3>
+                                    <p className="text-blue-200 text-[11px] mt-0.5">{lang==='id'?'Pastikan semua checklist terpenuhi':'Make sure all checks are complete'}</p>
                                 </div>
                             </div>
                         </div>
+                        {/* Same checklist style as TimesheetConfirmModal */}
                         <div className="p-4 space-y-2">
-                            {items.map((item, i) => (
-                                <div key={i} className={`flex items-start gap-3 p-3 ${item.bg} rounded-xl`}>
-                                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-sm mt-0.5">
-                                        <i className={`fas ${item.icon} text-[9px] ${item.color}`}></i>
+                            {items.map((c, i) => (
+                                <div key={i} className={`flex items-start gap-3 p-3 ${c.bg} rounded-xl`}>
+                                    <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <i className={`fas ${c.icon} text-xs ${c.color}`}></i>
                                     </div>
-                                    <p className="text-[11px] font-medium text-slate-700 leading-snug">{item.text}</p>
+                                    <p className="text-[12px] font-semibold text-slate-700 leading-snug pt-0.5">{c.text}</p>
                                 </div>
                             ))}
                         </div>
@@ -703,13 +705,15 @@
         };
 
         /* ── Payment Receipt Modal ── */
-        const ReceiptModal = ({ batch, batchKey, users, lang, t, formatCurrency, timezone, sysSettings, onClose }) => {
+        const ReceiptModal = ({ batch, batchKey, users, lang, t, formatCurrency, timezone, onClose }) => {
             const [downloading, setDownloading] = React.useState(false);
             const tzShort = TZ_CONFIG[timezone]?.label?.split(' ')[0] ?? '';
             const batchDateStr = (() => {
                 const [y,m,d] = batchKey.split('-').map(Number);
                 return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'long',year:'numeric'});
             })();
+            // Derive color from users prop — no closure dependency on getUserColor
+            const getUColor = uid => users.find(u => String(u.id) === String(uid))?.color || '#94a3b8';
             const fmtDur = mins => { const m=parseInt(mins)||0,h=Math.floor(m/60),r=m%60; return h>0?`${h}${t.common.unitShort}${r>0?' '+r+'m':''}`:r+'m'; };
             const fmtAmt = ts => lang==='id' ? (ts.paymentIDR?`Rp ${Number(ts.paymentIDR).toLocaleString('id-ID')}`:`$${Number(ts.paymentUSD||0).toFixed(2)}`) : `$${Number(ts.paymentUSD||0).toFixed(2)}`;
 
@@ -792,7 +796,7 @@
                             {Object.keys(batch.byUser).map(uid => {
                                 const uData=batch.byUser[uid];
                                 const uName=users.find(u=>String(u.id)===String(uid))?.name||uid;
-                                const uColor=getUserColor?.(uid)||'#94a3b8';
+                                const uColor=getUColor(uid);
                                 return (
                                     <div key={uid} className="rounded-xl overflow-hidden border border-slate-100 card-hover">
                                         <div className="flex items-center gap-2.5 px-3 py-2.5" style={{backgroundColor:uColor+'18'}}>
@@ -1027,6 +1031,7 @@
             }
             
             const [tab, setTab] = React.useState('personal'); 
+            const [analyticsReceiptModal, setAnalyticsReceiptModal] = React.useState(null); // { batch, batchKey }
             
             const totalMinutesTeam = timesheets.reduce((acc, ts) => acc + parseInt(ts.duration || 0), 0);
             const rate = RATES[lang];
@@ -1077,9 +1082,10 @@
             const paidGroups = {};
             myPaidSheets.forEach(ts => {
                 const dateKey = ts.paidAt ? ts.paidAt.split('T')[0] : 'Unknown';
-                if(!paidGroups[dateKey]) paidGroups[dateKey] = { totalMinutes: 0, dates: [] };
+                if(!paidGroups[dateKey]) paidGroups[dateKey] = { totalMinutes: 0, dates: [], sheets: [] };
                 paidGroups[dateKey].totalMinutes += parseInt(ts.duration || 0);
                 paidGroups[dateKey].dates.push(getPSTDay(ts.date, ts.startTime) || ts.date);
+                paidGroups[dateKey].sheets.push(ts);
             });
             const sortedPaidHistory = Object.keys(paidGroups).sort((a,b) => new Date(b) - new Date(a));
 
@@ -1136,6 +1142,18 @@
 
             return (
                 <div className="space-y-4 animate-slide-up pb-24 stagger">
+                    {analyticsReceiptModal && (
+                        <ReceiptModal
+                            batch={analyticsReceiptModal.batch}
+                            batchKey={analyticsReceiptModal.batchKey}
+                            users={users}
+                            lang={lang}
+                            t={t}
+                            formatCurrency={formatCurrency}
+                            timezone={timezone}
+                            onClose={() => setAnalyticsReceiptModal(null)}
+                        />
+                    )}
                     <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
                         <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
                             <button onClick={() => setTab('team')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}>
@@ -1284,7 +1302,17 @@
                                                 const group = paidGroups[dateKey];
                                                 const uniqueDates = [...new Set(group.dates)].sort();
                                                 const reportDateRange = uniqueDates[0] === uniqueDates[uniqueDates.length - 1] ? formatFullDate(uniqueDates[0], lang) : `${formatFullDate(uniqueDates[0], lang)} - ${formatFullDate(uniqueDates[uniqueDates.length - 1], lang)}`;
-                                                
+                                                // Build batch object for receipt modal
+                                                const uid = String(currentUser);
+                                                const uTotal = (group.totalMinutes / 60) * RATES[lang];
+                                                const receiptBatch = {
+                                                    sheets: group.sheets,
+                                                    total: uTotal,
+                                                    totalMins: group.totalMinutes,
+                                                    workDateMin: uniqueDates[0] || dateKey,
+                                                    workDateMax: uniqueDates[uniqueDates.length - 1] || dateKey,
+                                                    byUser: { [uid]: { sheets: group.sheets, total: uTotal, mins: group.totalMinutes } },
+                                                };
                                                 return (
                                                     <div key={dateKey} className="group flex justify-between items-center p-3 bg-slate-50 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
                                                         <div className="flex items-center gap-3">
@@ -1296,9 +1324,17 @@
                                                                 <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.paidOn}: {formatFullDate(dateKey, lang)}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <span className="block text-sm font-bold text-slate-800 group-hover:text-emerald-700">{formatCurrency((group.totalMinutes/60) * RATES[lang], lang)}</span>
-                                                            <span className="text-[9px] font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded shadow-sm">{(group.totalMinutes/60).toFixed(1)}{t.common.unitShort}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="text-right">
+                                                                <span className="block text-sm font-bold text-slate-800 group-hover:text-emerald-700">{formatCurrency((group.totalMinutes/60) * RATES[lang], lang)}</span>
+                                                                <span className="text-[9px] font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded shadow-sm">{(group.totalMinutes/60).toFixed(1)}{t.common.unitShort}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setAnalyticsReceiptModal({ batch: receiptBatch, batchKey: dateKey })}
+                                                                title={lang==='id'?'Lihat Tanda Terima':'View Receipt'}
+                                                                className="w-8 h-8 rounded-xl bg-emerald-100 hover:bg-emerald-200 flex items-center justify-center text-emerald-600 transition press flex-shrink-0">
+                                                                <i className="fas fa-receipt text-xs"></i>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 );
@@ -2636,7 +2672,6 @@
                             t={t}
                             formatCurrency={formatCurrency}
                             timezone={timezone}
-                            sysSettings={sysSettings}
                             onClose={() => setReceiptModal(null)}
                         />
                     )}
