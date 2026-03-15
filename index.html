@@ -83,9 +83,10 @@
         }
 
         /* ── Scrollbar ── */
-        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.4); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.7); }
 
         /* ── Glassmorphism ── */
         .glass {
@@ -106,25 +107,28 @@
 
         /* ── Card hover lift ── */
         .lift {
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease;
             will-change: transform;
         }
-        .lift:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,99,235,0.10); }
+        .lift:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,99,235,0.10), 0 2px 6px rgba(0,0,0,0.04); }
 
         /* ── Shimmer on primary buttons ── */
         .btn-primary {
             position: relative;
             overflow: hidden;
+            transition: filter 0.15s ease, transform 0.1s ease;
         }
         .btn-primary::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%);
+            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
             transform: translateX(-100%);
-            transition: transform 0.55s ease;
+            transition: transform 0.5s ease;
         }
         .btn-primary:hover::after { transform: translateX(100%); }
+        .btn-primary:hover { filter: brightness(1.05); }
+        .btn-primary:active { transform: scale(0.97); }
 
         /* ── Nav active dot ── */
         .nav-active-dot::after {
@@ -133,8 +137,9 @@
             width: 4px; height: 4px;
             border-radius: 99px;
             background: currentColor;
-            margin: 2px auto 0;
-            opacity: 0.7;
+            margin: 3px auto 0;
+            opacity: 0.8;
+            animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
         }
 
         /* ── Animations (used as className) ── */
@@ -188,6 +193,18 @@
         }
         .glow-red { animation: redGlowPulse 1.5s ease-in-out infinite; }
 
+        /* Now-line pulse — the red dot and line breathe */
+        @keyframes nowLinePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+            50%       { opacity: 0.85; box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+        }
+        @keyframes nowDotPulse {
+            0%, 100% { transform: translateX(-50%) scale(1);   box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+            50%       { transform: translateX(-50%) scale(1.3); box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+        }
+        .now-dot  { animation: nowDotPulse 2s ease-in-out infinite; }
+        .now-line { animation: nowLinePulse 2s ease-in-out infinite; }
+
         /* Smooth number transition */
         .num-animate { transition: all 0.4s cubic-bezier(0.16,1,0.3,1); }
 
@@ -213,11 +230,15 @@
         /* ── Input focus ring ── */
         input:focus, select:focus, textarea:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.14);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12), 0 1px 3px rgba(0,0,0,0.06);
+            border-color: #3b82f6 !important;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
         }
         input[type="date"], input[type="time"] {
             color-scheme: light;
         }
+        /* Smooth hover on form inputs */
+        .form-input { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
 
         /* ── Card default ── */
         .card {
@@ -712,10 +733,29 @@
                 const [y,m,d] = batchKey.split('-').map(Number);
                 return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'long',year:'numeric'});
             })();
-            // Derive color from users prop — no closure dependency on getUserColor
+            // Derive color from users prop
             const getUColor = uid => users.find(u => String(u.id) === String(uid))?.color || '#94a3b8';
             const fmtDur = mins => { const m=parseInt(mins)||0,h=Math.floor(m/60),r=m%60; return h>0?`${h}${t.common.unitShort}${r>0?' '+r+'m':''}`:r+'m'; };
-            const fmtAmt = ts => lang==='id' ? (ts.paymentIDR?`Rp ${Number(ts.paymentIDR).toLocaleString('id-ID')}`:`$${Number(ts.paymentUSD||0).toFixed(2)}`) : `$${Number(ts.paymentUSD||0).toFixed(2)}`;
+            // Fix 1: always compute amount from stored fields — NEVER from snapshotted batch.total
+            // ts.paymentIDR is stored in IDR; ts.paymentUSD is stored in USD
+            const getAmt = ts => lang==='id' ? Number(ts.paymentIDR||0) : Number(ts.paymentUSD||0);
+            const fmtAmt = ts => lang==='id'
+                ? `Rp ${Number(ts.paymentIDR||0).toLocaleString('id-ID')}`
+                : `$${Number(ts.paymentUSD||0).toFixed(2)}`;
+            // Recompute per-user and grand totals live from sheets, not from batch.total (which may be stale lang)
+            const computedByUser = React.useMemo(() => {
+                const map = {};
+                (batch.sheets||[]).forEach(ts => {
+                    const uid = String(ts.userId);
+                    if (!map[uid]) map[uid] = { sheets:[], total:0, mins:0 };
+                    map[uid].sheets.push(ts);
+                    map[uid].total += getAmt(ts);
+                    map[uid].mins += parseInt(ts.duration||0);
+                });
+                return map;
+            }, [batch.sheets, lang]);
+            const grandTotal = Object.values(computedByUser).reduce((s,u)=>s+u.total,0);
+            const fmtTotal = v => lang==='id' ? `Rp ${Math.round(v).toLocaleString('id-ID')}` : `$${v.toFixed(2)}`;
 
             const handleDownload = () => {
                 setDownloading(true);
@@ -789,20 +829,20 @@
                         </div>
                         <div className="overflow-y-auto flex-1 p-4 space-y-3">
                             <div className="bg-slate-50 rounded-xl p-3 space-y-2">
-                                {[[lang==='id'?'Tanggal Bayar':'Payment Date',batchDateStr],[lang==='id'?'Periode Kerja (PT)':'Work Period (PT)',batch.workDateMin===batch.workDateMax?batch.workDateMin:`${batch.workDateMin} – ${batch.workDateMax}`],[lang==='id'?'Total Jam':'Total Hours',`${(batch.totalMins/60).toFixed(2)}${t.common.unitShort}`],[lang==='id'?'Total Timesheet':'Total Timesheets',String(batch.sheets.length)]].map(([k,v])=>(
+                                {[[lang==='id'?'Tanggal Bayar':'Payment Date',batchDateStr],[lang==='id'?'Periode Kerja (PT)':'Work Period (PT)',batch.workDateMin===batch.workDateMax?batch.workDateMin:`${batch.workDateMin} – ${batch.workDateMax}`],[lang==='id'?'Total Jam':'Total Hours',`${(batch.totalMins/60).toFixed(2)}${t.common.unitShort}`],[lang==='id'?'Total Timesheet':'Total Timesheets',String((batch.sheets||[]).length)]].map(([k,v])=>(
                                     <div key={k} className="flex justify-between text-xs"><span className="text-slate-400">{k}</span><span className="font-bold text-slate-700">{v}</span></div>
                                 ))}
                             </div>
-                            {Object.keys(batch.byUser).map(uid => {
-                                const uData=batch.byUser[uid];
+                            {Object.keys(computedByUser).map(uid => {
+                                const uData=computedByUser[uid];
                                 const uName=users.find(u=>String(u.id)===String(uid))?.name||uid;
                                 const uColor=getUColor(uid);
                                 return (
-                                    <div key={uid} className="rounded-xl overflow-hidden border border-slate-100 card-hover">
+                                    <div key={uid} className="rounded-xl overflow-hidden border border-slate-100">
                                         <div className="flex items-center gap-2.5 px-3 py-2.5" style={{backgroundColor:uColor+'18'}}>
                                             <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-[10px] flex-shrink-0" style={{backgroundColor:uColor}}>{uName.substring(0,2).toUpperCase()}</div>
                                             <span className="font-bold text-slate-800 text-sm flex-1">{uName}</span>
-                                            <span className="font-black text-sm" style={{color:uColor}}>{formatCurrency(uData.total,lang)}</span>
+                                            <span className="font-black text-sm" style={{color:uColor}}>{fmtTotal(uData.total)}</span>
                                         </div>
                                         <div className="divide-y divide-slate-50 bg-white">
                                             {uData.sheets.map(ts=>{
@@ -822,14 +862,14 @@
                                         </div>
                                         <div className="px-3 py-1.5 bg-slate-50 flex justify-between text-[10px] border-t border-slate-100">
                                             <span className="text-slate-400">{(uData.mins/60).toFixed(2)}{t.common.unitShort}</span>
-                                            <span className="font-bold text-slate-600">{formatCurrency(uData.total,lang)}</span>
+                                            <span className="font-bold text-slate-600">{fmtTotal(uData.total)}</span>
                                         </div>
                                     </div>
                                 );
                             })}
                             <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl px-4 py-3 flex items-center justify-between">
                                 <span className="text-white font-bold text-sm">{lang==='id'?'Total Diterima':'Total Received'}</span>
-                                <span className="text-white font-black text-lg count-up">{formatCurrency(batch.total,lang)}</span>
+                                <span className="text-white font-black text-lg count-up">{fmtTotal(grandTotal)}</span>
                             </div>
                         </div>
                         <div className="px-4 pb-4 pt-2 flex-shrink-0 border-t border-slate-100">
@@ -1314,28 +1354,28 @@
                                                     byUser: { [uid]: { sheets: group.sheets, total: uTotal, mins: group.totalMinutes } },
                                                 };
                                                 return (
-                                                    <div key={dateKey} className="group flex justify-between items-center p-3 bg-slate-50 hover:bg-emerald-50 rounded-xl transition-all border border-transparent hover:border-emerald-100 animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-emerald-600 shadow-sm group-hover:scale-110 transition-transform">
+                                                    <div key={dateKey} className="group rounded-xl border border-slate-100 overflow-hidden bg-white hover:shadow-md transition-all animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
+                                                        {/* Main row */}
+                                                        <div className="flex items-center gap-3 px-4 py-3">
+                                                            <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 group-hover:scale-110 transition-transform">
                                                                 <i className="fas fa-check text-xs"></i>
                                                             </div>
-                                                            <div>
-                                                                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-800 transition-colors">{reportDateRange}</p>
-                                                                <p className="text-[10px] text-slate-400 mt-0.5 group-hover:text-emerald-600/70">{t.analytics.paidOn}: {formatFullDate(dateKey, lang)}</p>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs font-bold text-slate-700">{reportDateRange}</p>
+                                                                <p className="text-[10px] text-slate-400 mt-0.5">{t.analytics.paidOn}: {formatFullDate(dateKey, lang)}</p>
+                                                            </div>
+                                                            <div className="text-right flex-shrink-0">
+                                                                <span className="block text-sm font-bold text-emerald-600">{formatCurrency((group.totalMinutes/60) * RATES[lang], lang)}</span>
+                                                                <span className="text-[9px] text-slate-400">{(group.totalMinutes/60).toFixed(1)}{t.common.unitShort}</span>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="text-right">
-                                                                <span className="block text-sm font-bold text-slate-800 group-hover:text-emerald-700">{formatCurrency((group.totalMinutes/60) * RATES[lang], lang)}</span>
-                                                                <span className="text-[9px] font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded shadow-sm">{(group.totalMinutes/60).toFixed(1)}{t.common.unitShort}</span>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => setAnalyticsReceiptModal({ batch: receiptBatch, batchKey: dateKey })}
-                                                                title={lang==='id'?'Lihat Tanda Terima':'View Receipt'}
-                                                                className="w-8 h-8 rounded-xl bg-emerald-100 hover:bg-emerald-200 flex items-center justify-center text-emerald-600 transition press flex-shrink-0">
-                                                                <i className="fas fa-receipt text-xs"></i>
-                                                            </button>
-                                                        </div>
+                                                        {/* Receipt footer bar */}
+                                                        <button
+                                                            onClick={() => setAnalyticsReceiptModal({ batch: receiptBatch, batchKey: dateKey })}
+                                                            className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-emerald-50 border-t border-slate-100 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-all">
+                                                            <i className="fas fa-receipt text-[9px]"></i>
+                                                            {lang==='id'?'Lihat Tanda Terima':'View Receipt'}
+                                                        </button>
                                                     </div>
                                                 );
                                             })}
@@ -1811,8 +1851,8 @@
                                             <>
                                                 {/* The line + dot */}
                                                 <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: `${nowPct}%` }}>
-                                                    <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 shadow-sm"></div>
-                                                    <div className="absolute -top-0.5 w-2.5 h-2.5 bg-red-500 rounded-full -translate-x-1 shadow"></div>
+                                                    <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 now-line"></div>
+                                                    <div className="absolute -top-0.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow now-dot" style={{left:'-5px'}}></div>
                                                 </div>
                                                 {/* Hover trigger + dual-tz label */}
                                                 <div className="absolute top-0 bottom-0 z-30 group cursor-default" style={{ left: `${nowPct}%`, width: '12px', transform: 'translateX(-6px)' }}>
@@ -2168,8 +2208,8 @@
                                 return (
                                     <>
                                         {/* The line itself */}
-                                        <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-20 pointer-events-none" style={{left:`${leftPct}%`}}>
-                                            <div className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full bg-red-400 shadow"></div>
+                                        <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-20 pointer-events-none now-line" style={{left:`${leftPct}%`}}>
+                                            <div className="absolute -top-1 w-2.5 h-2.5 rounded-full bg-red-400 now-dot" style={{left:'-5px'}}></div>
                                         </div>
                                         {/* Hover trigger + label — inside chart bounds */}
                                         <div className="absolute top-0 z-30 group" style={{left:`${leftPct}%`, width:'1px', height:'100%', cursor:'default'}}>
@@ -3022,10 +3062,9 @@
                                         const batchUserCount = Object.keys(batch.byUser).length;
                                         return (
                                             <div key={batchKey} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden card-hover">
-                                                {/* Batch header */}
+                                                {/* Batch header — click expands detail */}
                                                 <div onClick={() => setExpandedUsers(prev => ({...prev, ['batch_'+batchKey]: !isBatchExpanded}))}
                                                     className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors">
-                                                    {/* Payment date icon */}
                                                     <div className="w-9 h-9 rounded-xl bg-emerald-100 flex-shrink-0 flex flex-col items-center justify-center leading-none mt-0.5">
                                                         <span className="text-[8px] font-bold text-emerald-500 uppercase">
                                                             {new Date(batchKey+'T00:00:00').toLocaleDateString(lang==='id'?'id-ID':'en-US',{month:'short'})}
@@ -3051,16 +3090,16 @@
                                                     </div>
                                                     <div className="flex items-center gap-2 flex-shrink-0">
                                                         <p className="font-black text-emerald-600 text-base">{formatCurrency(batch.total, lang)}</p>
-                                                        {/* Receipt button */}
-                                                        <button
-                                                            onClick={e => { e.stopPropagation(); setReceiptModal({ batch, batchKey }); }}
-                                                            title={lang==='id'?'Lihat Tanda Terima':'View Receipt'}
-                                                            className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-500 transition press flex-shrink-0">
-                                                            <i className="fas fa-receipt text-[10px]"></i>
-                                                        </button>
                                                         <i className={`fas fa-chevron-${isBatchExpanded?'up':'down'} text-slate-300 text-xs`}></i>
                                                     </div>
                                                 </div>
+                                                {/* Receipt footer bar — always visible, clean */}
+                                                <button
+                                                    onClick={e => { e.stopPropagation(); setReceiptModal({ batch, batchKey }); }}
+                                                    className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-emerald-50 border-t border-slate-100 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-all press">
+                                                    <i className="fas fa-receipt text-[9px]"></i>
+                                                    {lang==='id'?'Lihat Tanda Terima':'View Receipt'}
+                                                </button>
 
                                                 {/* Batch detail: per-user accordion */}
                                                 {isBatchExpanded && (
@@ -4222,9 +4261,12 @@
                         </div>
 
                         {/* Reminder banner */}
-                        <div className="bg-amber-50/90 border-t border-amber-100/80 px-4 py-2 flex items-center gap-2">
-                            <i className="fas fa-exclamation-circle text-amber-500 text-xs flex-shrink-0"></i>
-                            <p className="text-[10px] text-amber-700 font-medium leading-tight">{t.common.reminder}</p>
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50/60 border-t border-amber-100 px-4 py-2 flex items-center gap-2.5">
+                                <span className="relative flex-shrink-0">
+                                    <span className="w-2 h-2 bg-amber-400 rounded-full block"></span>
+                                    <span className="absolute inset-0 w-2 h-2 bg-amber-400 rounded-full animate-ping opacity-60"></span>
+                                </span>
+                            <p className="text-[10px] text-amber-700 font-semibold leading-tight tracking-wide">{t.common.reminder}</p>
                         </div>
                     </header>
 
