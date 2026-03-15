@@ -885,14 +885,14 @@
         /* ── Payment Receipt Modal ── */
         const ReceiptModal = ({ batch, batchKey, users, lang, t, formatCurrency, timezone, onClose }) => {
             const [downloading, setDownloading] = React.useState(false);
+            const unitShort = lang === 'id' ? 'j' : 'h'; // component-scope — used in JSX and PDF
             const tzShort = TZ_CONFIG[timezone]?.label?.split(' ')[0] ?? '';
             const batchDateStr = (() => {
                 const [y,m,d] = batchKey.split('-').map(Number);
                 return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'long',year:'numeric'});
             })();
-            // Derive color from users prop
             const getUColor = uid => users.find(u => String(u.id) === String(uid))?.color || '#94a3b8';
-            const fmtDur = mins => { const m=parseInt(mins)||0,h=Math.floor(m/60),r=m%60; return h>0?`${h}${t.common.unitShort}${r>0?' '+r+'m':''}`:r+'m'; };
+            const fmtDur = mins => { const m=parseInt(mins)||0,h=Math.floor(m/60),r=m%60; return h>0?`${h}${unitShort}${r>0?' '+r+'m':''}`:r+'m'; };
             // Fix 1: always compute amount from stored fields — NEVER from snapshotted batch.total
             // ts.paymentIDR is stored in IDR; ts.paymentUSD is stored in USD
             const getAmt = ts => lang==='id' ? Number(ts.paymentIDR||0) : Number(ts.paymentUSD||0);
@@ -930,13 +930,13 @@
                         doc.text(`${lang==='id'?'Dicetak':'Printed'}: ${new Date().toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short',year:'numeric'})}`, W-m, 21, {align:'right'});
                         y=40;
                         // Meta
-                        const meta = [[lang==='id'?'Tanggal Pembayaran':'Payment Date', batchDateStr],[lang==='id'?'Periode Kerja (PT)':'Work Period (PT)', batch.workDateMin===batch.workDateMax?batch.workDateMin:`${batch.workDateMin} – ${batch.workDateMax}`],[lang==='id'?'Total Jam':'Total Hours',`${(batch.totalMins/60).toFixed(2)}h`],[lang==='id'?'Total Timesheet':'Timesheets',String(batch.sheets.length)]];
+                        const meta = [[lang==='id'?'Tanggal Pembayaran':'Payment Date', batchDateStr],[lang==='id'?'Periode Kerja (PT)':'Work Period (PT)', batch.workDateMin===batch.workDateMax?batch.workDateMin:`${batch.workDateMin} – ${batch.workDateMax}`],[lang==='id'?'Total Jam':'Total Hours',`${(batch.totalMins/60).toFixed(2)}${unitShort}`],[lang==='id'?'Total Timesheet':'Total Timesheets',String(batch.sheets.length)]];
                         doc.setTextColor(30,41,59);
                         meta.forEach(([k,v]) => { doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text(k,m,y); doc.setFont('helvetica','normal'); doc.text(v,m+56,y); y+=6; });
                         y+=6;
-                        // Per-user
-                        Object.keys(batch.byUser).forEach(uid => {
-                            const uData=batch.byUser[uid];
+                        // Per-user — use computedByUser (live-computed from current lang), not batch.byUser
+                        Object.keys(computedByUser).forEach(uid => {
+                            const uData=computedByUser[uid];
                             const uName=users.find(u=>String(u.id)===String(uid))?.name||uid;
                             doc.setFillColor(241,245,249); doc.rect(m,y-5,W-m*2,9,'F');
                             doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(30,41,59);
@@ -953,14 +953,14 @@
                             });
                             doc.setDrawColor(226,232,240); doc.line(m,y,W-m,y);
                             doc.setFontSize(8.5); doc.setFont('helvetica','bold'); doc.setTextColor(30,41,59);
-                            doc.text(`${lang==='id'?'Subtotal':'Subtotal'}: ${(uData.mins/60).toFixed(2)}${t.common.unitShort}`,m+2,y+5.5);
-                            doc.text(formatCurrency(uData.total,lang),W-m-2,y+5.5,{align:'right'}); y+=12;
+                            doc.text(`${lang==='id'?'Subtotal':'Subtotal'}: ${(uData.mins/60).toFixed(2)}${unitShort}`,m+2,y+5.5);
+                            doc.text(fmtTotal(uData.total),W-m-2,y+5.5,{align:'right'}); y+=12;
                         });
                         // Grand total
                         doc.setFillColor(16,185,129); doc.rect(m,y,W-m*2,10,'F');
                         doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
                         doc.text(lang==='id'?'TOTAL DITERIMA':'TOTAL RECEIVED',m+3,y+7);
-                        doc.text(formatCurrency(batch.total,lang),W-m-3,y+7,{align:'right'}); y+=16;
+                        doc.text(fmtTotal(grandTotal),W-m-3,y+7,{align:'right'}); y+=16;
                         doc.setFontSize(7); doc.setFont('helvetica','italic'); doc.setTextColor(148,163,184);
                         doc.text(lang==='id'?'Dokumen ini digenerate otomatis oleh Remote Work Scheduler.':'Auto-generated by Remote Work Scheduler.',W/2,y,{align:'center'});
                         doc.save(`receipt_${batchKey}.pdf`);
@@ -2704,11 +2704,14 @@
         const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, getUserColor, timezone, sysSettings, updateSettings, onAddUser, onEditUser, onDeleteUser, onConfirmAction, logActivity, activityLog = [], isAdmin = false, hasPerm = () => true, onOpenReceipt, userSortPrimary = 'active', userSortSecondary = 'az', setUserSortPrimary = ()=>{}, setUserSortSecondary = ()=>{}, sortedUsers = [] }) => {
              const [viewMode, setViewMode] = React.useState('pending');
              const [settingsForm, setSettingsForm] = React.useState({ dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, offsetWIB: 7, offsetWITA: 8, offsetAEDT: 11, offsetPST: -8 });
+             const [isEditingSettings, setIsEditingSettings] = React.useState(false);
              const [selectedSheets, setSelectedSheets] = React.useState({});
              const [transferAmounts, setTransferAmounts] = React.useState({});
              const [expandedUsers, setExpandedUsers] = React.useState({});
              
              React.useEffect(() => { 
+                 // Don't overwrite form if user is actively editing settings
+                 if (isEditingSettings) return;
                  const userRateEntries = {};
                  if (sysSettings?.userRates) {
                      Object.entries(sysSettings.userRates).forEach(([uid, rate]) => {
@@ -3495,11 +3498,11 @@
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.admin.rateUSD}</label>
-                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.baseHourlyRateUSD} onChange={e => setSettingsForm({...settingsForm, baseHourlyRateUSD: Number(e.target.value)})} />
+                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.baseHourlyRateUSD} onFocus={() => setIsEditingSettings(true)} onChange={e => setSettingsForm({...settingsForm, baseHourlyRateUSD: Number(e.target.value)})} />
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.admin.rateIDR}</label>
-                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.usdToIdr} onChange={e => setSettingsForm({...settingsForm, usdToIdr: Number(e.target.value)})} />
+                                            <input type="number" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.usdToIdr} onFocus={() => setIsEditingSettings(true)} onChange={e => setSettingsForm({...settingsForm, usdToIdr: Number(e.target.value)})} />
                                         </div>
                                     </div>
                                 </div>
@@ -3593,7 +3596,7 @@
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">{t.admin.dailyQuota}</label>
-                                            <input type="number" step="0.1" min="0" max="24" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.dailyQuotaHours} onChange={e => setSettingsForm({...settingsForm, dailyQuotaHours: Number(e.target.value)})} />
+                                            <input type="number" step="0.1" min="0" max="24" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-bold" value={settingsForm.dailyQuotaHours} onFocus={() => setIsEditingSettings(true)} onChange={e => setSettingsForm({...settingsForm, dailyQuotaHours: Number(e.target.value)})} />
                                             <p className="text-[10px] text-slate-400 mt-1">{t.admin.quotaHelper}</p>
                                         </div>
                                     </div>
@@ -3605,13 +3608,13 @@
                                         showNotify(t.admin.quotaError, 'error');
                                         return;
                                     }
-                                    // Collect per-user rate overrides
                                     const userRates = {};
                                     users.filter(u => !u.hidden).forEach(u => {
                                         const draftKey = 'ur_' + u.id;
                                         const v = parseFloat(settingsForm[draftKey]);
                                         if (!isNaN(v) && v > 0) userRates[String(u.id)] = v;
                                     });
+                                    setIsEditingSettings(false); // allow Firestore sync after save
                                     updateSettings({ ...settingsForm, userRates });
                                 }} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-sm transition shadow-sm disabled:opacity-50">
                                     {loading ? <Spinner/> : t.common.save}
@@ -3802,7 +3805,8 @@
                             setUsers(INITIAL_USERS); 
                             INITIAL_USERS.forEach(async (u) => {
                                 try {
-                                    await window.fs.setDoc(window.fs.doc(window.db, 'users', u.id), u);
+                                    // merge:true preserves existing fields (bankName, accountNumber, etc.)
+                                    await window.fs.setDoc(window.fs.doc(window.db, 'users', u.id), u, { merge: true });
                                 } catch(e) {}
                             }); 
                         } else { 
