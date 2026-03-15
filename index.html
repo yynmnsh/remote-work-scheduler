@@ -2985,7 +2985,7 @@
                                     <div className="px-4 pb-4 pt-1">
                                         <p className="text-center text-[11px] text-slate-500 italic">
                                             <i className="fas fa-hand-point-down mr-1 text-slate-600"></i>
-                                            {lang === 'id' ? 'Centang timesheet di bawah untuk memilih yang ingin dibayar' : 'Check timesheets below to select which to pay'}
+                                            {lang === 'id' ? 'Pilih laporan di bawah dengan mencentang yang ingin dibayar' : 'Tick the reports below to select which ones to pay'}
                                         </p>
                                     </div>
                                 )}
@@ -3033,7 +3033,7 @@
                                                         {u?.name ? u.name.substring(0,2).toUpperCase() : '?'}
                                                     </div>
 
-                                                    {/* Name + bank */}
+                                                    {/* Name + bank — full info */}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <p className="font-black text-slate-800 text-sm leading-tight">{u?.name || t.common.unknown}</p>
@@ -3043,9 +3043,26 @@
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                                                            <i className="fas fa-university mr-1"></i>{u?.bankName || '-'} {u?.accountNumber ? '··' + u.accountNumber.slice(-4) : ''}
-                                                        </p>
+                                                        {/* Full bank info: bank name on its own line, full account number below */}
+                                                        {u?.bankName || u?.accountNumber ? (
+                                                            <div className="mt-0.5 space-y-0.5">
+                                                                <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                                                                    <i className="fas fa-university text-[8px] text-slate-400"></i>
+                                                                    {u?.bankName || '-'}
+                                                                </p>
+                                                                {u?.accountNumber && (
+                                                                    <p className="text-[10px] font-mono font-bold text-slate-700 flex items-center gap-1">
+                                                                        <i className="fas fa-credit-card text-[8px] text-slate-400"></i>
+                                                                        {u.accountNumber}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-[10px] text-amber-500 font-medium mt-0.5 flex items-center gap-1">
+                                                                <i className="fas fa-exclamation-triangle text-[8px]"></i>
+                                                                {lang==='id'?'Info rekening belum diisi':'Payment info missing'}
+                                                            </p>
+                                                        )}
                                                     </div>
 
                                                     {/* Total + chevron */}
@@ -3366,6 +3383,11 @@
                                                 timesheet_delete:      { icon: 'fa-trash',           color: 'text-red-500',    label: lang==='id'?'Hapus Laporan':'Delete Timesheet' },
                                                 payment_marked_paid:   { icon: 'fa-check-circle',    color: 'text-emerald-500',label: lang==='id'?'Tandai Lunas':'Marked Paid' },
                                                 payment_reverted:      { icon: 'fa-undo',            color: 'text-amber-500',  label: lang==='id'?'Batalkan Lunas':'Reverted to Pending' },
+                                                user_add:              { icon: 'fa-user-plus',        color: 'text-blue-500',   label: lang==='id'?'Tambah User':'User Added' },
+                                                user_edit:             { icon: 'fa-user-edit',        color: 'text-orange-500', label: lang==='id'?'Edit User':'User Edited' },
+                                                user_delete:           { icon: 'fa-user-times',       color: 'text-red-500',    label: lang==='id'?'Hapus User':'User Deleted' },
+                                                profile_update:        { icon: 'fa-id-card',          color: 'text-indigo-500', label: lang==='id'?'Update Profil':'Profile Updated' },
+                                                settings_update:       { icon: 'fa-cog',              color: 'text-slate-500',  label: lang==='id'?'Ubah Pengaturan':'Settings Changed' },
                                             }[entry.action] || { icon: 'fa-circle', color: 'text-slate-400', label: entry.action };
                                             const d = new Date(entry.ts);
                                             // Convert UTC ISO timestamp to the user's currently-selected timezone
@@ -3688,7 +3710,17 @@
                                                             {!uIsMainAdmin && uPerms.length > 0 && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded uppercase tracking-wider">{lang==='id'?'Semi-Admin':'Semi-Admin'}</span>}
                                                             {u.hidden && <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wider">{t.admin.inactive}</span>}
                                                         </p>
-                                                        <p className="text-xs text-slate-400">{u.bankName || '-'}</p>
+                                                        {u.bankName ? (
+                                                            <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                                                <i className="fas fa-university text-[8px] text-slate-300"></i>{u.bankName}
+                                                                {u.accountNumber && <span className="font-mono font-bold text-slate-700 ml-1">{u.accountNumber}</span>}
+                                                            </p>
+                                                        ) : (
+                                                            <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                                                                <i className="fas fa-exclamation-triangle text-[8px]"></i>
+                                                                {lang==='id'?'Belum ada info rekening':'No payment info'}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 {isAdmin && (
@@ -3890,6 +3922,7 @@
                 setLoading(true); 
                 try { 
                     await window.fs.updateDoc(window.fs.doc(window.db, 'users', currentUser), data); 
+                    logActivity('profile_update', data.bankName ? data.bankName + (data.accountNumber ? ' ' + data.accountNumber : '') : '', currentUser);
                     showNotify(t.common.saved); 
                     setShowProfileModal(false); 
                 } catch(e) { 
@@ -3904,9 +3937,11 @@
                 try { 
                     if (editingUser) {
                         await window.fs.updateDoc(window.fs.doc(window.db, 'users', editingUser.id), userData);
+                        logActivity('user_edit', userData.name, 'admin');
                     } else {
                         const newId = Date.now().toString();
                         await window.fs.setDoc(window.fs.doc(window.db, 'users', newId), { ...userData, id: newId });
+                        logActivity('user_add', userData.name, 'admin');
                     }
                     showNotify(editingUser ? t.admin.userUpdated : t.admin.userAdded); 
                     setShowUserModal(false); 
@@ -3921,7 +3956,9 @@
             const handleDeleteUser = (uid) => { 
                 triggerConfirm(t.admin.deleteUserConfirm, async () => { 
                     try { 
+                        const deletedUser = users.find(u => String(u.id) === String(uid));
                         await window.fs.deleteDoc(window.fs.doc(window.db, 'users', uid)); 
+                        logActivity('user_delete', deletedUser?.name || uid, 'admin');
                         showNotify(t.admin.userDeleted); 
                     } catch(e) { 
                         showNotify(t.common.error, "error"); 
@@ -3933,6 +3970,7 @@
                 setLoading(true); 
                 try { 
                     await window.fs.setDoc(window.fs.doc(window.db, 'settings', 'global'), newSettings, { merge: true }); 
+                    logActivity('settings_update', `quota=${newSettings.dailyQuotaHours}h rate=$${newSettings.baseHourlyRateUSD}`, 'admin');
                     showNotify(t.common.saved); 
                 } catch(e) { 
                     showNotify(t.common.error, "error"); 
