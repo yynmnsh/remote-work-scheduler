@@ -494,7 +494,7 @@
                     </div>
                     {/* User list */}
                     <div className="p-2 max-h-64 overflow-y-auto">
-                        {users.filter(u => !u.hidden).map(u => (
+                        {users.filter(u => !u.hidden).sort((a,b) => a.name.localeCompare(b.name)).map(u => (
                             <button key={u.id} onClick={() => onPick(u.id)}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-all text-left">
                                 <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm flex-shrink-0" style={{backgroundColor: u.color}}>
@@ -630,6 +630,159 @@
         };
 
         /* ── Book Schedule Confirmation — same identity as TimesheetConfirmModal ── */
+        /* ── Receipts View — tabulated receipt browser with period filter ── */
+        const ReceiptsView = ({ timesheets, users, lang, t, formatCurrency, timezone, onOpenReceipt }) => {
+            const today = getPSTDayFromEpoch(Date.now());
+            const [preset, setPreset] = React.useState('all');
+            const [customFrom, setCustomFrom] = React.useState('');
+            const [customTo, setCustomTo]   = React.useState('');
+
+            // Preset date ranges (based on paidAt date)
+            const presets = [
+                { id:'all',    label: lang==='id'?'Semua':'All Time' },
+                { id:'7d',     label: lang==='id'?'7 Hari Terakhir':'Last 7 Days' },
+                { id:'30d',    label: lang==='id'?'30 Hari Terakhir':'Last 30 Days' },
+                { id:'90d',    label: lang==='id'?'3 Bulan Terakhir':'Last 3 Months' },
+                { id:'thisY',  label: lang==='id'?'Tahun Ini':'This Year' },
+                { id:'custom', label: lang==='id'?'Kustom':'Custom' },
+            ];
+
+            const addDays = (dateStr, n) => {
+                const d = new Date(dateStr + 'T00:00:00Z');
+                d.setUTCDate(d.getUTCDate() + n);
+                return d.toISOString().slice(0,10);
+            };
+
+            const inRange = (paidAt) => {
+                if (!paidAt) return false;
+                const d = paidAt.slice(0,10);
+                if (preset === 'all') return true;
+                if (preset === '7d')    return d >= addDays(today,-7);
+                if (preset === '30d')   return d >= addDays(today,-30);
+                if (preset === '90d')   return d >= addDays(today,-90);
+                if (preset === 'thisY') return d.slice(0,4) === today.slice(0,4);
+                if (preset === 'custom') {
+                    if (customFrom && d < customFrom) return false;
+                    if (customTo   && d > customTo)   return false;
+                    return true;
+                }
+                return true;
+            };
+
+            // Build batches from filtered paid sheets
+            const batches = {};
+            timesheets.filter(ts => ts.status === 'paid' && inRange(ts.paidAt)).forEach(ts => {
+                const key = ts.paidAt ? ts.paidAt.slice(0,10) : ts.date;
+                if (!batches[key]) batches[key] = { sheets:[], totalMins:0 };
+                batches[key].sheets.push(ts);
+                batches[key].totalMins += parseInt(ts.duration||0);
+            });
+
+            const sorted = Object.keys(batches).sort((a,b) => b.localeCompare(a));
+
+            // Build batch object for ReceiptModal (same shape as AdminPanel paymentBatches)
+            const buildBatch = (key) => {
+                const b = batches[key];
+                const byUser = {};
+                b.sheets.forEach(ts => {
+                    const uid = String(ts.userId);
+                    if (!byUser[uid]) byUser[uid] = { sheets:[], total:0, mins:0 };
+                    byUser[uid].sheets.push(ts);
+                    byUser[uid].total += lang==='id' ? Number(ts.paymentIDR||0) : Number(ts.paymentUSD||0);
+                    byUser[uid].mins += parseInt(ts.duration||0);
+                });
+                const workDates = b.sheets.map(ts => getPSTDay(ts.date, ts.startTime)||ts.date).sort();
+                return {
+                    sheets: b.sheets,
+                    total: Object.values(byUser).reduce((s,u)=>s+u.total,0),
+                    totalMins: b.totalMins,
+                    workDateMin: workDates[0]||key,
+                    workDateMax: workDates[workDates.length-1]||key,
+                    byUser,
+                };
+            };
+
+            const grandTotal = sorted.reduce((s,k) => s + buildBatch(k).total, 0);
+            const grandMins  = sorted.reduce((s,k) => s + batches[k].totalMins, 0);
+            const fmtTotal = v => lang==='id' ? `Rp ${Math.round(v).toLocaleString('id-ID')}` : `$${Number(v).toFixed(2)}`;
+
+            return (
+                <div className="space-y-3">
+                    {/* Preset filter pills */}
+                    <div className="flex gap-1.5 flex-wrap">
+                        {presets.map(p => (
+                            <button key={p.id} onClick={() => setPreset(p.id)}
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all press ${preset===p.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-400'}`}>
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+                    {/* Custom date range inputs */}
+                    {preset === 'custom' && (
+                        <div className="flex gap-2 items-center animate-slide-down">
+                            <input type="date" value={customFrom} onChange={e=>setCustomFrom(e.target.value)}
+                                className="flex-1 form-input text-xs py-1.5 rounded-lg border border-slate-200"/>
+                            <span className="text-slate-400 text-xs">→</span>
+                            <input type="date" value={customTo} onChange={e=>setCustomTo(e.target.value)}
+                                className="flex-1 form-input text-xs py-1.5 rounded-lg border border-slate-200"/>
+                        </div>
+                    )}
+                    {/* Grand total summary */}
+                    {sorted.length > 0 && (
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl px-4 py-3 flex items-center justify-between">
+                            <div>
+                                <p className="text-emerald-100 text-[10px] font-semibold uppercase tracking-wide">{lang==='id'?'Total Periode':'Period Total'}</p>
+                                <p className="text-white font-black text-lg leading-tight count-up">{fmtTotal(grandTotal)}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-emerald-100 text-[10px]">{sorted.length} {lang==='id'?'pembayaran':'payments'}</p>
+                                <p className="text-white font-bold text-sm">{(grandMins/60).toFixed(1)}{t.common.unitShort}</p>
+                            </div>
+                        </div>
+                    )}
+                    {/* Receipt rows */}
+                    {sorted.length === 0 ? (
+                        <div className="bg-white rounded-2xl p-8 text-center border border-dashed border-slate-200">
+                            <i className="fas fa-receipt text-3xl text-slate-200 mb-3 block"></i>
+                            <p className="text-slate-400 text-sm">{lang==='id'?'Tidak ada pembayaran di periode ini':'No payments in this period'}</p>
+                        </div>
+                    ) : sorted.map((key, idx) => {
+                        const b = batches[key];
+                        const batch = buildBatch(key);
+                        const batchDate = (() => {
+                            const [y,m,d] = key.split('-').map(Number);
+                            return new Date(y,m-1,d).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short',year:'numeric'});
+                        })();
+                        const workRange = batch.workDateMin===batch.workDateMax ? batch.workDateMin : `${batch.workDateMin} – ${batch.workDateMax}`;
+                        const contributors = [...new Set(b.sheets.map(ts=>ts.userId))].length;
+                        return (
+                            <div key={key} className="bg-white rounded-2xl border border-slate-100 overflow-hidden card-hover slide-right" style={{animationDelay:`${idx*0.04}s`}}>
+                                <div className="flex items-center gap-3 px-4 py-3">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex-shrink-0 flex flex-col items-center justify-center leading-none">
+                                        <span className="text-[8px] font-bold text-emerald-500 uppercase">{new Date(key+'T00:00:00').toLocaleDateString(lang==='id'?'id-ID':'en-US',{month:'short'})}</span>
+                                        <span className="text-sm font-black text-emerald-700 leading-tight">{key.substring(8)}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-slate-700">{lang==='id'?'Dibayar':'Paid'} {batchDate}</p>
+                                        <p className="text-[9px] text-slate-400 mt-0.5">{workRange} (PT) · {b.sheets.length} ts · {contributors} {lang==='id'?'kontrib':'contrib'}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                        <p className="font-black text-emerald-600 text-sm">{fmtTotal(batch.total)}</p>
+                                        <p className="text-[9px] text-slate-400">{(b.totalMins/60).toFixed(1)}{t.common.unitShort}</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => onOpenReceipt(batch, key)}
+                                    className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-emerald-50 border-t border-slate-100 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-all press">
+                                    <i className="fas fa-receipt text-[9px]"></i>
+                                    {lang==='id'?'Lihat Tanda Terima':'View Receipt'}
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        };
+
         const BookScheduleConfirmModal = ({ onConfirm, onCancel, lang, t }) => {
             const items = lang === 'id' ? [
                 { icon: 'fa-check-double', color: 'text-blue-600',   bg: 'bg-blue-50',   text: 'Data jadwal sudah benar dan akurat' },
@@ -1046,7 +1199,7 @@
             );
         };
 
-        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone, onSelectAccount }) => {
+        const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone, onSelectAccount, onOpenReceipt }) => {
             if (!currentUser) {
                 return (
                     <div className="space-y-4 slide-up">
@@ -1071,7 +1224,6 @@
             }
             
             const [tab, setTab] = React.useState('personal'); 
-            const [analyticsReceiptModal, setAnalyticsReceiptModal] = React.useState(null); // { batch, batchKey }
             
             const totalMinutesTeam = timesheets.reduce((acc, ts) => acc + parseInt(ts.duration || 0), 0);
             const rate = RATES[lang];
@@ -1182,18 +1334,6 @@
 
             return (
                 <div className="space-y-4 animate-slide-up pb-24 stagger">
-                    {analyticsReceiptModal && (
-                        <ReceiptModal
-                            batch={analyticsReceiptModal.batch}
-                            batchKey={analyticsReceiptModal.batchKey}
-                            users={users}
-                            lang={lang}
-                            t={t}
-                            formatCurrency={formatCurrency}
-                            timezone={timezone}
-                            onClose={() => setAnalyticsReceiptModal(null)}
-                        />
-                    )}
                     <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-2 items-center">
                         <div className="flex-1 flex bg-slate-50 p-1 rounded-lg">
                             <button onClick={() => setTab('team')} className={`flex-1 py-1.5 text-xs font-bold rounded-md transition ${tab === 'team' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-500'}`}>
@@ -1333,54 +1473,18 @@
                                 <div className="p-5 relative z-20 bg-white rounded-t-2xl -mt-4 border-t border-slate-50">
                                     <div className="flex items-center gap-3 mb-4 pb-2 border-b border-slate-50">
                                         <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                            <i className="fas fa-history text-slate-400 text-xs"></i> {t.analytics.paymentHistory}
+                                            <i className="fas fa-receipt text-slate-400 text-xs"></i> {t.analytics.paymentHistory}
                                         </h3>
                                     </div>
-                                    {sortedPaidHistory.length === 0 ? <p className="text-center text-xs text-slate-400 py-6 italic bg-slate-50 rounded-lg">{t.analytics.noPayHistory}</p> : (
-                                        <div className="space-y-3">
-                                            {sortedPaidHistory.map((dateKey, index) => {
-                                                const group = paidGroups[dateKey];
-                                                const uniqueDates = [...new Set(group.dates)].sort();
-                                                const reportDateRange = uniqueDates[0] === uniqueDates[uniqueDates.length - 1] ? formatFullDate(uniqueDates[0], lang) : `${formatFullDate(uniqueDates[0], lang)} - ${formatFullDate(uniqueDates[uniqueDates.length - 1], lang)}`;
-                                                // Build batch object for receipt modal
-                                                const uid = String(currentUser);
-                                                const uTotal = (group.totalMinutes / 60) * RATES[lang];
-                                                const receiptBatch = {
-                                                    sheets: group.sheets,
-                                                    total: uTotal,
-                                                    totalMins: group.totalMinutes,
-                                                    workDateMin: uniqueDates[0] || dateKey,
-                                                    workDateMax: uniqueDates[uniqueDates.length - 1] || dateKey,
-                                                    byUser: { [uid]: { sheets: group.sheets, total: uTotal, mins: group.totalMinutes } },
-                                                };
-                                                return (
-                                                    <div key={dateKey} className="group rounded-xl border border-slate-100 overflow-hidden bg-white hover:shadow-md transition-all animate-slide-up" style={{animationDelay: `${index * 0.1}s`}}>
-                                                        {/* Main row */}
-                                                        <div className="flex items-center gap-3 px-4 py-3">
-                                                            <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 group-hover:scale-110 transition-transform">
-                                                                <i className="fas fa-check text-xs"></i>
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-xs font-bold text-slate-700">{reportDateRange}</p>
-                                                                <p className="text-[10px] text-slate-400 mt-0.5">{t.analytics.paidOn}: {formatFullDate(dateKey, lang)}</p>
-                                                            </div>
-                                                            <div className="text-right flex-shrink-0">
-                                                                <span className="block text-sm font-bold text-emerald-600">{formatCurrency((group.totalMinutes/60) * RATES[lang], lang)}</span>
-                                                                <span className="text-[9px] text-slate-400">{(group.totalMinutes/60).toFixed(1)}{t.common.unitShort}</span>
-                                                            </div>
-                                                        </div>
-                                                        {/* Receipt footer bar */}
-                                                        <button
-                                                            onClick={() => setAnalyticsReceiptModal({ batch: receiptBatch, batchKey: dateKey })}
-                                                            className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-emerald-50 border-t border-slate-100 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-all">
-                                                            <i className="fas fa-receipt text-[9px]"></i>
-                                                            {lang==='id'?'Lihat Tanda Terima':'View Receipt'}
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                    <ReceiptsView
+                                        timesheets={myPaidSheets}
+                                        users={users}
+                                        lang={lang}
+                                        t={t}
+                                        formatCurrency={formatCurrency}
+                                        timezone={timezone}
+                                        onOpenReceipt={onOpenReceipt}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1852,7 +1956,7 @@
                                                 {/* The line + dot */}
                                                 <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: `${nowPct}%` }}>
                                                     <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 now-line"></div>
-                                                    <div className="absolute -top-0.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow now-dot" style={{left:'-5px'}}></div>
+                                                    <div className="absolute -top-0.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow now-dot" style={{left:'50%',transform:'translateX(-50%)'}}></div>
                                                 </div>
                                                 {/* Hover trigger + dual-tz label */}
                                                 <div className="absolute top-0 bottom-0 z-30 group cursor-default" style={{ left: `${nowPct}%`, width: '12px', transform: 'translateX(-6px)' }}>
@@ -2209,7 +2313,7 @@
                                     <>
                                         {/* The line itself */}
                                         <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-20 pointer-events-none now-line" style={{left:`${leftPct}%`}}>
-                                            <div className="absolute -top-1 w-2.5 h-2.5 rounded-full bg-red-400 now-dot" style={{left:'-5px'}}></div>
+                                            <div className="absolute -top-1 w-2.5 h-2.5 rounded-full bg-red-400 now-dot" style={{left:'50%',transform:'translateX(-50%)'}}></div>
                                         </div>
                                         {/* Hover trigger + label — inside chart bounds */}
                                         <div className="absolute top-0 z-30 group" style={{left:`${leftPct}%`, width:'1px', height:'100%', cursor:'default'}}>
@@ -2579,9 +2683,9 @@
             );
         };
 
-        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, getUserColor, timezone, sysSettings, updateSettings, onAddUser, onEditUser, onDeleteUser, onConfirmAction, logActivity, activityLog = [], isAdmin = false, hasPerm = () => true }) => {
+        const AdminPanel = ({ timesheets, users, schedules, loading, setLoading, showNotify, t, lang, formatCurrency, getUserColor, timezone, sysSettings, updateSettings, onAddUser, onEditUser, onDeleteUser, onConfirmAction, logActivity, activityLog = [], isAdmin = false, hasPerm = () => true, onOpenReceipt }) => {
              const [viewMode, setViewMode] = React.useState('pending');
-             const [receiptModal, setReceiptModal] = React.useState(null); // { batch, batchKey }
+             const [userSort, setUserSort] = React.useState('default'); // 'default'|'az'|'za'|'active'|'inactive'
              const [settingsForm, setSettingsForm] = React.useState({ dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, offsetWIB: 7, offsetWITA: 8, offsetAEDT: 11, offsetPST: -8 });
              const [selectedSheets, setSelectedSheets] = React.useState({});
              const [transferAmounts, setTransferAmounts] = React.useState({});
@@ -2702,22 +2806,11 @@
             
             return (
                 <div className="space-y-4 fade-in pb-20 stagger tab-content">
-                    {/* Receipt Modal */}
-                    {receiptModal && (
-                        <ReceiptModal
-                            batch={receiptModal.batch}
-                            batchKey={receiptModal.batchKey}
-                            users={users}
-                            lang={lang}
-                            t={t}
-                            formatCurrency={formatCurrency}
-                            timezone={timezone}
-                            onClose={() => setReceiptModal(null)}
-                        />
-                    )}
+                    
                      <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100 flex gap-1 overflow-x-auto">
                         {hasPerm('billing') && <button onClick={() => setViewMode('pending')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 ${viewMode === 'pending' ? 'bg-purple-600 text-white' : 'text-slate-500'}`}>{t.admin.pendingBill}</button>}
                         {hasPerm('billing') && <button onClick={() => setViewMode('history')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 ${viewMode === 'history' ? 'bg-green-600 text-white' : 'text-slate-500'}`}>{t.admin.payHistory}</button>}
+                        {hasPerm('billing') && <button onClick={() => setViewMode('receipts')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 flex items-center justify-center gap-1 ${viewMode === 'receipts' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}><i className="fas fa-receipt text-[9px]"></i><span>{lang==='id'?'Tanda Terima':'Receipts'}</span></button>}
                         {hasPerm('users')   && <button onClick={() => setViewMode('users')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 ${viewMode === 'users' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>{t.admin.manageUsers}</button>}
                         {hasPerm('log')     && <button onClick={() => setViewMode('log')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 flex items-center justify-center gap-1 ${viewMode === 'log' ? 'bg-amber-500 text-white' : 'text-slate-500'}`}><i className="fas fa-history text-[10px]"></i><span className="hidden xs:inline">{t.admin.activityLog}</span><span className="xs:hidden">Log</span></button>}
                         {hasPerm('export')  && <button onClick={() => setViewMode('export')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition whitespace-nowrap px-2 flex items-center justify-center gap-1 ${viewMode === 'export' ? 'bg-teal-600 text-white' : 'text-slate-500'}`}><i className="fas fa-download text-[10px]"></i><span className="hidden xs:inline">{t.admin.exportData}</span><span className="xs:hidden">CSV</span></button>}
@@ -3095,7 +3188,7 @@
                                                 </div>
                                                 {/* Receipt footer bar — always visible, clean */}
                                                 <button
-                                                    onClick={e => { e.stopPropagation(); setReceiptModal({ batch, batchKey }); }}
+                                                    onClick={e => { e.stopPropagation(); onOpenReceipt(batch, batchKey); }}
                                                     className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-emerald-50 border-t border-slate-100 text-[10px] font-bold text-slate-400 hover:text-emerald-600 transition-all press">
                                                     <i className="fas fa-receipt text-[9px]"></i>
                                                     {lang==='id'?'Lihat Tanda Terima':'View Receipt'}
@@ -3357,6 +3450,18 @@
                         );
                     })()}
 
+                    {viewMode === 'receipts' && (
+                        <ReceiptsView
+                            timesheets={timesheets}
+                            users={users}
+                            lang={lang}
+                            t={t}
+                            formatCurrency={formatCurrency}
+                            timezone={timezone}
+                            onOpenReceipt={onOpenReceipt}
+                        />
+                    )}
+
                     {viewMode === 'settings' && (
                         <div className="space-y-4 slide-up">
                             <div className="grid grid-cols-1 gap-4">
@@ -3493,15 +3598,34 @@
                     
                     {viewMode === 'users' && ( 
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-bold text-slate-700 flex items-center">
+                            <div className="flex justify-between items-center gap-2">
+                                <h3 className="font-bold text-slate-700 flex items-center flex-shrink-0">
                                     {t.admin.userList}
                                     <InfoTooltip text={t.tooltips.adminInfo} />
                                 </h3>
-                                {isAdmin && <button onClick={onAddUser} className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg">{t.admin.addUser}</button>}
+                                <div className="flex items-center gap-1.5 flex-1 justify-end">
+                                    {/* Sort selector */}
+                                    <select value={userSort} onChange={e => setUserSort(e.target.value)}
+                                        className="text-[10px] font-bold text-slate-500 border border-slate-200 rounded-lg px-2 py-1 bg-white focus:border-blue-400 outline-none cursor-pointer">
+                                        <option value="default">{lang==='id'?'Urutan Default':'Default Order'}</option>
+                                        <option value="az">A → Z</option>
+                                        <option value="za">Z → A</option>
+                                        <option value="active">{lang==='id'?'Aktif Dulu':'Active First'}</option>
+                                        <option value="inactive">{lang==='id'?'Nonaktif Dulu':'Inactive First'}</option>
+                                    </select>
+                                    {isAdmin && <button onClick={onAddUser} className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg flex-shrink-0">{t.admin.addUser}</button>}
+                                </div>
                             </div>
                             <div className="bg-white rounded-xl border border-slate-200 divide-y">
-                                {users.map(u => {
+                                {(() => {
+                                    const sorted = [...users].sort((a,b) => {
+                                        if (userSort === 'az') return a.name.localeCompare(b.name);
+                                        if (userSort === 'za') return b.name.localeCompare(a.name);
+                                        if (userSort === 'active') return (a.hidden?1:0) - (b.hidden?1:0);
+                                        if (userSort === 'inactive') return (b.hidden?1:0) - (a.hidden?1:0);
+                                        return 0; // default: keep original order
+                                    });
+                                    return sorted.map(u => {
                                     const uIsMainAdmin = String(u.id) === ADMIN_ID;
                                     const uPerms = u.permissions || [];
                                     const allPerms = ['billing','log','users','settings','export'];
@@ -3573,7 +3697,8 @@
                                             )}
                                         </div>
                                     )
-                                })}
+                                });
+                                })()}
                             </div>
                         </div> 
                     )}
@@ -3606,6 +3731,7 @@
             const [confirmModal, setConfirmModal] = React.useState({ show: false, message: '', action: null });
             const [timesheetConfirm, setTimesheetConfirm] = React.useState({ show: false, action: null });
             const [bookingConfirm, setBookingConfirm] = React.useState({ show: false, action: null });
+            const [appReceiptModal, setAppReceiptModal] = React.useState(null); // { batch, batchKey }
             const userSelectRef = React.useRef(null);
             const [showUserPicker, setShowUserPicker] = React.useState(false);
             const [activityLog, setActivityLog] = React.useState([]);
@@ -4163,6 +4289,21 @@
                         />
                     )}
 
+                    {/* App-level receipt modal — must be here, NOT inside AdminPanel/AnalyticsView,
+                        because those have transform animations that break position:fixed */}
+                    {appReceiptModal && (
+                        <ReceiptModal
+                            batch={appReceiptModal.batch}
+                            batchKey={appReceiptModal.batchKey}
+                            users={users}
+                            lang={lang}
+                            t={t}
+                            formatCurrency={formatCurrency}
+                            timezone={timezone}
+                            onClose={() => setAppReceiptModal(null)}
+                        />
+                    )}
+
                     {confirmModal.show && (
                         <ConfirmationModal 
                             isOpen={confirmModal.show} 
@@ -4357,6 +4498,7 @@
                                         formatCurrency={formatCurrency} 
                                         timezone={timezone}
                                         onSelectAccount={() => setShowUserPicker(true)}
+                                        onOpenReceipt={(batch, batchKey) => setAppReceiptModal({ batch, batchKey })}
                                     />
                                 )}
                                 {view === 'admin' && canAdmin && (
@@ -4382,6 +4524,7 @@
                                         activityLog={activityLog}
                                         isAdmin={isAdmin}
                                         hasPerm={hasPerm}
+                                        onOpenReceipt={(batch, batchKey) => setAppReceiptModal({ batch, batchKey })}
                                     />
                                 )}
                             </>
