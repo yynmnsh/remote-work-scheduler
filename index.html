@@ -1817,87 +1817,70 @@
                             </div>
                         </div>
                         <div className="p-5 space-y-4">
-                            {/* ── DAILY TEAM QUOTA BAR ── */}
-                            <div className={`rounded-xl overflow-hidden border transition-all duration-300 ${isOverQuota ? 'border-red-200' : isCritical ? 'border-orange-100' : 'border-slate-200'}`}>
-                                {/* Over-quota alert banner — only shows when already exceeded */}
-                                {isOverQuota && (
-                                    <div className="bg-red-500 px-3 py-1.5 flex items-center gap-2">
-                                        <i className="fas fa-exclamation-triangle text-white text-[10px] flex-shrink-0"></i>
-                                        <span className="text-white text-[10px] font-bold flex-1">
-                                            {lang==='id'
-                                                ? `Kuota harian terlampaui +${(overByMins/60).toFixed(1)}${t.common.unitShort} — booking baru diblokir`
-                                                : `Daily quota exceeded by +${(overByMins/60).toFixed(1)}${t.common.unitShort} — new bookings blocked`}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className={`p-3 ${isOverQuota ? 'bg-red-50' : isCritical ? 'bg-orange-50' : 'bg-slate-50'}`}>
-                                    {/* Row 1: label + date badge  |  used / max */}
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                            <i className={`fas fa-bolt text-xs flex-shrink-0 ${isOverQuota ? 'text-red-500 glow-red' : isCritical ? 'text-orange-500 glow-pulse' : 'text-amber-500'}`}></i>
-                                            <span className={`text-[10px] font-bold uppercase tracking-wide ${isOverQuota ? 'text-red-700' : isCritical ? 'text-orange-600' : 'text-slate-600'}`}>
+                            {/* ── DAILY TEAM QUOTA BAR — redesigned ── */}
+                            <div className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                                isOverQuota ? 'border-red-200 bg-red-50'
+                                : isCritical ? 'border-orange-100 bg-orange-50/60'
+                                : 'border-slate-100 bg-white'}`}>
+                                <div className="px-4 pt-3 pb-3">
+                                    {/* Title row: icon + label | date pill */}
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${isOverQuota ? 'bg-red-100' : isCritical ? 'bg-orange-100' : 'bg-blue-100'}`}>
+                                                <i className={`fas fa-bolt text-[10px] ${isOverQuota ? 'text-red-500 glow-red' : isCritical ? 'text-orange-500 glow-pulse' : 'text-blue-500'}`}></i>
+                                            </div>
+                                            <span className={`text-xs font-bold ${isOverQuota ? 'text-red-700' : isCritical ? 'text-orange-700' : 'text-slate-700'}`}>
                                                 {t.schedule.teamQuota}
                                             </span>
-                                            {/* Date badge with cutoff tooltip */}
-                                            {(() => {
-                                                const co = getPtCutoffInTz(timezone);
-                                                const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
-                                                const tip = timezone === 'PST'
-                                                    ? `00:00 – 23:59 ${tzLabel}`
-                                                    : co.crossMidnight
-                                                        ? `${co.startStr} – ${co.endStr} ${tzLabel} ${lang==='id'?'(esok)':'(next day)'}`
-                                                        : `${co.startStr} – ${co.endStr} ${tzLabel}`;
-                                                return (
-                                                    <span className="group relative cursor-help flex-shrink-0">
-                                                        <span className="bg-slate-200/80 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] border border-slate-300/40 hover:bg-blue-100 hover:text-blue-600 hover:border-blue-200 transition-colors">
-                                                            {formatDate(targetPstDate, lang)} PT ⓘ
-                                                        </span>
-                                                        <span className="hidden group-hover:block absolute left-0 top-full mt-1.5 z-50 bg-slate-800 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/50 pointer-events-none">
-                                                            <span className="text-slate-400 text-[9px] block mb-0.5">{lang==='id'?'Hari PT ini = lokal:':'This PT day in local:'}</span>
-                                                            {tip}
-                                                        </span>
-                                                    </span>
-                                                );
-                                            })()}
                                         </div>
-                                        <div className="text-[10px] font-medium text-slate-500 flex-shrink-0">
-                                            <span className={`font-bold text-sm ${isOverQuota ? 'text-red-600' : 'text-slate-800'}`}>{(dailyUsedMinutes/60).toFixed(1)}</span>
-                                            <span className="text-slate-400 mx-0.5">/</span>
-                                            <span className="font-bold text-slate-500">{sysSettings?.dailyQuotaHours || 10}{t.common.unitShort}</span>
-                                        </div>
-                                    </div>
-                                    {/* Row 2: progress bar */}
-                                    <div className="w-full bg-slate-200/70 rounded-full h-2 overflow-hidden flex">
-                                        <div className={`h-2 transition-all duration-700 ease-out flex-shrink-0 rounded-l-full ${isOverQuota ? 'bg-red-400' : isCritical ? 'bg-orange-400' : 'bg-blue-500'}`}
-                                            style={{ width: `${usedPercentage}%`, borderRadius: isOverQuota ? '9999px 0 0 9999px' : '9999px' }}></div>
-                                        {isOverQuota && (
-                                            <div className="h-2 flex-1 rounded-r-full"
-                                                style={{ background: 'repeating-linear-gradient(45deg,#f87171,#f87171 2px,#fecaca 2px,#fecaca 5px)' }}></div>
-                                        )}
-                                    </div>
-                                    {/* Row 3: cutoff window | remaining / over status */}
-                                    <div className="mt-1.5 flex justify-between items-center">
-                                        {timezone !== 'PST' ? (() => {
+                                        {(() => {
                                             const co = getPtCutoffInTz(timezone);
                                             const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
+                                            const tip = timezone === 'PST' ? `00:00–23:59 PT`
+                                                : co.crossMidnight ? `${co.startStr}–${co.endStr} ${tzLabel} ${lang==='id'?'(esok)':'(+1d)'}`
+                                                : `${co.startStr}–${co.endStr} ${tzLabel}`;
                                             return (
-                                                <span className="text-[9px] text-slate-400 font-medium flex items-center gap-1">
-                                                    <i className="fas fa-clock text-[8px] opacity-50"></i>
-                                                    {co.startStr}–{co.endStr} {tzLabel}
-                                                    {co.crossMidnight && <span className="text-[8px] opacity-60 ml-0.5">+1</span>}
+                                                <span className="group relative cursor-help">
+                                                    <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                                        {formatDate(targetPstDate, lang)} PT
+                                                    </span>
+                                                    <span className="hidden group-hover:block absolute right-0 top-full mt-1.5 z-50 bg-slate-800 text-white text-[10px] px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap border border-slate-700/50 pointer-events-none">
+                                                        {tip}
+                                                    </span>
                                                 </span>
                                             );
-                                        })() : <span></span>}
-                                        {isOverQuota ? (
-                                            <span className="text-[9px] font-bold text-red-500 uppercase tracking-wide">
-                                                {t.schedule.overQuota}
-                                            </span>
-                                        ) : (
-                                            <span className={`text-[9px] font-bold uppercase tracking-wide ${isCritical ? 'text-orange-500' : remainingClamped === 0 ? 'text-slate-400' : 'text-blue-600'}`}>
-                                                {t.schedule.remaining}: {(remainingClamped/60).toFixed(1)}{t.common.unitShort}
-                                            </span>
-                                        )}
+                                        })()}
                                     </div>
+                                    {/* Usage numbers + status */}
+                                    <div className="flex items-baseline gap-1.5 mb-2.5">
+                                        <span className={`text-2xl font-black leading-none tabular-nums ${isOverQuota ? 'text-red-600' : isCritical ? 'text-orange-600' : 'text-slate-800'}`}>
+                                            {(dailyUsedMinutes/60).toFixed(1)}
+                                        </span>
+                                        <span className="text-slate-400 text-sm">/ {sysSettings?.dailyQuotaHours || 10}{t.common.unitShort}</span>
+                                        <span className={`ml-auto text-[10px] font-bold tabular-nums ${isOverQuota ? 'text-red-500' : isCritical ? 'text-orange-500' : remainingClamped === 0 ? 'text-slate-400' : 'text-blue-500'}`}>
+                                            {isOverQuota
+                                                ? `+${(overByMins/60).toFixed(1)}${t.common.unitShort} ${t.schedule.overQuota}`
+                                                : remainingClamped > 0
+                                                    ? `${(remainingClamped/60).toFixed(1)}${t.common.unitShort} ${t.schedule.remaining}`
+                                                    : (lang==='id'?'Kuota penuh':'Full')}
+                                        </span>
+                                    </div>
+                                    {/* Progress bar */}
+                                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div className={`h-1.5 rounded-full transition-all duration-700 ease-out ${isOverQuota ? 'bg-red-400' : isCritical ? 'bg-orange-400' : 'bg-blue-500'}`}
+                                            style={{width:`${usedPercentage}%`}}/>
+                                    </div>
+                                    {/* Footer: local cutoff window */}
+                                    {timezone !== 'PST' && (() => {
+                                        const co = getPtCutoffInTz(timezone);
+                                        const tzLabel = TZ_CONFIG[timezone].label.split(' ')[0];
+                                        return (
+                                            <p className="text-[9px] text-slate-400 mt-1.5 flex items-center gap-1">
+                                                <i className="fas fa-clock text-[8px] opacity-40"></i>
+                                                {lang==='id'?'Jendela hari PT:':'PT day window:'} {co.startStr}–{co.endStr} {tzLabel}{co.crossMidnight ? (lang==='id'?' (esok)':', +1d') : ''}
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
@@ -2469,32 +2452,47 @@
                             </div>
                         </div>
 
-                        {/* Team Daily Actual Quota bar — mirrors the style from Schedule tab */}
-                        <div className={`rounded-xl p-3 border mb-4 transition-all duration-300 ${teamActualIsCritical ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-                            <div className="flex justify-between items-center mb-2">
-                                <div className="flex items-center gap-1.5">
-                                    <i className={`fas fa-check-circle text-xs ${teamActualIsCritical ? 'text-green-600' : 'text-green-500'}`}></i>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${teamActualIsCritical ? 'text-green-700' : 'text-slate-600'}`}>
-                                        {lang === 'id' ? 'Aktual Tim Harian' : 'Daily Team Actual'}
-                                        <span className="bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-mono text-[8px] normal-case tracking-normal border border-slate-300/50 shadow-sm">{formatDate(todayPst, lang)} PT</span>
+                        {/* ── AKTUAL TIM HARIAN BAR — redesigned ── */}
+                        <div className={`rounded-2xl border mb-4 transition-all duration-300 overflow-hidden ${
+                            teamActualIsCritical ? 'border-emerald-200 bg-emerald-50'
+                            : teamScheduledMins === 0 ? 'border-slate-100 bg-slate-50/60'
+                            : 'border-slate-100 bg-white'}`}>
+                            <div className="px-4 pt-3 pb-3">
+                                {/* Title row */}
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${teamActualIsCritical ? 'bg-emerald-100' : 'bg-slate-100'}`}>
+                                            <i className={`fas fa-check-circle text-[10px] ${teamActualIsCritical ? 'text-emerald-500' : 'text-slate-400'}`}></i>
+                                        </div>
+                                        <span className={`text-xs font-bold ${teamActualIsCritical ? 'text-emerald-700' : 'text-slate-700'}`}>
+                                            {lang === 'id' ? 'Aktual Tim Harian' : 'Daily Team Actual'}
+                                        </span>
+                                    </div>
+                                    <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold border border-slate-200">
+                                        {formatDate(todayPst, lang)} PT
                                     </span>
                                 </div>
-                                <div className="text-[10px] font-medium text-slate-500">
-                                    {lang === 'id' ? 'Dilaporkan' : 'Reported'}: <span className="font-bold text-slate-700">{(teamActualMins/60).toFixed(1)}{t.common.unitShort}</span>
-                                    {teamScheduledMins > 0 && <span> / <span className="font-bold text-slate-700">{(teamScheduledMins/60).toFixed(1)}{t.common.unitShort}</span> {lang==='id'?'dijadwalkan':'sched.'}</span>}
+                                {/* Numbers row */}
+                                <div className="flex items-baseline gap-1.5 mb-2.5">
+                                    <span className={`text-2xl font-black leading-none tabular-nums ${teamActualIsCritical ? 'text-emerald-600' : 'text-slate-800'}`}>
+                                        {(teamActualMins/60).toFixed(1)}
+                                    </span>
+                                    {teamScheduledMins > 0
+                                        ? <span className="text-slate-400 text-sm">/ {(teamScheduledMins/60).toFixed(1)}{t.common.unitShort} {lang==='id'?'dijadwal':'sched'}</span>
+                                        : <span className="text-slate-400 text-sm">{t.common.unitShort} {lang==='id'?'dilaporkan':'reported'}</span>}
+                                    <span className={`ml-auto text-[10px] font-bold ${teamActualIsCritical ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                        {teamActualPct >= 100
+                                            ? (lang === 'id' ? '✓ Semua Terlaporkan' : '✓ All Reported')
+                                            : teamScheduledMins > 0
+                                                ? `${(100 - teamActualPct).toFixed(0)}% ${lang === 'id' ? 'belum' : 'unreported'}`
+                                                : (lang === 'id' ? 'Belum ada jadwal' : 'No schedules')}
+                                    </span>
                                 </div>
-                            </div>
-                            <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
-                                <div className={`h-1.5 rounded-full transition-all duration-700 ease-out ${teamActualIsCritical ? 'bg-green-500' : 'bg-green-400'}`} style={{ width: `${teamActualPct}%` }}></div>
-                            </div>
-                            <div className="mt-1.5 text-right">
-                                <span className={`text-[9px] font-bold uppercase ${teamActualIsCritical ? 'text-green-600' : 'text-slate-400'}`}>
-                                    {teamActualPct >= 100
-                                        ? (lang === 'id' ? '✓ Semua Jadwal Terlaporkan!' : '✓ All Schedules Reported!')
-                                        : teamScheduledMins > 0
-                                            ? `${(100 - teamActualPct).toFixed(0)}% ${lang === 'id' ? 'jadwal belum terlaporkan' : 'of schedules unreported'}`
-                                            : (lang === 'id' ? 'Belum ada jadwal hari ini' : 'No schedules today')}
-                                </span>
+                                {/* Progress bar */}
+                                <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                    <div className={`h-1.5 rounded-full transition-all duration-700 ease-out ${teamActualIsCritical ? 'bg-emerald-500' : 'bg-emerald-400'}`}
+                                        style={{width:`${teamActualPct}%`}}/>
+                                </div>
                             </div>
                         </div>
                         
@@ -3648,9 +3646,20 @@
                                         if (!isNaN(v) && v > 0) userRates[String(u.id)] = v;
                                     });
                                     setIsEditingSettings(false); // allow Firestore sync after save
-                                    updateSettings({ ...settingsForm, userRates });
-                                }} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-sm transition shadow-sm disabled:opacity-50">
-                                    {loading ? <Spinner/> : t.common.save}
+                                    // Extract only known settings keys — never write ur_* draft keys to Firestore
+                                    const cleanPayload = {
+                                        dailyQuotaHours: Number(settingsForm.dailyQuotaHours),
+                                        baseHourlyRateUSD: Number(settingsForm.baseHourlyRateUSD),
+                                        usdToIdr: Number(settingsForm.usdToIdr),
+                                        offsetWIB: Number(settingsForm.offsetWIB),
+                                        offsetWITA: Number(settingsForm.offsetWITA),
+                                        offsetAEDT: Number(settingsForm.offsetAEDT),
+                                        offsetPST: Number(settingsForm.offsetPST),
+                                        userRates,
+                                    };
+                                    updateSettings(cleanPayload);
+                                }} disabled={loading || sysSettings?.offsetPST === undefined} className="w-full bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-sm transition shadow-sm disabled:opacity-50">
+                                    {loading ? <Spinner/> : sysSettings?.offsetPST === undefined ? (lang==='id'?'Memuat...':'Loading...') : t.common.save}
                                 </button>
                             </div>
                         </div>
@@ -3876,10 +3885,13 @@
                             if (data.offsetAEDT !== undefined) TZ_CONFIG['AEDT'].offsetUTC = data.offsetAEDT;
                             if (data.offsetPST  !== undefined) TZ_CONFIG['PST'].offsetUTC  = data.offsetPST;
                         } else {
+                            // merge:true — only writes defaults for fields that don't exist yet.
+                            // Prevents overwriting saved settings during offline/online reconnect
+                            // or Firestore cache misses that temporarily report exists()=false.
                             window.fs.setDoc(window.fs.doc(window.db, 'settings', 'global'), { 
                                 dailyQuotaHours: 10, baseHourlyRateUSD: 15, usdToIdr: 16000, 
                                 offsetWIB: 7, offsetWITA: 8, offsetAEDT: 11, offsetPST: -8 
-                            }).catch(e => {});
+                            }, { merge: true }).catch(e => {});
                         }
                     }, (err) => console.error(err));
 
