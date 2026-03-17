@@ -1712,91 +1712,100 @@
                                 const thisWedTotal = thisPeriodEarned + carryOverEarned;
                                 const thisWedHours = thisPeriodHours + carryOverHours;
                                 if (thisWedHours <= 0 && nextPeriodHours <= 0) return (
-                                    <p className="text-blue-300/50 text-sm italic">{lang==='id'?'Tidak ada laporan pending.':'No pending reports.'}</p>
+                                    <p className="text-blue-300/50 text-sm italic py-2">{lang==='id'?'Tidak ada laporan pending.':'No pending reports.'}</p>
                                 );
-                                const pThis  = thisWedHours > 0 ? thisPeriodHours / thisWedHours * 100 : 0;
+                                const pThis  = thisWedHours > 0 ? (thisPeriodHours / thisWedHours) * 100 : 0;
                                 const pCarry = 100 - pThis;
                                 return (
                                     <>
-                                        {/* ── Main payment card ── */}
+                                        {/* ── Main Wednesday payment card ── */}
                                         {thisWedHours > 0 && (
-                                            <div className="rounded-2xl overflow-hidden" style={{background:'linear-gradient(135deg,rgba(255,255,255,0.12) 0%,rgba(255,255,255,0.06) 100%)', border:'1px solid rgba(255,255,255,0.18)', backdropFilter:'blur(16px)'}}>
-                                                {/* Label row — ONE label + payday badge, no duplication */}
-                                                <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <i className="fas fa-wallet text-white/50 text-[9px]"></i>
-                                                        <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">
-                                                            {lang==='id'?'Estimasi Gaji':'Pay Estimate'}
+                                            <div className="rounded-2xl overflow-hidden" style={{
+                                                background:'linear-gradient(145deg,rgba(255,255,255,0.11) 0%,rgba(255,255,255,0.05) 100%)',
+                                                border:'1px solid rgba(255,255,255,0.16)'
+                                            }}>
+                                                <div className="px-4 pt-3 pb-3">
+                                                    {/* Top row: period + payday badge */}
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <p className="text-[9px] text-white/50 uppercase tracking-widest font-bold flex items-center gap-1.5">
+                                                            <i className="fas fa-calendar-check text-emerald-400 text-[8px]"></i>
+                                                            {periodLabel} (PT)
+                                                            <InfoTooltip text={t.tooltips.estInfo} />
+                                                        </p>
+                                                        <span className="text-[8px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                                                            {pp.isPaydayToday ? '🎉 Hari ini!' : `${t.dashboard.paidWed} ${fmtShortPP(pp.upcomingPayday)}`}
                                                         </span>
-                                                        <InfoTooltip text={t.tooltips.estInfo} />
                                                     </div>
-                                                    <span className="text-[8px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/25 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                        <i className="fas fa-calendar-check text-[7px]"></i>
-                                                        {pp.isPaydayToday ? t.dashboard.paydayToday : `${t.dashboard.paidWed} ${fmtShortPP(pp.upcomingPayday)}`}
-                                                    </span>
-                                                </div>
-                                                {/* Big amount */}
-                                                <div className="px-4 pb-3">
-                                                    <p className="text-[30px] font-black leading-tight tracking-tight count-up text-white">{formatCurrency(thisWedTotal, lang)}</p>
-                                                    <p className="text-[10px] text-white/50 mt-0.5">
-                                                        <i className="far fa-clock mr-1 text-[9px]"></i>
-                                                        {thisWedHours.toFixed(1)}{t.common.unitShort} &nbsp;·&nbsp; {myPendingThisPeriod.length + myPendingCarryOver.length} {lang==='id'?'laporan':'reports'}
+                                                    {/* Big amount */}
+                                                    <p className="text-[32px] font-black leading-none tracking-tight text-white count-up">{formatCurrency(thisWedTotal, lang)}</p>
+                                                    <p className="text-[10px] text-white/45 mt-1.5 flex items-center gap-1.5">
+                                                        <i className="far fa-clock text-[9px]"></i>
+                                                        <span className="font-semibold text-white/60">{thisWedHours.toFixed(1)}{t.common.unitShort}</span>
+                                                        <span className="opacity-40">·</span>
+                                                        <span>{myPendingThisPeriod.length + myPendingCarryOver.length} {lang==='id'?'laporan':'reports'}</span>
                                                     </p>
                                                 </div>
-                                                {/* Breakdown — only when both buckets exist */}
-                                                {carryOverHours > 0 && thisPeriodHours > 0 && (
-                                                    <div className="mx-3 mb-3 rounded-xl overflow-hidden" style={{background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.08)'}}>
-                                                        {/* Period row */}
-                                                        <div className="flex items-center justify-between px-3 py-2.5">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0 mt-px"></div>
-                                                                <div>
-                                                                    <p className="text-[9px] font-semibold text-white/70">{t.dashboard.thisWeekEst}</p>
-                                                                    <p className="text-[7px] text-white/35 mt-0.5">{periodLabel} PT</p>
-                                                                </div>
+
+                                                {/* Breakdown rows — only shown when BOTH buckets exist */}
+                                                {thisPeriodHours > 0 && carryOverHours > 0 && (
+                                                    <div className="mx-3 mb-3 rounded-xl divide-y" style={{
+                                                        background:'rgba(0,0,0,0.18)',
+                                                        border:'1px solid rgba(255,255,255,0.07)',
+                                                        divideColor:'rgba(255,255,255,0.06)'
+                                                    }}>
+                                                        {/* Row 1: current period */}
+                                                        <div className="flex items-center justify-between px-3 py-2">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <div className="w-1.5 h-4 rounded-full bg-white/50 flex-shrink-0"></div>
+                                                                <p className="text-[9px] text-white/65 font-semibold truncate">{t.dashboard.thisWeekEst}</p>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <p className="text-xs font-black text-white/85">{formatCurrency(thisPeriodEarned, lang)}</p>
-                                                                <p className="text-[7px] text-white/35">{thisPeriodHours.toFixed(1)}{t.common.unitShort}</p>
+                                                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                                                <span className="text-[8px] text-white/35">{thisPeriodHours.toFixed(1)}{t.common.unitShort}</span>
+                                                                <span className="text-xs font-black text-white/85">{formatCurrency(thisPeriodEarned, lang)}</span>
                                                             </div>
                                                         </div>
-                                                        {/* Carry-over row */}
-                                                        <div className="flex items-center justify-between px-3 py-2.5" style={{background:'rgba(251,191,36,0.08)', borderTop:'1px solid rgba(255,255,255,0.06)'}}>
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-300/70 flex-shrink-0 mt-px"></div>
-                                                                <div>
+                                                        {/* Row 2: carry-over */}
+                                                        <div className="flex items-center justify-between px-3 py-2 rounded-b-xl" style={{background:'rgba(251,191,36,0.07)'}}>
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <div className="w-1.5 h-4 rounded-full bg-amber-300/60 flex-shrink-0"></div>
+                                                                <div className="min-w-0">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <p className="text-[9px] font-semibold text-amber-200/80">{t.dashboard.overduePay}</p>
-                                                                        <span className="text-[6px] font-bold uppercase tracking-wide bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">{lang==='id'?'termasuk':'included'}</span>
+                                                                        <p className="text-[9px] text-amber-200/75 font-semibold">{t.dashboard.overduePay}</p>
+                                                                        <span className="text-[6px] font-bold uppercase bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full tracking-wide">{lang==='id'?'termasuk':'included'}</span>
                                                                     </div>
-                                                                    <p className="text-[7px] text-amber-300/40 mt-0.5">{t.dashboard.overdueIncluded}</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <p className="text-xs font-black text-amber-200/90">{formatCurrency(carryOverEarned, lang)}</p>
-                                                                <p className="text-[7px] text-amber-300/40">{carryOverHours.toFixed(1)}{t.common.unitShort}</p>
+                                                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                                                <span className="text-[8px] text-amber-300/40">{carryOverHours.toFixed(1)}{t.common.unitShort}</span>
+                                                                <span className="text-xs font-black text-amber-100/85">{formatCurrency(carryOverEarned, lang)}</span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 )}
-                                                {/* Stacked accent bar */}
-                                                <div className="flex h-1" style={{gap:'1px'}}>
-                                                    <div className="h-full transition-all duration-1000" style={{width:`${pThis}%`, background:'rgba(255,255,255,0.35)'}}/>
-                                                    {pCarry > 0 && <div className="h-full transition-all duration-1000" style={{width:`${pCarry}%`, background:'rgba(251,191,36,0.5)'}}/>}
+
+                                                {/* Proportional bar at bottom of card */}
+                                                <div className="flex h-1">
+                                                    <div className="h-full transition-all duration-1000" style={{width:`${pThis}%`, background:'rgba(255,255,255,0.3)'}}/>
+                                                    {pCarry > 0 && <div className="h-full transition-all duration-1000" style={{width:`${pCarry}%`, background:'rgba(251,191,36,0.45)'}}/>}
                                                 </div>
                                             </div>
                                         )}
-                                        {/* ── Next period row ── */}
+
+                                        {/* ── Next period: compact pill ── */}
                                         {nextPeriodHours > 0 && (
-                                            <div className="flex items-center gap-3 rounded-xl px-3.5 py-3" style={{background:'rgba(139,92,246,0.15)', border:'1px solid rgba(139,92,246,0.25)'}}>
-                                                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:'rgba(139,92,246,0.2)'}}>
-                                                    <i className="fas fa-forward text-violet-300 text-xs"></i>
-                                                </div>
+                                            <div className="flex items-center gap-3 rounded-xl px-3.5 py-2.5" style={{
+                                                background:'rgba(139,92,246,0.14)',
+                                                border:'1px solid rgba(139,92,246,0.22)'
+                                            }}>
+                                                <i className="fas fa-forward-step text-violet-300 text-xs flex-shrink-0"></i>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[10px] font-bold text-violet-200 leading-tight">{t.dashboard.estNextPeriod}</p>
-                                                    <p className="text-[8px] text-violet-300/50 mt-0.5">{nextPeriodHours.toFixed(1)}{t.common.unitShort} · {t.dashboard.estNextPeriodHint}</p>
+                                                    <p className="text-[9px] font-bold text-violet-200 leading-tight">{t.dashboard.estNextPeriod}</p>
+                                                    <p className="text-[7px] text-violet-300/50 mt-0.5 truncate">{t.dashboard.estNextPeriodHint}</p>
                                                 </div>
-                                                <p className="text-sm font-black text-violet-100 flex-shrink-0">{formatCurrency(nextPeriodEarned, lang)}</p>
+                                                <div className="text-right flex-shrink-0">
+                                                    <p className="text-sm font-black text-violet-100">{formatCurrency(nextPeriodEarned, lang)}</p>
+                                                    <p className="text-[7px] text-violet-300/50">{nextPeriodHours.toFixed(1)}{t.common.unitShort}</p>
+                                                </div>
                                             </div>
                                         )}
                                     </>
@@ -2864,7 +2873,8 @@
                     
                     <div className="pb-20">
                         <ActualScheduleMap
-                            schedules={schedules}s={timesheets}
+                            schedules={schedules}
+                            timesheets={timesheets}
                             users={users}
                             getUserName={getUserName}
                             getUserColor={getUserColor}
