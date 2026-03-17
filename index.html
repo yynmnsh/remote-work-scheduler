@@ -148,30 +148,30 @@
            This prevents the opacity:0 blank-screen bug.
            ══════════════════════════════════════════════════ */
         @keyframes fadeIn     { from{opacity:0}                                              to{opacity:1} }
-        @keyframes slideUp    { from{opacity:0;transform:translateY(18px)}                   to{opacity:1;transform:translateY(0)} }
+        @keyframes slideUp    { from{transform:translateY(16px)}                            to{transform:translateY(0)} }
         @keyframes slideDown  { from{opacity:0;transform:translateY(-14px)}                  to{opacity:1;transform:translateY(0)} }
         @keyframes slideRight { from{opacity:0;transform:translateX(-14px)}                  to{opacity:1;transform:translateX(0)} }
         @keyframes popIn      { 0%{opacity:0;transform:scale(0.85)} 70%{transform:scale(1.04)} 100%{opacity:1;transform:scale(1)} }
         @keyframes popInSm    { 0%{opacity:0;transform:scale(0.92)} 70%{transform:scale(1.02)} 100%{opacity:1;transform:scale(1)} }
         @keyframes bounceIn   { 0%{opacity:0;transform:scale(0.3)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)} }
         @keyframes countUp    { from{opacity:0;transform:translateY(6px)}                    to{opacity:1;transform:translateY(0)} }
-        @keyframes tabEnter   { from{opacity:0;transform:translateY(10px)}                   to{opacity:1;transform:translateY(0)} }
+        @keyframes tabEnter   { from{transform:translateY(8px)}                              to{transform:translateY(0)} }
         @keyframes fadeUp     { from{opacity:0;transform:translateY(6px)}                    to{opacity:1;transform:translateY(0)} }
         @keyframes shimmerSlide { 0%{background-position:200% center} 100%{background-position:-200% center} }
 
         /* ── Animation utility classes ── */
-        .fade-in    { animation: fadeIn    0.3s  ease-out both; }
-        .slide-up   { animation: slideUp   0.38s cubic-bezier(0.16,1,0.3,1) both; }
-        .slide-down { animation: slideDown 0.36s cubic-bezier(0.16,1,0.3,1) both; }
-        .pop-in     { animation: popIn     0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
-        .count-up   { animation: countUp   0.55s cubic-bezier(0.16,1,0.3,1) both; }
+        .fade-in    { animation: fadeIn    0.3s  ease-out forwards; }
+        .slide-up   { animation: slideUp   0.38s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .slide-down { animation: slideDown 0.36s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .pop-in     { animation: popIn     0.32s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .count-up   { animation: countUp   0.55s cubic-bezier(0.16,1,0.3,1) forwards; }
         .fade-up    { animation: fadeUp    0.3s  ease-out both; }
 
         /* ── Tab / page content enter ── */
-        .tab-content { animation: tabEnter 0.32s cubic-bezier(0.16,1,0.3,1) both; }
+        .tab-content { animation: tabEnter 0.32s cubic-bezier(0.16,1,0.3,1) forwards; }
 
         /* ── Staggered list items ── */
-        .stagger > * { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+        .stagger > * { animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
         .stagger > *:nth-child(1)  { animation-delay: 0.03s; }
         .stagger > *:nth-child(2)  { animation-delay: 0.07s; }
         .stagger > *:nth-child(3)  { animation-delay: 0.11s; }
@@ -180,6 +180,7 @@
         .stagger > *:nth-child(6)  { animation-delay: 0.23s; }
 
         /* Shimmer loading skeleton */
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
         .shimmer-bg {
             background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
             background-size: 400% 100%;
@@ -233,10 +234,10 @@
         }
 
         /* Bounce in for badges/pills */
-        .bounce-in { animation: bounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .bounce-in { animation: bounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
         /* Slide-right for list items */
-        .slide-right { animation: slideRight 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+        .slide-right { animation: slideRight 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
 
         /* Smooth color transitions on interactive elements */
         button, a { transition-property: color, background-color, border-color, opacity, transform, box-shadow; transition-duration: 0.15s; transition-timing-function: ease; }
@@ -1245,6 +1246,9 @@
         };
 
         const AnalyticsView = ({ timesheets, schedules, users, currentUser, isAdmin, loading, lang, t, formatCurrency, timezone, onSelectAccount, onOpenReceipt }) => {
+            // ── ALL hooks at top — Rules of Hooks ──
+            const [tab, setTab] = React.useState('personal');
+
             if (!currentUser) {
                 return (
                     <div className="space-y-4 tab-content">
@@ -1266,9 +1270,7 @@
                         </button>
                     </div>
                 );
-            }
-            
-            const [tab, setTab] = React.useState('personal'); 
+            } 
             
             const totalMinutesTeam = timesheets.reduce((acc, ts) => acc + parseInt(ts.duration || 0), 0);
             const rate = RATES[lang];
@@ -1719,14 +1721,17 @@
                                         {/* ── Main payment card ── */}
                                         {thisWedHours > 0 && (
                                             <div className="rounded-2xl overflow-hidden" style={{background:'linear-gradient(135deg,rgba(255,255,255,0.12) 0%,rgba(255,255,255,0.06) 100%)', border:'1px solid rgba(255,255,255,0.18)', backdropFilter:'blur(16px)'}}>
-                                                {/* Label row */}
+                                                {/* Label row — ONE label + payday badge, no duplication */}
                                                 <div className="flex items-center justify-between px-4 pt-3 pb-1">
                                                     <div className="flex items-center gap-1.5">
-                                                        <i className="fas fa-calendar-check text-emerald-400 text-xs"></i>
-                                                        <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">{t.dashboard.totalPending}</span>
+                                                        <i className="fas fa-wallet text-white/50 text-[9px]"></i>
+                                                        <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">
+                                                            {lang==='id'?'Estimasi Gaji':'Pay Estimate'}
+                                                        </span>
                                                         <InfoTooltip text={t.tooltips.estInfo} />
                                                     </div>
-                                                    <span className="text-[8px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/25 px-2 py-0.5 rounded-full">
+                                                    <span className="text-[8px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                        <i className="fas fa-calendar-check text-[7px]"></i>
                                                         {pp.isPaydayToday ? t.dashboard.paydayToday : `${t.dashboard.paidWed} ${fmtShortPP(pp.upcomingPayday)}`}
                                                     </span>
                                                 </div>
@@ -1738,9 +1743,9 @@
                                                         {thisWedHours.toFixed(1)}{t.common.unitShort} &nbsp;·&nbsp; {myPendingThisPeriod.length + myPendingCarryOver.length} {lang==='id'?'laporan':'reports'}
                                                     </p>
                                                 </div>
-                                                {/* Breakdown — only when carry-over exists */}
+                                                {/* Breakdown — only when both buckets exist */}
                                                 {carryOverHours > 0 && thisPeriodHours > 0 && (
-                                                    <div className="mx-3 mb-3 rounded-xl overflow-hidden divide-y" style={{background:'rgba(0,0,0,0.15)', divideColor:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.08)'}}>
+                                                    <div className="mx-3 mb-3 rounded-xl overflow-hidden" style={{background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.08)'}}>
                                                         {/* Period row */}
                                                         <div className="flex items-center justify-between px-3 py-2.5">
                                                             <div className="flex items-center gap-2">
@@ -1756,7 +1761,7 @@
                                                             </div>
                                                         </div>
                                                         {/* Carry-over row */}
-                                                        <div className="flex items-center justify-between px-3 py-2.5" style={{background:'rgba(251,191,36,0.08)'}}>
+                                                        <div className="flex items-center justify-between px-3 py-2.5" style={{background:'rgba(251,191,36,0.08)', borderTop:'1px solid rgba(255,255,255,0.06)'}}>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-1.5 h-1.5 rounded-full bg-amber-300/70 flex-shrink-0 mt-px"></div>
                                                                 <div>
@@ -2609,6 +2614,52 @@
         };
 
         const ReportManager = ({ saveTimesheet, timesheetForm, setTimesheetForm, loading, timesheets, schedules, users, getUserName, getUserColor, currentUser, deleteTimesheet, editTimesheetId, setEditTimesheetId, editTimesheet, hasPaymentInfo, onOpenProfile, isAdmin, lang, t, formatCurrency, timezone, showNotify, sysSettings, onSelectAccount }) => {
+            // ── ALL hooks MUST be at the top — no exceptions (Rules of Hooks) ──
+            const [showHistory, setShowHistory] = React.useState(false);
+            const [filterMine, setFilterMine] = React.useState(false);
+
+            // ── Derived values (safe even when currentUser is null) ──
+            const filteredTimesheets = React.useMemo(() =>
+                timesheets
+                    .filter(ts => showHistory ? ts.status === 'paid' : ts.status === 'pending')
+                    .sort((a, b) => (`${b.date}T${b.startTime}`).localeCompare(`${a.date}T${a.startTime}`)),
+                [timesheets, showHistory]
+            );
+
+            const getDisplayAmount = (item) => {
+                const baseVal = parseFloat(item.paymentUSD) || 0;
+                if (lang === 'id') return baseVal * (RATES.id / RATES.en);
+                return baseVal;
+            };
+
+            const calculateDurationMins = () => {
+                if (!timesheetForm.date || !timesheetForm.startTime || !timesheetForm.endTime) return 0;
+                const startEpoch = getEpochFromWIB(timesheetForm.date, timesheetForm.startTime);
+                let endEpoch = getEpochFromWIB(timesheetForm.endDate || timesheetForm.date, timesheetForm.endTime);
+                if (endEpoch < startEpoch) endEpoch += 86400000;
+                return Math.max(0, Math.round((endEpoch - startEpoch) / 60000));
+            };
+
+            const currentDur = calculateDurationMins();
+            const isFormDirty = timesheetForm.scheduleId !== '' || timesheetForm.date !== '' || timesheetForm.startTime !== '' || timesheetForm.endDate !== '' || timesheetForm.endTime !== '';
+
+            // Team actual quota bar data
+            const todayPst = getPSTDayFromEpoch(Date.now());
+            const teamScheduledMins = schedules.reduce((acc, s) => {
+                if (getPSTDay(s.startDate || s.date, s.startTime) !== todayPst) return acc;
+                const sE = getEpochFromWIB(s.startDate || s.date, s.startTime);
+                let eE = getEpochFromWIB(s.endDate || s.date, s.endTime);
+                if (!s.endDate && eE <= sE) eE += 86400000;
+                return acc + Math.floor((eE - sE) / 60000);
+            }, 0);
+            const teamQuotaMins = (sysSettings?.dailyQuotaHours || 10) * 60;
+            const teamActualMins = timesheets.reduce((acc, ts) => getPSTDay(ts.date, ts.startTime) === todayPst ? acc + parseInt(ts.duration || 0) : acc, 0);
+            const teamDenominator = teamScheduledMins > 0 ? teamScheduledMins : teamQuotaMins;
+            const teamActualPct = Math.min(100, teamDenominator > 0 ? teamActualMins / teamDenominator * 100 : 0);
+            const teamUnreportedMins = Math.max(0, teamScheduledMins - teamActualMins);
+            const teamActualIsCritical = teamScheduledMins > 0 ? teamActualMins >= teamScheduledMins * 0.9 : teamActualMins >= teamQuotaMins * 0.9;
+
+            // ── Guard screens — rendered AFTER hooks ──
             if (!currentUser) {
                 return (
                     <div className="space-y-4 tab-content">
@@ -2647,51 +2698,6 @@
                     </div>
                 );
             }
-
-            const [showHistory, setShowHistory] = React.useState(false); 
-            const filteredTimesheets = timesheets
-                .filter(t => showHistory ? t.status === 'paid' : t.status === 'pending')
-                .sort((a,b) => {
-                    const timeA = `${a.date}T${a.startTime}`;
-                    const timeB = `${b.date}T${b.startTime}`;
-                    return timeB.localeCompare(timeA); 
-                });
-
-            const getDisplayAmount = (item) => {
-                const baseVal = parseFloat(item.paymentUSD) || 0;
-                if (lang === 'id') return baseVal * (RATES.id / RATES.en);
-                return baseVal;
-            };
-
-            const calculateDurationMins = () => {
-                if (!timesheetForm.date || !timesheetForm.startTime || !timesheetForm.endTime) return 0;
-                const startEpoch = getEpochFromWIB(timesheetForm.date, timesheetForm.startTime);
-                let endEpoch = getEpochFromWIB(timesheetForm.endDate || timesheetForm.date, timesheetForm.endTime);
-                if (endEpoch < startEpoch) endEpoch += 86400000;
-                return Math.max(0, Math.round((endEpoch - startEpoch) / 60000));
-            };
-            
-            const currentDur = calculateDurationMins();
-            const [filterMine, setFilterMine] = React.useState(false);
-            const isFormDirty = timesheetForm.scheduleId !== '' || timesheetForm.date !== '' || timesheetForm.startTime !== '' || timesheetForm.endDate !== '' || timesheetForm.endTime !== '';
-
-            // Team actual quota bar data
-            const todayPst = getPSTDayFromEpoch(Date.now());
-            // teamScheduledMins: total scheduled hours for today (correct denominator for "unreported" %)
-            const teamScheduledMins = schedules.reduce((acc, s) => {
-                if (getPSTDay(s.startDate || s.date, s.startTime) !== todayPst) return acc;
-                const sE = getEpochFromWIB(s.startDate || s.date, s.startTime);
-                let eE = getEpochFromWIB(s.endDate || s.date, s.endTime);
-                if (!s.endDate && eE <= sE) eE += 86400000;
-                return acc + Math.floor((eE - sE) / 60000);
-            }, 0);
-            const teamQuotaMins = (sysSettings?.dailyQuotaHours || 10) * 60;
-            const teamActualMins = timesheets.reduce((acc, ts) => getPSTDay(ts.date, ts.startTime) === todayPst ? acc + parseInt(ts.duration || 0) : acc, 0);
-            // Compare actual vs scheduled (not quota) — this is the meaningful "reported vs planned" ratio
-            const teamDenominator = teamScheduledMins > 0 ? teamScheduledMins : teamQuotaMins;
-            const teamActualPct = Math.min(100, teamDenominator > 0 ? teamActualMins / teamDenominator * 100 : 0);
-            const teamUnreportedMins = Math.max(0, teamScheduledMins - teamActualMins);
-            const teamActualIsCritical = teamScheduledMins > 0 ? teamActualMins >= teamScheduledMins * 0.9 : teamActualMins >= teamQuotaMins * 0.9;
 
             return (
                 <div className="space-y-4 tab-content">
