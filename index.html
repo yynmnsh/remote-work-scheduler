@@ -4145,7 +4145,7 @@
             const [timesheets, setTimesheets] = React.useState([]);
             const [loading, setLoading] = React.useState(false);
             const [notify, setNotify] = React.useState(null);
-            const [sysSettings, setSysSettings] = React.useState({ dailyQuotaHours: 10 });
+            const [sysSettings, setSysSettings] = React.useState(null); // null until Firestore loads; prevents premature defaults
             const [showProfileModal, setShowProfileModal] = React.useState(false);
             const [showUserModal, setShowUserModal] = React.useState(false);
             const [passwordModal, setPasswordModal] = React.useState({ show: false, mode: 'login', userId: null });
